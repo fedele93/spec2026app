@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Graduation Cap & Laurel Wreath & Neural Icon centered inside safe zone -->
+    <!-- Laurel Wreath Left Leaf curves -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M32,54 C31,64 36,73 44,78 C42,75 40,68 41,60 C37,63 34,60 32,54 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M30,44 C31,48 34,51 37,50 C36,46 34,43 30,44 Z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M34,36 C36,40 39,41 42,39 C40,35 38,34 34,36 Z" />
+
+    <!-- Laurel Wreath Right Leaf curves -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M76,54 C77,64 72,73 64,78 C66,75 68,68 67,60 C71,63 74,60 76,54 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M78,44 C77,48 74,51 71,50 C72,46 74,43 78,44 Z" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M74,36 C72,40 69,41 66,39 C68,35 70,34 74,36 Z" />
+
+    <!-- Central Brain Hemispheres & Neural Nodes -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M49,54 C46,52 45,49 46,46 C47,43 50,43 51,46 C52,43 55,43 56,46 C57,49 56,52 53,54 Z" />
+    <!-- Neural Stem & Synapse Connections -->
+    <path
+        android:strokeColor="#BAE6FD"
+        android:strokeWidth="1.8"
+        android:pathData="M48,58 C46,63 50,67 54,68 C58,67 62,63 60,58" />
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="1.5"
+        android:pathData="M54,55 L54,68 M47,60 L54,63 M61,60 L54,63" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,55 m-2.2,0 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 M46,60 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 M62,60 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 M54,69 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+
+    <!-- Graduation Mortarboard (Cap) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,27 L74,36 L54,44 L34,36 Z" />
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M42,40 L42,46 C42,49 47,52 54,52 C61,52 66,49 66,46 L66,40 L54,44 Z" />
+    <path
+        android:strokeColor="#F59E0B"
+        android:strokeWidth="1.6"
+        android:pathData="M54,35 C59,37 68,40 69,47" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M69,48 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+</vector>

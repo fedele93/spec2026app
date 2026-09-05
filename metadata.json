@@ -1,0 +1,6 @@
+{
+  "name": "NeuroParty",
+  "description": "App per la festa di specializzazione e laurea in Neurologia: gestione invitati e RSVP, notifiche push in tempo reale, mappa ritrovi, prenotazione navetta bus, bacheca auguri, galleria foto e quote regali differenziate.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

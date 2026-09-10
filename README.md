@@ -55,6 +55,37 @@ Le release vengono prodotte automaticamente dalla GitHub Action
 `.github/workflows/release.yml`: al push di un tag `v*` viene compilato l'APK
 release e pubblicato come asset di una GitHub Release.
 
+### Firma dell'APK in CI (per installazione su cellulare)
+
+Per produrre un APK firmato e installabile sul telefono, la CI usa un keystore
+salvato come secret. Configura una sola volta questi 4 secret nel repo
+(**Settings → Secrets and variables → Actions → New repository secret**):
+
+| Secret | Valore |
+|---|---|
+| `SIGNING_KEYSTORE_BASE64` | il keystore `.jks` codificato in base64 (vedi sotto) |
+| `SIGNING_KEY_ALIAS` | alias della chiave nel keystore (es. `upload`) |
+| `SIGNING_STORE_PASSWORD` | password del keystore |
+| `SIGNING_KEY_PASSWORD` | password della chiave |
+
+Genera il keystore in locale (una sola volta) e codificalo in base64:
+
+```bash
+# 1. Crea il keystore (JDK richiesto)
+keytool -genkeypair -v \
+  -keystore my-upload-key.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -alias upload
+
+# 2. Codificalo in base64 e copia l'output nel secret SIGNING_KEYSTORE_BASE64
+base64 -w0 my-upload-key.jks
+```
+
+Conserva `my-upload-key.jks` in luogo sicuro: è necessario per firmare ogni
+futura release con la stessa identità, altrimenti gli aggiornamenti non si
+installano sopra la versione precedente. Una volta configurati i secret, ogni
+tag `v*` produce un APK firmato pronto da installare sul cellulare.
+
 ## Licenza
 
 MIT — Fedele Luisi, 2026. Vedi [LICENSE](LICENSE).

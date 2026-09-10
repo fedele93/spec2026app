@@ -22,10 +22,12 @@ android {
 
   signingConfigs {
     create("release") {
+      // Keystore resolved from either a file path (KEYSTORE_PATH) or base64
+      // content (KEYSTORE_BASE64, used by CI). Secrets come from env.
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
       storeFile = file(keystorePath)
       storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
+      keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
@@ -43,7 +45,8 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       // Sign only when a keystore is available; otherwise produce an unsigned
       // release APK (signable locally) so CI can build without secrets.
-      val releaseKeystore = System.getenv("KEYSTORE_PATH")?.let { file(it) } ?: file("${rootDir}/my-upload-key.jks")
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+      val releaseKeystore = file(keystorePath)
       if (releaseKeystore.exists() && !System.getenv("STORE_PASSWORD").isNullOrEmpty()) {
         signingConfig = signingConfigs.getByName("release")
       }

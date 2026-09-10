@@ -1,0 +1,58 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-36 build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate Gradle wrapper
+        run: gradle wrapper --gradle-version 9.3.1 --distribution-type bin
+
+      - name: Assemble release APK
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Rename APK
+        id: apk
+        run: |
+          apk=$(find app/build/outputs/apk/release -name "*.apk" | head -n1)
+          if [ -z "$apk" ]; then echo "APK non trovato"; exit 1; fi
+          tag="${GITHUB_REF_NAME:-${GITHUB_SHA::7}}"
+          dest="NeuroParty-${tag}.apk"
+          mv "$apk" "$dest"
+          echo "path=$dest" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release and upload asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.apk.outputs.path }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false

@@ -37,36 +37,36 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     val mapPoints = listOf(
         MapPoint(
             id = "seduta",
-            title = "Seduta di Laurea & Specializzazione",
-            subtitle = "Discussione Tesi & Proclamazione",
-            timeLabel = "Ore 10:30 - 13:00",
-            address = "Aula Magna Clinica Neurologica, Policlinico Universitario, Via Giustiniani 2",
-            latitude = 45.4025,
-            longitude = 11.8890,
+            title = "Seduta di Specializzazione & Proclamazione",
+            subtitle = "Discussione Tesi & Brindisi",
+            timeLabel = "9 Novembre - ora da definire",
+            address = "Aula Magna \"G. De Benedictis\", AOUC Policlinico di Bari, Piazza Giulio Cesare 11, Bari",
+            latitude = 41.1173,
+            longitude = 16.8719,
             iconType = "GRADUATION",
-            description = "Ingresso pedonale 'Clinica Neurologica'. Parcheggio convenzionato Park Policlinico a 100m. Si raccomanda arrivo entro le 10:15."
+            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (in via di definizione)."
         ),
         MapPoint(
             id = "bus",
             title = "Partenza Autobus Navetta",
             subtitle = "Punto di Ritrovo Transfer Gratuito",
-            timeLabel = "Ritrovo 18:30 • Partenza 18:45",
-            address = "Piazzale Centrale Policlinico (Fronte Ingresso Principale)",
-            latitude = 45.4030,
-            longitude = 11.8885,
+            timeLabel = "Venerdì 13 - ritrovo da definire",
+            address = "Piazzale Policlinico di Bari (fronte ingresso principale)",
+            latitude = 41.1170,
+            longitude = 16.8715,
             iconType = "BUS",
-            description = "Navetta riservata Gran Turismo 54 posti con destinazione diretta Villa Delle Rose. Rientro notturno garantito alle 01:30 e alle 03:00."
+            description = "Navetta riservata 54 posti verso la location della festa (luogo da definire). Orari e fermate di andata e ritorno saranno confermati prossimamente."
         ),
         MapPoint(
             id = "festa",
-            title = "Festa & Ricevimento Serale",
+            title = "Festa di Specializzazione",
             subtitle = "Aperitivo, Cena, Dj Set & Torta",
-            timeLabel = "Dalle ore 19:30 fino a tarda notte",
-            address = "Villa Delle Rose - Garden & Lounge, Via Panoramica Colli 45",
-            latitude = 45.3340,
-            longitude = 11.7380,
+            timeLabel = "Venerdì 13 novembre - ora da definire",
+            address = "Location da definire (Bari e dintorni)",
+            latitude = 41.1100,
+            longitude = 16.8600,
             iconType = "PARTY",
-            description = "Location esclusiva sui colli. Ampio parcheggio interno custodito per chi viaggia in auto. Dress code: Elegant Chic."
+            description = "La location della festa di venerdì 13 novembre sarà comunicata a breve. Dress code: Elegant Chic."
         )
     )
 

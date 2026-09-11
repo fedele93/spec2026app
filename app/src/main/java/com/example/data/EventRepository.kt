@@ -140,25 +140,60 @@ class EventRepository(private val db: AppDatabase) {
                     heartCount = 24
                 ),
                 WishEntity(
-                    authorName = "I tuoi colleghi di reparto",
-                    targetGraduate = "Dott. Andrea Riva",
-                    message = "Grande Andrea! Tra turni di notte interminabili ed EEG complessi sei arrivato al traguardo più bello. Fieri di te!",
+                    authorName = "I colleghi di reparto",
+                    targetGraduate = "Fedele Luisi",
+                    message = "Grande Fedele! Tra turni di notte interminabili ed EEG complessi sei arrivato al traguardo più bello. Fieri di te!",
                     emojiBadge = "⚡",
                     heartCount = 18
                 ),
                 WishEntity(
-                    authorName = "Mamma e Papà",
-                    targetGraduate = "Dott.ssa Elena Moretti",
-                    message = "Elena carissima, vedere coronato il tuo sogno di diventare neurologa ci riempie di orgoglio e gioia immensa. Ti vogliamo bene!",
+                    authorName = "La tua famiglia",
+                    targetGraduate = "Sebastiano Carlone",
+                    message = "Sebastiano, vedere coronato il tuo sogno di diventare neurologo ci riempie di orgoglio e gioia immensa. Ti vogliamo bene!",
                     emojiBadge = "❤️",
                     heartCount = 31
                 ),
                 WishEntity(
-                    authorName = "Gli amici del calcetto e della facoltà",
-                    targetGraduate = "Dott. Marco Ferri",
-                    message = "Adesso sei ufficialmente un 'Brain Master'! Stasera si brinda senza sosta alla tua salute!",
+                    authorName = "Gli amici della facoltà",
+                    targetGraduate = "Roberto Spiridione Prezioso",
+                    message = "Adesso sei ufficialmente un 'Brain Master'! Venerdì 13 si brinda senza sosta alla tua salute!",
                     emojiBadge = "🥂",
                     heartCount = 15
+                ),
+                WishEntity(
+                    authorName = "I tuoi tutor ambulatoriali",
+                    targetGraduate = "Dalila Totaro",
+                    message = "Dalila, la tua sensibilità clinica e la cura dei pazienti sono state un esempio per tutti. Auguri di vera specialista!",
+                    emojiBadge = "⭐",
+                    heartCount = 12
+                ),
+                WishEntity(
+                    authorName = "Le compagne di studio",
+                    targetGraduate = "Giorgia Ruta",
+                    message = "Giorgia, ce l'hai fatta! Da oggi neurologa a tutti gli effetti: orgogliose di te e del percorso condiviso.",
+                    emojiBadge = "🎉",
+                    heartCount = 20
+                ),
+                WishEntity(
+                    authorName = "Mamma e Papà",
+                    targetGraduate = "Lorenzo Parrulli",
+                    message = "Lorenzo caro, ogni sacrificio di questi anni diventa oggi orgoglio immenso. Continua a curare i tuoi pazienti come hai curato il tuo sogno.",
+                    emojiBadge = "❤️",
+                    heartCount = 27
+                ),
+                WishEntity(
+                    authorName = "Gli amici di sempre",
+                    targetGraduate = "Francesco Cusmai",
+                    message = "Francesco, neurologo e amico: una combinazione imbattibile. Venerdì 13 festa, e poi... si vedrà!",
+                    emojiBadge = "🎓",
+                    heartCount = 16
+                ),
+                WishEntity(
+                    authorName = "La tua famiglia",
+                    targetGraduate = "Chiara Esposto",
+                    message = "Chiara, la tua determinazione e il tuo sorriso hanno illuminato il reparto. Auguri di cuore, dottoressa!",
+                    emojiBadge = "✨",
+                    heartCount = 22
                 )
             )
             db.wishDao().insertWishes(initialWishes)
@@ -168,21 +203,21 @@ class EventRepository(private val db: AppDatabase) {
             val initialPhotos = listOf(
                 SharedPhotoEntity(
                     authorName = "Staff Organizzazione",
-                    caption = "L'Aula Magna del Policlinico è pronta per accogliere la seduta di specializzazione!",
+                    caption = "L'Aula Magna \"G. De Benedictis\" del Policlinico di Bari è pronta per la seduta di specializzazione del 9 novembre!",
                     imageResId = 1,
                     imageUri = "",
                     likesCount = 28
                 ),
                 SharedPhotoEntity(
-                    authorName = "Elena Moretti",
-                    caption = "Tesi rilegata, corona d'alloro pronta: conto alla rovescia!",
+                    authorName = "Chiara Esposto",
+                    caption = "Tesi rilegata, corona d'alloro pronta: conto alla rovescia alla proclamazione!",
                     imageResId = 2,
                     imageUri = "",
                     likesCount = 42
                 ),
                 SharedPhotoEntity(
-                    authorName = "Andrea & Marco",
-                    caption = "Ultimo turno insieme da specializzandi, da stasera Neurologi ufficiali!",
+                    authorName = "Fedele & Lorenzo",
+                    caption = "Ultimo turno insieme da specializzandi, da oggi Neurologi ufficiali!",
                     imageResId = 3,
                     imageUri = "",
                     likesCount = 35
@@ -197,57 +232,127 @@ class EventRepository(private val db: AppDatabase) {
                     id = "gruppo",
                     name = "Regalo Comune Specializzandi",
                     specialization = "Specializzazione in Neurologia 2026",
-                    roleTitle = "Andrea, Elena & Marco",
+                    roleTitle = "Fedele, Sebastiano, Roberto, Dalila, Giorgia, Lorenzo, Francesco, Chiara",
                     giftTitle = "Viaggio Congresso Europeo di Neurologia & Brindisi di Classe",
-                    giftDescription = "Quota comune per sostenere la partecipazione al congresso EAN (European Academy of Neurology) e la festa di stasera!",
-                    targetAmount = 2400.0,
-                    collectedAmount = 1450.0,
+                    giftDescription = "Quota comune per sostenere la partecipazione al congresso EAN (European Academy of Neurology) e la festa di venerdì 13 novembre!",
+                    targetAmount = 4800.0,
+                    collectedAmount = 2100.0,
                     iban = "IT78 K030 6909 6061 0000 1234 567",
-                    ibanHolder = "Comitato Festa Neurologia (Andrea Riva)",
-                    satispayUrl = "https://tag.satispay.com/festaneurologia",
-                    paypalMeUrl = "https://paypal.me/festaneurologia2026"
+                    ibanHolder = "Comitato Festa Neurologia Bari",
+                    satispayUrl = "https://tag.satispay.com/festaneurologiabari",
+                    paypalMeUrl = "https://paypal.me/festaneurologiabari2026"
                 ),
                 GiftTargetEntity(
-                    id = "andrea",
-                    name = "Dott. Andrea Riva",
+                    id = "luisi",
+                    name = "Dott. Fedele Luisi",
                     specialization = "Epilessia & Neurofisiologia Clinica",
                     roleTitle = "Neo-Specialista in Neurologia",
                     giftTitle = "Stetoscopio Digitale Littmann & Fellowship Clinica",
-                    giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Andrea.",
+                    giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Fedele.",
                     targetAmount = 900.0,
                     collectedAmount = 520.0,
                     iban = "IT44 X030 6909 6061 0000 9876 543",
-                    ibanHolder = "Andrea Riva",
-                    satispayUrl = "https://tag.satispay.com/andrearivaneuro",
-                    paypalMeUrl = "https://paypal.me/andrearivamd"
+                    ibanHolder = "Fedele Luisi",
+                    satispayUrl = "https://tag.satispay.com/fedeleluisineuro",
+                    paypalMeUrl = "https://paypal.me/fedeleluisimd"
                 ),
                 GiftTargetEntity(
-                    id = "elena",
-                    name = "Dott.ssa Elena Moretti",
+                    id = "carlone",
+                    name = "Dott. Sebastiano Carlone",
                     specialization = "Cefalee e Malattie Neurodegenerative",
                     roleTitle = "Neo-Specialista in Neurologia",
                     giftTitle = "Oftalmoscopio Professionale & Borsa Medico in Cuoio",
-                    giftDescription = "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Elena.",
+                    giftDescription = "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Sebastiano.",
                     targetAmount = 950.0,
                     collectedAmount = 680.0,
                     iban = "IT12 Y030 6909 6061 0000 4567 890",
-                    ibanHolder = "Elena Moretti",
-                    satispayUrl = "https://tag.satispay.com/elenamorettimd",
-                    paypalMeUrl = "https://paypal.me/elenamorettimd"
+                    ibanHolder = "Sebastiano Carlone",
+                    satispayUrl = "https://tag.satispay.com/sebastianocarlone",
+                    paypalMeUrl = "https://paypal.me/sebastianocarlone"
                 ),
                 GiftTargetEntity(
-                    id = "marco",
-                    name = "Dott. Marco Ferri",
+                    id = "prezioso",
+                    name = "Dott. Roberto Spiridione Prezioso",
                     specialization = "Stroke Unit & Neuro-Vascolare",
                     roleTitle = "Neo-Specialista in Neurologia",
                     giftTitle = "Corso Neurosonologia Doppler & Attrezzatura Studio",
-                    giftDescription = "Regalo dedicato per la certificazione in ecocolordoppler transcranico e dotazione clinica di Marco.",
+                    giftDescription = "Regalo dedicato per la certificazione in ecocolordoppler transcranico e dotazione clinica di Roberto.",
                     targetAmount = 850.0,
                     collectedAmount = 430.0,
                     iban = "IT99 Z030 6909 6061 0000 3210 987",
-                    ibanHolder = "Marco Ferri",
-                    satispayUrl = "https://tag.satispay.com/marcoferrimd",
-                    paypalMeUrl = "https://paypal.me/marcoferrimd"
+                    ibanHolder = "Roberto Spiridione Prezioso",
+                    satispayUrl = "https://tag.satispay.com/robertoprezioso",
+                    paypalMeUrl = "https://paypal.me/robertoprezioso"
+                ),
+                GiftTargetEntity(
+                    id = "totaro",
+                    name = "Dott.ssa Dalila Totaro",
+                    specialization = "Sclerosi Multipla & Immunologia Neurologica",
+                    roleTitle = "Neo-Specialista in Neurologia",
+                    giftTitle = "Martello Riflessi Digitale & Corso RM Funzionale",
+                    giftDescription = "Contributo per la dotazione ambulatoriale e l'aggiornamento in neuroimaging funzionale di Dalila.",
+                    targetAmount = 800.0,
+                    collectedAmount = 350.0,
+                    iban = "IT55 A030 6909 6061 0000 1112 223",
+                    ibanHolder = "Dalila Totaro",
+                    satispayUrl = "https://tag.satispay.com/dalilatotaro",
+                    paypalMeUrl = "https://paypal.me/dalilatotaro"
+                ),
+                GiftTargetEntity(
+                    id = "ruta",
+                    name = "Dott.ssa Giorgia Ruta",
+                    specialization = "Neuropatologie Periferiche & EMG",
+                    roleTitle = "Neo-Specialista in Neurologia",
+                    giftTitle = "Elettromiografo Portatile & Stage Neurofisiologia",
+                    giftDescription = "Regalo per l'avvio dell'attività in elettrofisiologia clinica e lo studio delle neuropatie di Giorgia.",
+                    targetAmount = 880.0,
+                    collectedAmount = 410.0,
+                    iban = "IT66 B030 6909 6061 0000 3334 445",
+                    ibanHolder = "Giorgia Ruta",
+                    satispayUrl = "https://tag.satispay.com/gorgiaruta",
+                    paypalMeUrl = "https://paypal.me/giorgiaruta"
+                ),
+                GiftTargetEntity(
+                    id = "parrulli",
+                    name = "Dott. Lorenzo Parrulli",
+                    specialization = "Movimenti Patologici & Malattia di Parkinson",
+                    roleTitle = "Neo-Specialista in Neurologia",
+                    giftTitle = "Corso Tourette & Dispositivo Wearable Monitoring",
+                    giftDescription = "Regalo per la formazione sui disturbi del movimento e l'attività di ricerca clinica di Lorenzo.",
+                    targetAmount = 820.0,
+                    collectedAmount = 380.0,
+                    iban = "IT77 C030 6909 6061 0000 5556 667",
+                    ibanHolder = "Lorenzo Parrulli",
+                    satispayUrl = "https://tag.satispay.com/lorenzoparrulli",
+                    paypalMeUrl = "https://paypal.me/lorenzoparrulli"
+                ),
+                GiftTargetEntity(
+                    id = "cusmai",
+                    name = "Dott. Francesco Cusmai",
+                    specialization = "Neuroriabilitazione & Medicina Fisica",
+                    roleTitle = "Neo-Specialista in Neurologia",
+                    giftTitle = "Tappeto Rotante & Kit Valutazione Neurologica",
+                    giftDescription = "Contributo per la dotazione di neuroriabilitazione e l'attività ambulatoriale di Francesco.",
+                    targetAmount = 760.0,
+                    collectedAmount = 290.0,
+                    iban = "IT88 D030 6909 6061 0000 7778 889",
+                    ibanHolder = "Francesco Cusmai",
+                    satispayUrl = "https://tag.satispay.com/francescocusmai",
+                    paypalMeUrl = "https://paypal.me/francescocusmai"
+                ),
+                GiftTargetEntity(
+                    id = "esposto",
+                    name = "Dott.ssa Chiara Esposto",
+                    specialization = "Disturbi Cognitivi & Demenze",
+                    roleTitle = "Neo-Specialista in Neurologia",
+                    giftTitle = "Tablet Clinico & Corso Neuropsicologia",
+                    giftDescription = "Regalo per la valutazione neuropsicologica dei pazienti e l'aggiornamento sulle demenze di Chiara.",
+                    targetAmount = 790.0,
+                    collectedAmount = 360.0,
+                    iban = "IT33 E030 6909 6061 0000 9990 011",
+                    ibanHolder = "Chiara Esposto",
+                    satispayUrl = "https://tag.satispay.com/chiaraesposto",
+                    paypalMeUrl = "https://paypal.me/chiaraesposto"
                 )
             )
             db.giftDao().insertTargets(initialTargets)
@@ -255,24 +360,24 @@ class EventRepository(private val db: AppDatabase) {
             val initialContributions = listOf(
                 GiftContributionEntity(
                     donorName = "Zia Laura & Famiglia",
-                    targetGraduateId = "elena",
-                    targetGraduateName = "Dott.ssa Elena Moretti",
+                    targetGraduateId = "carlone",
+                    targetGraduateName = "Dott. Sebastiano Carlone",
                     amount = 150.0,
                     paymentMethod = "IBAN",
-                    note = "Per la nostra neurologa preferita! Con affetto infinito."
+                    note = "Per il nostro neurologo preferito! Con affetto infinito."
                 ),
                 GiftContributionEntity(
                     donorName = "Colleghi Reparto Stroke",
-                    targetGraduateId = "marco",
-                    targetGraduateName = "Dott. Marco Ferri",
+                    targetGraduateId = "prezioso",
+                    targetGraduateName = "Dott. Roberto Spiridione Prezioso",
                     amount = 100.0,
                     paymentMethod = "Satispay",
-                    note = "Per il futuro re delle trombolisi! Forza Marco!"
+                    note = "Per il futuro re delle trombolisi! Forza Roberto!"
                 ),
                 GiftContributionEntity(
-                    donorName = "Famiglia Riva",
-                    targetGraduateId = "andrea",
-                    targetGraduateName = "Dott. Andrea Riva",
+                    donorName = "Famiglia Luisi",
+                    targetGraduateId = "luisi",
+                    targetGraduateName = "Dott. Fedele Luisi",
                     amount = 200.0,
                     paymentMethod = "IBAN",
                     note = "Orgogliosi del tuo percorso impeccabile."
@@ -283,7 +388,7 @@ class EventRepository(private val db: AppDatabase) {
                     targetGraduateName = "Regalo Comune Specializzandi",
                     amount = 120.0,
                     paymentMethod = "PayPal",
-                    note = "Brindiamo a tutti voi stasera!"
+                    note = "Brindiamo a tutti voi venerdì 13!"
                 )
             )
             for (c in initialContributions) {
@@ -295,22 +400,29 @@ class EventRepository(private val db: AppDatabase) {
             val initialNotifications = listOf(
                 EventNotificationEntity(
                     title = "🎓 Benvenuti all'evento di Specializzazione!",
-                    message = "L'app ufficiale per la Laurea in Neurologia è attiva. Controlla il programma, prenota il bus e conferma il tuo RSVP!",
+                    message = "L'app ufficiale per la Specializzazione in Neurologia a Bari è attiva. Controlla il programma, prenota il bus e conferma il tuo RSVP!",
                     category = "Organizzazione",
                     timestamp = System.currentTimeMillis() - 3600000 * 5,
                     isRead = false
                 ),
                 EventNotificationEntity(
-                    title = "🚌 Prenotazione Bus Navetta Aperta",
-                    message = "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico a Villa Delle Rose. Riserva il tuo posto!",
-                    category = "Navetta",
+                    title = "📍 Seduta del 9 Novembre all'Aula Magna",
+                    message = "La seduta di proclamazione si terrà il 9 novembre presso l'Aula Magna \"G. De Benedictis\" del Policlinico di Bari (AOUC Policlinico di Bari). Ora da definirsi.",
+                    category = "Seduta",
+                    timestamp = System.currentTimeMillis() - 3600000 * 3,
+                    isRead = false
+                ),
+                EventNotificationEntity(
+                    title = "🎉 Festa di Venerdì 13 Novembre",
+                    message = "La festa di specializzazione è fissata per venerdì 13 novembre. Luogo e ora saranno comunicati a breve: resta in attesa!",
+                    category = "Festa",
                     timestamp = System.currentTimeMillis() - 3600000 * 2,
                     isRead = false
                 ),
                 EventNotificationEntity(
-                    title = "📍 Dettagli Seduta e Aula Magna",
-                    message = "La discussione delle tesi inizierà puntuale alle 10:30 presso l'Aula Magna della Clinica Neurologica (Ingresso 4).",
-                    category = "Seduta",
+                    title = "🚌 Prenotazione Bus Navetta Aperta",
+                    message = "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico di Bari alla location della festa. Riserva il tuo posto!",
+                    category = "Navetta",
                     timestamp = System.currentTimeMillis() - 3600000,
                     isRead = false
                 )

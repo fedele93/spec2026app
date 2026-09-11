@@ -459,9 +459,14 @@ fun PostWishDialog(
 
     val graduates = listOf(
         "Tutti i Laureandi",
-        "Dott. Andrea Riva",
-        "Dott.ssa Elena Moretti",
-        "Dott. Marco Ferri"
+        "Fedele Luisi",
+        "Sebastiano Carlone",
+        "Roberto Spiridione Prezioso",
+        "Dalila Totaro",
+        "Giorgia Ruta",
+        "Lorenzo Parrulli",
+        "Francesco Cusmai",
+        "Chiara Esposto"
     )
     val emojis = listOf("🎓", "🧠", "🥂", "❤️", "⚡", "⭐", "🎉")
 

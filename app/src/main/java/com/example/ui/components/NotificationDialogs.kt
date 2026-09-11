@@ -43,11 +43,11 @@ fun SendPushNotificationDialog(
     val categories = listOf("Seduta", "Festa", "Navetta", "Organizzazione")
 
     val quickTemplates = listOf(
-        Pair("🎓 Seduta Iniziata!", "La discussione delle tesi è iniziata in Aula Magna. Proclamazione prevista alle 13:00."),
-        Pair("🚌 Partenza Navetta Imminente", "L'autobus è in sosta al Piazzale Principale Policlinico. Partenza tra 15 minuti!"),
-        Pair("🥂 Benvenuti a Villa Delle Rose", "Aperitivo di benvenuto aperto nel giardino! Vi aspettiamo per il primo brindisi."),
-        Pair("🎂 Taglio della Torta & Dj Set", "Tutti attorno alla torta monumentale per il momento più atteso della serata!"),
-        Pair("📸 Caricate le vostre foto!", "Aprite la sezione Foto dell'app e condividete gli scatti più belli con i laureandi!")
+        Pair("🎓 Seduta del 9 Novembre!", "La seduta di proclamazione è in corso all'Aula Magna \"G. De Benedictis\" del Policlinico di Bari."),
+        Pair("🚌 Partenza Navetta Imminente", "L'autobus è in sosta al Piazzale Principale del Policlinico di Bari. Partenza tra 15 minuti!"),
+        Pair("🥂 Benvenuti alla Festa!", "Venerdì 13 novembre: aperitivo di benvenuto aperto! Vi aspettiamo per il primo brindisi insieme."),
+        Pair("🎂 Taglio della Torta & Dj Set", "Tutti attorno alla torta di specializzazione per il momento più atteso della serata!"),
+        Pair("📸 Caricate le vostre foto!", "Aprite la sezione Foto dell'app e condividete gli scatti più belli con i neo-specialisti!")
     )
 
     AlertDialog(

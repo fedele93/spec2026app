@@ -34,41 +34,7 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         startWishTicker()
     }
 
-    val mapPoints = listOf(
-        MapPoint(
-            id = "seduta",
-            title = "Seduta di Specializzazione & Proclamazione",
-            subtitle = "Discussione Tesi & Brindisi",
-            timeLabel = "9 Novembre - ora da definire",
-            address = "Aula Magna \"G. De Benedictis\", AOUC Policlinico di Bari, Piazza Giulio Cesare 11, Bari",
-            latitude = 41.1173,
-            longitude = 16.8719,
-            iconType = "GRADUATION",
-            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (in via di definizione)."
-        ),
-        MapPoint(
-            id = "bus",
-            title = "Partenza Autobus Navetta",
-            subtitle = "Punto di Ritrovo Transfer Gratuito",
-            timeLabel = "Venerdì 13 - ritrovo da definire",
-            address = "Piazzale Policlinico di Bari (fronte ingresso principale)",
-            latitude = 41.1170,
-            longitude = 16.8715,
-            iconType = "BUS",
-            description = "Navetta riservata 54 posti verso la location della festa (luogo da definire). Orari e fermate di andata e ritorno saranno confermati prossimamente."
-        ),
-        MapPoint(
-            id = "festa",
-            title = "Festa di Specializzazione",
-            subtitle = "Aperitivo, Cena, Dj Set & Torta",
-            timeLabel = "Venerdì 13 novembre - ora da definire",
-            address = "Location da definire (Bari e dintorni)",
-            latitude = 41.1100,
-            longitude = 16.8600,
-            iconType = "PARTY",
-            description = "La location della festa di venerdì 13 novembre sarà comunicata a breve. Dress code: Elegant Chic."
-        )
-    )
+    val mapPoints: List<MapPoint> = SeedData.mapPoints
 
     private val _selectedTab = MutableStateFlow(0)
     val selectedTab: StateFlow<Int> = _selectedTab.asStateFlow()
@@ -104,7 +70,7 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Bus Bookings
-    val maxBusSeats = 54
+    val maxBusSeats = SeedData.maxBusSeats
     val busBookings = repository.allBookings.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),

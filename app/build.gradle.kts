@@ -68,6 +68,21 @@ android {
   }
 }
 
+// Codegen: rigenera SeedData.kt da pwa/shared/event-data.json (singola sorgente dati).
+// Eseguito prima della compilazione Kotlin. Richiede Python 3 nel PATH.
+tasks.register<Exec>("genEventData") {
+  description = "Generates SeedData.kt from pwa/shared/event-data.json"
+  group = "codegen"
+  workingDir = rootDir
+  commandLine("python3", "tools/gen-event-data.py")
+  // rigenera sempre: il JSON è la sorgente di verità
+  outputs.upToDateWhen { false }
+}
+
+// Esegui il codegen prima della compilazione Kotlin (solo se Python è disponibile).
+tasks.matching { it.name.startsWith("compile") && it.name.contains("Kotlin") }
+  .configureEach { dependsOn("genEventData") }
+
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
 // to match the convention used in Web projects.
 secrets {

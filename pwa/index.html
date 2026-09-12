@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0A192F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NeuroParty" />
+  <meta name="description" content="App per la festa di specializzazione in Neurologia - Bari, 9 e 13 novembre" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <title>NeuroParty</title>
+</head>
+<body>
+  <div id="app">
+    <main id="screen" class="screen"></main>
+    <nav id="tabs" class="tabs">
+      <button class="tab" data-tab="program" aria-label="Programma">
+        <span class="tab-ico">📅</span><span class="tab-lbl">Programma</span>
+      </button>
+      <button class="tab" data-tab="rsvp" aria-label="Invitati">
+        <span class="tab-ico">👥</span><span class="tab-lbl">Invitati</span>
+      </button>
+      <button class="tab" data-tab="bus" aria-label="Navetta">
+        <span class="tab-ico">🚌</span><span class="tab-lbl">Navetta</span>
+      </button>
+      <button class="tab" data-tab="wishes" aria-label="Auguri">
+        <span class="tab-ico">🎓</span><span class="tab-lbl">Auguri</span>
+      </button>
+      <button class="tab" data-tab="gifts" aria-label="Regali">
+        <span class="tab-ico">🎁</span><span class="tab-lbl">Regali</span>
+      </button>
+    </nav>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

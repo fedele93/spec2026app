@@ -72,7 +72,7 @@ fun BusTransferScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = SeedData.busScheduleSubtitle
+                        text = SeedData.busScheduleSubtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

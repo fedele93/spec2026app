@@ -148,18 +148,27 @@ fun ProgramAndEventScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
-                            text = "Festa di Laurea & Seduta Ufficiale",
+                            text = "Seduta di Specializzazione & Festa",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
 
                         Text(
-                            text = "Dott. Andrea Riva • Dott.ssa Elena Moretti • Dott. Marco Ferri",
+                            text = "8 Neo-Specialisti in Neurologia",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = LaurelGold,
                             modifier = Modifier.padding(top = 4.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Fedele Luisi • Sebastiano Carlone • Roberto Spiridione Prezioso • Dalila Totaro • Giorgia Ruta • Lorenzo Parrulli • Francesco Cusmai • Chiara Esposto",
+                            color = Color.White.copy(alpha = 0.85f),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(end = 8.dp)
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
@@ -177,27 +186,30 @@ fun ProgramAndEventScreen(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Sabato 10 Ottobre",
+                                    text = "9 Novembre (seduta) • 13 Novembre (festa)",
                                     color = Color.White,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.LocationOn,
-                                    contentDescription = null,
-                                    tint = SynapseCyan,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Padova & Colli",
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(top = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = SynapseCyan,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
                     }
                 }
@@ -286,30 +298,30 @@ fun ProgramAndEventScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     TimelineItem(
-                        time = "10:30",
-                        title = "Discussione Tesi di Specializzazione",
-                        location = "Aula Magna Clinica Neurologica - Policlinico",
-                        details = "I candidati presenteranno i risultati delle loro ricerche cliniche davanti alla commissione presieduta dal Direttore della Scuola.",
+                        time = "Ore 9/10",
+                        title = "Seduta di Laurea & Proclamazione",
+                        location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
+                        details = "Discussione delle tesi e proclamazione degli 8 neo-specialisti in Neurologia. L'ora esatta della seduta sarà comunicata a breve.",
                         icon = Icons.Default.School,
                         accentColor = NeuroPrimary,
                         isLast = false
                     )
 
                     TimelineItem(
-                        time = "13:00",
-                        title = "Proclamazione Solenne & Brindisi Accademico",
-                        location = "Chiostro Storico / Ingresso Clinica Neurologica",
-                        details = "Consegna dei diplomi, tocco accademico, corona d'alloro e foto di rito con colleghi, docenti e parenti.",
+                        time = "Dopo",
+                        title = "Brindisi Accademico & Foto di Rito",
+                        location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
+                        details = "Consegna dei diplomi, corona d'alloro e foto di rito con colleghi, docenti e parenti al termine della seduta del 9 novembre.",
                         icon = Icons.Default.Celebration,
                         accentColor = LaurelGold,
                         isLast = false
                     )
 
                     TimelineItem(
-                        time = "18:30",
+                        time = "Ven 13",
                         title = "Ritrovo & Imbarco Autobus Navetta",
-                        location = "Piazzale Principale Policlinico",
-                        details = "Partenza puntuale ore 18:45 con transfer riservato 54 posti verso Villa Delle Rose. Nessun problema di guida o parcheggio.",
+                        location = "Piazzale Policlinico di Bari",
+                        details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 54 posti verso la location della festa (luogo da definire).",
                         icon = Icons.Default.DirectionsBus,
                         accentColor = SynapseCyan,
                         isLast = false,
@@ -318,20 +330,20 @@ fun ProgramAndEventScreen(
                     )
 
                     TimelineItem(
-                        time = "19:30",
-                        title = "Festa, Cena a Buffet & Cocktail Bar",
-                        location = "Villa Delle Rose - Ricevimenti & Lounge Garden",
-                        details = "Sunset cocktail nel parco della villa, aperitivi gourmet, cena placé e open bar riservato.",
+                        time = "Ven 13",
+                        title = "Festa di Specializzazione",
+                        location = "Location da definire (Bari e dintorni)",
+                        details = "Venerdì 13 novembre: aperitivo, cena a buffet e brindisi tutti insieme per festeggiare i neo-neurologi. Luogo e ora saranno comunicati a breve.",
                         icon = Icons.Default.Nightlife,
                         accentColor = Color(0xFF8B5CF6),
                         isLast = false
                     )
 
                     TimelineItem(
-                        time = "23:00",
-                        title = "Taglio della Torta Monumentale & Dj Set",
-                        location = "Area Piscina & Dance Floor",
-                        details = "Taglio della torta di specializzazione, video celebrativo a sorpresa, musica e balli fino a tarda notte.",
+                        time = "Ven 13",
+                        title = "Taglio della Torta & Dj Set",
+                        location = "Location da definire (Bari e dintorni)",
+                        details = "Taglio della torta di specializzazione, video celebrativo a sorpresa, musica e balli per chiudere in bellezza la serata.",
                         icon = Icons.Default.Cake,
                         accentColor = Color(0xFFF43F5E),
                         isLast = true

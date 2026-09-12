@@ -71,7 +71,7 @@ fun BusTransferScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Transfer andata e ritorno dal Policlinico alla sede della festa",
+                        text = "Transfer andata e ritorno dal Policlinico di Bari alla sede della festa",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -194,11 +194,11 @@ fun BusTransferScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         BusScheduleRow(
-                            time = "18:30 - 18:45",
+                            time = "Ven 13 - da definire",
                             direction = "ANDATA",
-                            from = "Policlinico (Piazzale Principale)",
-                            to = "Villa Delle Rose (Colli Euganei)",
-                            notes = "Salita partecipanti subito dopo i festeggiamenti in reparto"
+                            from = "Policlinico di Bari (Piazzale Principale)",
+                            to = "Location della festa (da definire)",
+                            notes = "Venerdì 13 novembre: orario di partenza in via di definizione, confermato appena nota la location"
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -206,11 +206,11 @@ fun BusTransferScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         BusScheduleRow(
-                            time = "01:30 & 03:00",
+                            time = "Ven 13 - notte",
                             direction = "RITORNO",
-                            from = "Villa Delle Rose",
-                            to = "Policlinico / Stazione Centrale",
-                            notes = "Due partenze notturne garantite per viaggiare in totale sicurezza"
+                            from = "Location della festa (da definire)",
+                            to = "Policlinico di Bari / Stazione Centrale",
+                            notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
                         )
                     }
                 }
@@ -406,15 +406,15 @@ fun BookBusDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var seats by remember { mutableStateOf("1") }
-    var stop by remember { mutableStateOf("Policlinico (Piazzale Principale)") }
+    var stop by remember { mutableStateOf("Policlinico di Bari (Piazzale Principale)") }
     var returnTrip by remember { mutableStateOf(true) }
     var phone by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
 
     val stops = listOf(
-        "Policlinico (Piazzale Principale)",
-        "Policlinico (Fermata Metro/Navetta)",
-        "Stazione Ferroviaria Centrale"
+        "Policlinico di Bari (Piazzale Principale)",
+        "Policlinico di Bari (Fermata Metro/Navetta)",
+        "Stazione Ferroviaria Centrale di Bari"
     )
 
     AlertDialog(

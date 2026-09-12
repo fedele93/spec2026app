@@ -17,11 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21 (necessario per Robolectric SDK 36)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Set up Python 3 (per codegen SeedData.kt)
         uses: actions/setup-python@v5

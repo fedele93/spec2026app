@@ -16,6 +16,20 @@ dell'app nativa (5 schermate), con persistenza locale (`IndexedDB`) e notifiche 
   & RSVP, Navetta bus, Auguri & Foto, Regali (quote IBAN/Satispay/PayPal)
 - Notifiche push web locali (Notification API), offline via service worker
 
+## Sorgente dati unica (PWA + Android)
+
+Tutti i dati dell'evento vivono in **`pwa/shared/event-data.json`**: è l'unica
+sorgente di verità per PWA e app Android.
+
+- **PWA**: `js/data.js` carica il JSON via `fetch` e ne deriva seed/constanti.
+- **Android**: lo script `tools/gen-event-data.py` converte il JSON in
+  `SeedData.kt` (Kotlin). Il task Gradle `genEventData` lo rigenera ad ogni build
+  e la CI verifica che sia sincronizzato.
+
+Per aggiornare date, nomi, orari, regali, ecc.: modifica `event-data.json` e
+rigenera l'Android con `python3 tools/gen-event-data.py` (la build Gradle lo
+fa automaticamente). Entrambe le piattaforme verranno aggiornate insieme.
+
 ## Come provarla in locale
 
 ```bash

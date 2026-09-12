@@ -1,5 +1,5 @@
 // Schermate PWA - mirror delle 5 schermate Compose dell'app Android
-import { Repo, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS } from "./data.js";
+import { Repo, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE } from "./data.js";
 import { toast, openModal, fmtTime, goto } from "./app.js";
 import { sendPush, ensurePermission } from "./notify.js";
 
@@ -13,14 +13,15 @@ export async function program(el, goto) {
   const unread = notifications.filter((n) => !n.isRead).length;
   const ticker = wishes.length ? wishes[Math.floor(Math.random() * wishes.length)] : null;
 
+  const P = PROGRAM;
   el.innerHTML = `
     <div class="hero">
-      <div class="badge">🎓 SPECIALIZZAZIONE IN NEUROLOGIA</div>
-      <h1>Seduta di Specializzazione & Festa</h1>
-      <div class="sub">8 Neo-Specialisti in Neurologia</div>
+      <div class="badge">🎓 ${esc(P.badge)}</div>
+      <h1>${esc(P.title)}</h1>
+      <div class="sub">${esc(P.subtitle)}</div>
       <div class="graduates">${GRADUATES.join(" • ")}</div>
-      <div class="meta">📅 9 Novembre (seduta) • 13 Novembre (festa)</div>
-      <div class="meta">📍 Aula Magna "G. De Benedictis" - Policlinico di Bari</div>
+      <div class="meta">📅 ${esc(P.dateLabel)}</div>
+      <div class="meta">📍 ${esc(P.locationLabel)}</div>
     </div>
 
     ${ticker ? `<div class="ticker"><span class="emoji">${ticker.emojiBadge || "🎓"}</span>
@@ -40,11 +41,7 @@ export async function program(el, goto) {
 
     <h2 class="section">Programma dell'Evento</h2>
     <div class="card">
-      ${timelineItem("Ore 9/10", "🏫", "Seduta di Laurea & Proclamazione", 'Aula Magna "G. De Benedictis" - Policlinico di Bari', "Discussione delle tesi e proclamazione degli 8 neo-specialisti in Neurologia. L'ora esatta della seduta sarà comunicata a breve.", true)}
-      ${timelineItem("Dopo", "🎉", "Brindisi Accademico & Foto di Rito", 'Aula Magna "G. De Benedictis" - Policlinico di Bari', "Consegna dei diplomi, corona d'alloro e foto di rito con colleghi, docenti e parenti al termine della seduta del 9 novembre.", true)}
-      ${timelineItem("Ven 13", "🚌", "Ritrovo & Imbarco Autobus Navetta", "Piazzale Policlinico di Bari", "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 54 posti verso la location della festa (luogo da definire).", true)}
-      ${timelineItem("Ven 13", "🌃", "Festa di Specializzazione", "Location da definire (Bari e dintorni)", "Venerdì 13 novembre: aperitivo, cena a buffet e brindisi tutti insieme per festeggiare i Neo-neurologi. Luogo e ora saranno comunicati a breve.", true)}
-      ${timelineItem("Ven 13", "🎂", "Taglio della Torta & Dj Set", "Location da definire (Bari e dintorni)", "Taglio della torta di specializzazione, video celebrativo a sorpresa, musica e balli per chiudere in bellezza la serata.", false)}
+      ${(P.timeline ?? []).map((t, i) => timelineItem(t.time, timelineIcon(i), t.title, t.location, t.details, !!t.more)).join("")}
     </div>
 
     <h2 class="section">Mappa Interattiva Punti di Ritrovo</h2>
@@ -86,6 +83,10 @@ function timelineItem(time, icon, title, loc, det, more) {
   return `<div class="timeline">
     <div class="col-time"><div class="time">${time}</div><div class="dot">${icon}</div>${more ? '<div class="line"></div>' : ""}</div>
     <div class="body"><div class="t-title">${esc(title)}</div><div class="t-loc">📍 ${esc(loc)}</div><div class="t-det">${esc(det)}</div></div>
+  </div>`;
+
+const TIMELINE_ICONS = ["🎓", "🎉", "🚌", "🌃", "🎂"];
+function timelineIcon(i) { return TIMELINE_ICONS[i] ?? "🎓"; }
   </div>`;
 }
 
@@ -248,7 +249,7 @@ export async function bus(el) {
   const pct = Math.min(100, (booked / MAX_BUS_SEATS) * 100);
   el.innerHTML = `
     <h2 class="section">Navetta Autobus Riservata</h2>
-    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Transfer andata e ritorno dal Policlinico di Bari alla sede della festa</div>
+    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">${esc(BUS_SCHEDULE.subtitle || "")}</div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <b>Posti totali</b><b>${booked} / ${MAX_BUS_SEATS}</b>
@@ -258,16 +259,8 @@ export async function bus(el) {
     </div>
     <div class="card">
       <b style="font-size:14px;">Orari & Fermate Transfer</b>
-      <div style="margin-top:12px;border-top:1px solid var(--outline);padding-top:12px;">
-        <div style="display:flex;justify-content:space-between;"><b style="font-size:12px;">ANDATA</b><span class="pill pill-conf">Ven 13 - da definire</span></div>
-        <div class="muted" style="margin-top:4px;">Policlinico di Bari (Piazzale Principale) → Location della festa (da definire)</div>
-        <div class="muted" style="font-size:11px;">Orario di partenza in via di definizione, confermato appena nota la location</div>
-      </div>
-      <div style="margin-top:12px;border-top:1px solid var(--outline);padding-top:12px;">
-        <div style="display:flex;justify-content:space-between;"><b style="font-size:12px;">RITORNO</b><span class="pill pill-pend">Ven 13 - notte</span></div>
-        <div class="muted" style="margin-top:4px;">Location della festa → Policlinico di Bari / Stazione Centrale</div>
-        <div class="muted" style="font-size:11px;">Rientro notturno garantito per tornare a casa in totale sicurezza</div>
-      </div>
+      ${busTripRow("ANDATA", BUS_SCHEDULE.andata)}
+      ${busTripRow("RITORNO", BUS_SCHEDULE.ritorno)}
     </div>
     <h2 class="section">Elenco Passeggeri Prenotati (${bookings.length})</h2>
     <div class="card">
@@ -289,8 +282,17 @@ export async function bus(el) {
   el.querySelector("#book-bus").onclick = () => busDialog(el, async (ok) => { if (ok) bus(el); });
 }
 
+function busTripRow(label, trip) {
+  if (!trip) return "";
+  return `<div style="margin-top:12px;border-top:1px solid var(--outline);padding-top:12px;">
+    <div style="display:flex;justify-content:space-between;"><b style="font-size:12px;">${label}</b><span class="pill ${label === "ANDATA" ? "pill-conf" : "pill-pend"}">${esc(trip.timeLabel || "")}</span></div>
+    <div class="muted" style="margin-top:4px;">${esc(trip.from || "")} → ${esc(trip.to || "")}</div>
+    <div class="muted" style="font-size:11px;">${esc(trip.notes || "")}</div>
+  </div>`;
+}
+
 function busDialog(el, onDone) {
-  const stops = ["Policlinico di Bari (Piazzale Principale)", "Policlinico di Bari (Fermata Metro/Navetta)", "Stazione Ferroviaria Centrale di Bari"];
+  const stops = BUS_SCHEDULE.pickupStops && BUS_SCHEDULE.pickupStops.length ? BUS_SCHEDULE.pickupStops : ["Policlinico di Bari"];
   openModal(`<h3>＋ Prenota Posto Autobus Navetta</h3>
     <div class="field"><label>Nome passeggero *</label><input id="bk-name"></div>
     <div class="field"><label>Numero di posti</label><input id="bk-seats" type="number" min="1" value="1"></div>

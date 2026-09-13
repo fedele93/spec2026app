@@ -11,6 +11,18 @@ le notifiche usano `NotificationCompat` locale e la mappa apre l'app di mappe
 di sistema tramite `Intent`. Le note di posizionamento geografico usano un URI
 di sistema, niente SDK Google.
 
+## Le tre componenti
+
+| Componente | Dove | Per chi |
+|---|---|---|
+| **App Android** (questo repo, cartella `app/`) | APK dalle GitHub Release | invitati con Android |
+| **PWA / webapp** (cartella `pwa/`) | `https://<sottodominio>/` servita dal backend | iPhone, iPad, PC e chiunque non voglia installare l'APK |
+| **Backend** ([fedele93/neuroparty-backend](https://github.com/fedele93/neuroparty-backend)) | Docker su Ubuntu, sottodominio con HTTPS automatico | condivide i dati fra tutti e invia le notifiche push |
+
+Con il backend configurato (variabile `API_BASE_URL`, vedi sotto) l'app Android e la PWA
+leggono e scrivono gli stessi dati: RSVP, prenotazioni navetta, auguri, foto, quote regalo e
+notifiche. Senza backend entrambe funzionano in **modalità locale/demo** con i dati di esempio.
+
 ## Funzionalità
 
 - **Programma & evento**: programma della giornata e dettagli della location.
@@ -30,6 +42,48 @@ di sistema, niente SDK Google.
 - Roborazzi/Robolectric per i test
 
 Requisiti: `minSdk = 24`, `targetSdk = 36`, `compileSdk = 36`.
+
+## Collegamento al backend
+
+1. Metti online il backend seguendo il README di
+   [neuroparty-backend](https://github.com/fedele93/neuroparty-backend) (Docker + Caddy su un
+   sottodominio, es. `https://neurospec.peukeia.eu`).
+2. Nella root di questo repo crea un file `.env` (è ignorato da git):
+
+   ```bash
+   API_BASE_URL=https://neurospec.peukeia.eu
+   # solo nella build degli organizzatori:
+   ADMIN_TOKEN=lo-stesso-token-del-server
+   ```
+
+   `.env.example` contiene già `API_BASE_URL=https://neurospec.peukeia.eu`, quindi anche senza
+   `.env` (per esempio nella CI) l'APK punta al server. Precedenza: variabile d'ambiente,
+   poi `.env`, poi `.env.example`. `ADMIN_TOKEN` va messo solo in `.env` o in un secret di CI.
+3. Compila l'APK. In alternativa l'URL e il token si possono inserire dall'app: schermata
+   **Programma → ⚙️** (icona ingranaggio nell'intestazione).
+
+Come funziona la sincronizzazione: l'app interroga `GET /api/state` ogni 20 secondi mentre è
+aperta e, se la versione dei dati è cambiata, scarica `GET /api/snapshot` e aggiorna il database
+Room locale (che resta la cache da cui legge l'interfaccia). Ogni scrittura va prima al server.
+Le notifiche pubblicate dagli organizzatori vengono mostrate come notifiche di sistema: subito se
+l'app è aperta, altrimenti da un controllo periodico in background (WorkManager, ogni 15 minuti,
+perché l'app non usa Firebase per restare compatibile con F-Droid). La PWA riceve invece vere
+notifiche Web Push anche a browser chiuso.
+
+## PWA (iPhone e web)
+
+La cartella `pwa/` contiene la versione web installabile: vedi [pwa/README.md](pwa/README.md).
+Viene servita direttamente dal backend (Caddy) allo stesso sottodominio dell'API.
+
+## Test
+
+- **Android** (unit test JVM + Robolectric): `./gradlew testDebugUnitTest`
+  - `SnapshotParsingTest`: i modelli Kotlin leggono una risposta reale di `/api/snapshot`
+  - `EventRepositoryRoomTest`: Room in memoria, dati demo, contributi, sincronizzazione snapshot
+  - `BusCapacityTest`: regola dei 54 posti
+- **PWA** (Playwright end-to-end contro il backend): `node pwa/tests/e2e.mjs` (vedi `pwa/README.md`)
+- La CI (`.github/workflows/ci.yml`) esegue tutto ad ogni push/PR e pubblica l'APK di debug e
+  gli screenshot della PWA come artifact.
 
 ## Build
 

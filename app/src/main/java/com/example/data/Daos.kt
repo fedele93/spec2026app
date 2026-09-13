@@ -22,6 +22,9 @@ interface GuestDao {
 
     @Query("SELECT COUNT(*) FROM guests")
     suspend fun countGuests(): Int
+
+    @Query("DELETE FROM guests")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -43,6 +46,9 @@ interface BusBookingDao {
 
     @Query("SELECT COUNT(*) FROM bus_bookings")
     suspend fun countBookings(): Int
+
+    @Query("DELETE FROM bus_bookings")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -61,6 +67,9 @@ interface WishDao {
 
     @Query("SELECT COUNT(*) FROM wishes")
     suspend fun countWishes(): Int
+
+    @Query("DELETE FROM wishes")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -79,6 +88,9 @@ interface PhotoDao {
 
     @Query("SELECT COUNT(*) FROM shared_photos")
     suspend fun countPhotos(): Int
+
+    @Query("DELETE FROM shared_photos")
+    suspend fun deleteAll()
 }
 
 @Dao
@@ -103,6 +115,15 @@ interface GiftDao {
 
     @Query("SELECT COUNT(*) FROM gift_contributions")
     suspend fun countContributions(): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertContributions(contributions: List<GiftContributionEntity>)
+
+    @Query("DELETE FROM gift_targets")
+    suspend fun deleteAllTargets()
+
+    @Query("DELETE FROM gift_contributions")
+    suspend fun deleteAllContributions()
 }
 
 @Dao
@@ -124,4 +145,13 @@ interface NotificationDao {
 
     @Query("SELECT COUNT(*) FROM event_notifications")
     suspend fun countNotifications(): Int
+
+    @Query("SELECT id FROM event_notifications WHERE isRead = 1")
+    suspend fun getReadIds(): List<Long>
+
+    @Query("SELECT * FROM event_notifications WHERE timestamp > :since ORDER BY timestamp ASC")
+    suspend fun getNewerThan(since: Long): List<EventNotificationEntity>
+
+    @Query("DELETE FROM event_notifications")
+    suspend fun deleteAll()
 }

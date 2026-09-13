@@ -1,9 +1,33 @@
 package com.example.data
 
+import androidx.room.withTransaction
+import com.example.data.remote.BookingRequest
+import com.example.data.remote.ContributionRequest
+import com.example.data.remote.GuestRequest
+import com.example.data.remote.GuestStatusRequest
+import com.example.data.remote.NeuroPartyApi
+import com.example.data.remote.NotificationRequest
+import com.example.data.remote.RemoteClient
+import com.example.data.remote.SnapshotDto
+import com.example.data.remote.WishRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
+/**
+ * Unico punto di accesso ai dati.
+ *
+ * - Senza server ([remote] == null): tutto vive nel database Room locale (modalità demo, come in v1.x).
+ * - Con server: ogni scrittura va al backend e subito dopo il DB locale viene riallineato
+ *   con lo snapshot del server. Room resta la "cache" da cui la UI legge tramite Flow.
+ */
 class EventRepository(private val db: AppDatabase) {
+    /** Client verso il backend; null = modalità locale. Impostato dal ViewModel in base alle preferenze. */
+    @Volatile
+    var remote: NeuroPartyApi? = null
+
     val allGuests: Flow<List<GuestEntity>> = db.guestDao().getAllGuests()
     val allBookings: Flow<List<BusBookingEntity>> = db.busBookingDao().getAllBookings()
     val totalBookedSeats: Flow<Int> = db.busBookingDao().getTotalBookedSeats().map { it ?: 0 }
@@ -14,420 +38,238 @@ class EventRepository(private val db: AppDatabase) {
     val allNotifications: Flow<List<EventNotificationEntity>> = db.notificationDao().getAllNotifications()
     val unreadNotificationsCount: Flow<Int> = db.notificationDao().getUnreadCount()
 
-    suspend fun insertGuest(guest: GuestEntity) = db.guestDao().insertGuest(guest)
-    suspend fun updateGuest(guest: GuestEntity) = db.guestDao().updateGuest(guest)
-    suspend fun deleteGuest(guest: GuestEntity) = db.guestDao().deleteGuest(guest)
+    // ------------------------------------------------------------------ sincronizzazione
 
-    suspend fun insertBusBooking(booking: BusBookingEntity) = db.busBookingDao().insertBooking(booking)
-    suspend fun deleteBusBooking(booking: BusBookingEntity) = db.busBookingDao().deleteBooking(booking)
-
-    suspend fun insertWish(wish: WishEntity) = db.wishDao().insertWish(wish)
-    suspend fun incrementWishHearts(wishId: Long) = db.wishDao().incrementHearts(wishId)
-
-    suspend fun insertPhoto(photo: SharedPhotoEntity) = db.photoDao().insertPhoto(photo)
-    suspend fun incrementPhotoLikes(photoId: Long) = db.photoDao().incrementLikes(photoId)
-
-    suspend fun addGiftContribution(contribution: GiftContributionEntity) {
-        db.giftDao().insertContribution(contribution)
-        db.giftDao().addAmountToTarget(contribution.targetGraduateId, contribution.amount)
+    /** Scarica lo snapshot dal server e sostituisce i dati locali. Lancia [com.example.data.remote.RemoteException]. */
+    suspend fun syncFromServer(): SnapshotDto {
+        val api = remote ?: throw IllegalStateException("Nessun server configurato")
+        val snapshot = runRemote { api.snapshot() }
+        applySnapshot(snapshot)
+        return snapshot
     }
 
-    suspend fun insertNotification(notification: EventNotificationEntity) =
-        db.notificationDao().insertNotification(notification)
+    /** Sostituisce le tabelle locali con i dati del server, conservando lo stato "letta" delle notifiche. */
+    suspend fun applySnapshot(snapshot: SnapshotDto) {
+        db.withTransaction {
+            val readIds = db.notificationDao().getReadIds().toSet()
+
+            db.guestDao().deleteAll()
+            db.guestDao().insertGuests(snapshot.guests)
+
+            db.busBookingDao().deleteAll()
+            db.busBookingDao().insertBookings(snapshot.busBookings)
+
+            db.wishDao().deleteAll()
+            db.wishDao().insertWishes(snapshot.wishes)
+
+            db.photoDao().deleteAll()
+            db.photoDao().insertPhotos(snapshot.photos)
+
+            db.giftDao().deleteAllContributions()
+            db.giftDao().deleteAllTargets()
+            db.giftDao().insertTargets(snapshot.giftTargets)
+            db.giftDao().insertContributions(snapshot.giftContributions)
+
+            db.notificationDao().deleteAll()
+            db.notificationDao().insertNotifications(
+                snapshot.notifications.map { it.copy(isRead = it.id in readIds) }
+            )
+        }
+    }
+
+    suspend fun notificationsNewerThan(since: Long): List<EventNotificationEntity> =
+        db.notificationDao().getNewerThan(since)
+
+    /** Esegue una chiamata remota convertendo gli errori in [com.example.data.remote.RemoteException]. */
+    private suspend fun <T> runRemote(block: suspend () -> T): T = try {
+        block()
+    } catch (e: Exception) {
+        throw RemoteClient.toRemoteException(e)
+    }
+
+    /** Scrittura sul server seguita dal riallineamento del DB locale. */
+    private suspend fun <T> writeRemote(api: NeuroPartyApi, block: suspend (NeuroPartyApi) -> T): T {
+        val result = runRemote { block(api) }
+        applySnapshot(runRemote { api.snapshot() })
+        return result
+    }
+
+    // ------------------------------------------------------------------ invitati
+
+    suspend fun insertGuest(guest: GuestEntity) {
+        val api = remote
+        if (api == null) {
+            db.guestDao().insertGuest(guest)
+        } else {
+            writeRemote(api) {
+                it.addGuest(
+                    GuestRequest(
+                        fullName = guest.fullName,
+                        category = guest.category,
+                        rsvpStatus = guest.rsvpStatus,
+                        guestsCount = guest.guestsCount,
+                        dietaryNotes = guest.dietaryNotes,
+                        contactInfo = guest.contactInfo
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun updateGuestStatus(guest: GuestEntity, newStatus: RsvpStatus) {
+        val api = remote
+        if (api == null) {
+            db.guestDao().updateGuest(guest.copy(rsvpStatus = newStatus, updatedAt = System.currentTimeMillis()))
+        } else {
+            writeRemote(api) { it.updateGuestStatus(guest.id, GuestStatusRequest(newStatus)) }
+        }
+    }
+
+    suspend fun deleteGuest(guest: GuestEntity) {
+        val api = remote
+        if (api == null) db.guestDao().deleteGuest(guest)
+        else writeRemote(api) { it.deleteGuest(guest.id) }
+    }
+
+    // ------------------------------------------------------------------ navetta
+
+    suspend fun insertBusBooking(booking: BusBookingEntity) {
+        val api = remote
+        if (api == null) {
+            db.busBookingDao().insertBooking(booking)
+        } else {
+            writeRemote(api) {
+                it.addBooking(
+                    BookingRequest(
+                        passengerName = booking.passengerName,
+                        seatsCount = booking.seatsCount,
+                        pickupStop = booking.pickupStop,
+                        returnTripWanted = booking.returnTripWanted,
+                        contactPhone = booking.contactPhone,
+                        notes = booking.notes
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun deleteBusBooking(booking: BusBookingEntity) {
+        val api = remote
+        if (api == null) db.busBookingDao().deleteBooking(booking)
+        else writeRemote(api) { it.deleteBooking(booking.id) }
+    }
+
+    // ------------------------------------------------------------------ auguri
+
+    suspend fun insertWish(wish: WishEntity) {
+        val api = remote
+        if (api == null) {
+            db.wishDao().insertWish(wish)
+        } else {
+            writeRemote(api) {
+                it.addWish(WishRequest(wish.authorName, wish.targetGraduate, wish.message, wish.emojiBadge))
+            }
+        }
+    }
+
+    suspend fun incrementWishHearts(wishId: Long) {
+        val api = remote
+        if (api == null) db.wishDao().incrementHearts(wishId)
+        else writeRemote(api) { it.heartWish(wishId) }
+    }
+
+    // ------------------------------------------------------------------ foto
+
+    /**
+     * Pubblica una foto. In modalità server servono i byte dell'immagine ([imageBytes]);
+     * in modalità locale viene salvato solo l'URI del photo picker.
+     */
+    suspend fun insertPhoto(photo: SharedPhotoEntity, imageBytes: ByteArray? = null, mimeType: String = "image/jpeg") {
+        val api = remote
+        if (api == null) {
+            db.photoDao().insertPhoto(photo)
+        } else {
+            val bytes = imageBytes ?: throw IllegalArgumentException("Immagine non disponibile")
+            val filePart = MultipartBody.Part.createFormData(
+                "file", "photo.jpg", bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+            )
+            val text = "text/plain".toMediaTypeOrNull()
+            writeRemote(api) {
+                it.uploadPhoto(filePart, photo.authorName.toRequestBody(text), photo.caption.toRequestBody(text))
+            }
+        }
+    }
+
+    suspend fun incrementPhotoLikes(photoId: Long) {
+        val api = remote
+        if (api == null) db.photoDao().incrementLikes(photoId)
+        else writeRemote(api) { it.likePhoto(photoId) }
+    }
+
+    // ------------------------------------------------------------------ regali
+
+    suspend fun addGiftContribution(contribution: GiftContributionEntity) {
+        val api = remote
+        if (api == null) {
+            db.giftDao().insertContribution(contribution)
+            db.giftDao().addAmountToTarget(contribution.targetGraduateId, contribution.amount)
+        } else {
+            writeRemote(api) {
+                it.addContribution(
+                    ContributionRequest(
+                        donorName = contribution.donorName,
+                        targetGraduateId = contribution.targetGraduateId,
+                        amount = contribution.amount,
+                        paymentMethod = contribution.paymentMethod,
+                        note = contribution.note,
+                        isAnonymous = contribution.isAnonymous
+                    )
+                )
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ notifiche
+
+    /** Salva la notifica; con il server la invia in push a tutti (richiede il token organizzatore). Ritorna l'id. */
+    suspend fun insertNotification(notification: EventNotificationEntity): Long {
+        val api = remote
+        return if (api == null) {
+            db.notificationDao().insertNotification(notification)
+        } else {
+            val created = writeRemote(api) {
+                it.sendNotification(NotificationRequest(notification.title, notification.message, notification.category))
+            }
+            created.id
+        }
+    }
 
     suspend fun markAllNotificationsAsRead() = db.notificationDao().markAllAsRead()
 
+    // ------------------------------------------------------------------ dati demo (modalità locale)
+
     suspend fun prepopulateIfNeeded() {
+        // Sorgente dati unica: pwa/shared/event-data.json -> SeedData.kt (codegen)
         if (db.guestDao().countGuests() == 0) {
-            val initialGuests = listOf(
-                GuestEntity(
-                    fullName = "Prof. Giancarlo Bianchi",
-                    category = "Docenti e Reparto",
-                    rsvpStatus = RsvpStatus.CONFIRMED,
-                    guestsCount = 2,
-                    dietaryNotes = "Nessuna restrizione",
-                    contactInfo = "giancarlo.bianchi@unipol.it"
-                ),
-                GuestEntity(
-                    fullName = "Dott.ssa Sofia Valenti",
-                    category = "Specializzandi 1° e 2° anno",
-                    rsvpStatus = RsvpStatus.CONFIRMED,
-                    guestsCount = 1,
-                    dietaryNotes = "Opzione Vegetariana",
-                    contactInfo = "333 4567891"
-                ),
-                GuestEntity(
-                    fullName = "Matteo Moretti & Famiglia",
-                    category = "Famigliari",
-                    rsvpStatus = RsvpStatus.CONFIRMED,
-                    guestsCount = 4,
-                    dietaryNotes = "1 Celiaco (menu senza glutine)",
-                    contactInfo = "340 1122334"
-                ),
-                GuestEntity(
-                    fullName = "Dott. Luca Gatti",
-                    category = "Colleghi Reparto",
-                    rsvpStatus = RsvpStatus.PENDING,
-                    guestsCount = 2,
-                    dietaryNotes = "Nessuna",
-                    contactInfo = "348 9988776"
-                ),
-                GuestEntity(
-                    fullName = "Giulia Colombo",
-                    category = "Amici Università",
-                    rsvpStatus = RsvpStatus.CONFIRMED,
-                    guestsCount = 1,
-                    dietaryNotes = "Nessuna",
-                    contactInfo = "giulia.colombo@gmail.com"
-                ),
-                GuestEntity(
-                    fullName = "Dott. Roberto De Luca",
-                    category = "Docenti e Reparto",
-                    rsvpStatus = RsvpStatus.DECLINED,
-                    guestsCount = 0,
-                    dietaryNotes = "Turno di guardia in Neuro-Rianimazione",
-                    contactInfo = "r.deluca@policlinico.it"
-                ),
-                GuestEntity(
-                    fullName = "Martina Ferri",
-                    category = "Famigliari",
-                    rsvpStatus = RsvpStatus.CONFIRMED,
-                    guestsCount = 2,
-                    dietaryNotes = "Nessuna",
-                    contactInfo = "329 5544332"
-                )
-            )
-            db.guestDao().insertGuests(initialGuests)
+            db.guestDao().insertGuests(SeedData.guests)
         }
-
         if (db.busBookingDao().countBookings() == 0) {
-            val initialBookings = listOf(
-                BusBookingEntity(
-                    passengerName = "Dott.ssa Sofia Valenti",
-                    seatsCount = 1,
-                    pickupStop = "Policlinico (Piazzale Principale)",
-                    returnTripWanted = true,
-                    contactPhone = "333 4567891",
-                    notes = "Pronta subito dopo le proclamazioni"
-                ),
-                BusBookingEntity(
-                    passengerName = "Giulia Colombo & Gruppo Amici",
-                    seatsCount = 3,
-                    pickupStop = "Policlinico (Piazzale Principale)",
-                    returnTripWanted = true,
-                    contactPhone = "340 5566778",
-                    notes = "Con festoni e regali"
-                ),
-                BusBookingEntity(
-                    passengerName = "Specializzandi Neurologia Turno A",
-                    seatsCount = 6,
-                    pickupStop = "Policlinico (Fermata Metro/Navetta)",
-                    returnTripWanted = true,
-                    contactPhone = "349 1122339",
-                    notes = "Tutti insieme"
-                )
-            )
-            db.busBookingDao().insertBookings(initialBookings)
+            db.busBookingDao().insertBookings(SeedData.busBookings)
         }
-
         if (db.wishDao().countWishes() == 0) {
-            val initialWishes = listOf(
-                WishEntity(
-                    authorName = "Prof. Giancarlo Bianchi",
-                    targetGraduate = "Tutti i Laureandi",
-                    message = "Congratulazioni di cuore ai nostri nuovi specialisti! Avete dimostrato dedizione, rigore scientifico e grande umanità. Buona strada in Neurologia!",
-                    emojiBadge = "🧠",
-                    heartCount = 24
-                ),
-                WishEntity(
-                    authorName = "I colleghi di reparto",
-                    targetGraduate = "Fedele Luisi",
-                    message = "Grande Fedele! Tra turni di notte interminabili ed EEG complessi sei arrivato al traguardo più bello. Fieri di te!",
-                    emojiBadge = "⚡",
-                    heartCount = 18
-                ),
-                WishEntity(
-                    authorName = "La tua famiglia",
-                    targetGraduate = "Sebastiano Carlone",
-                    message = "Sebastiano, vedere coronato il tuo sogno di diventare neurologo ci riempie di orgoglio e gioia immensa. Ti vogliamo bene!",
-                    emojiBadge = "❤️",
-                    heartCount = 31
-                ),
-                WishEntity(
-                    authorName = "Gli amici della facoltà",
-                    targetGraduate = "Roberto Spiridione Prezioso",
-                    message = "Adesso sei ufficialmente un 'Brain Master'! Venerdì 13 si brinda senza sosta alla tua salute!",
-                    emojiBadge = "🥂",
-                    heartCount = 15
-                ),
-                WishEntity(
-                    authorName = "I tuoi tutor ambulatoriali",
-                    targetGraduate = "Dalila Totaro",
-                    message = "Dalila, la tua sensibilità clinica e la cura dei pazienti sono state un esempio per tutti. Auguri di vera specialista!",
-                    emojiBadge = "⭐",
-                    heartCount = 12
-                ),
-                WishEntity(
-                    authorName = "Le compagne di studio",
-                    targetGraduate = "Giorgia Ruta",
-                    message = "Giorgia, ce l'hai fatta! Da oggi neurologa a tutti gli effetti: orgogliose di te e del percorso condiviso.",
-                    emojiBadge = "🎉",
-                    heartCount = 20
-                ),
-                WishEntity(
-                    authorName = "Mamma e Papà",
-                    targetGraduate = "Lorenzo Parrulli",
-                    message = "Lorenzo caro, ogni sacrificio di questi anni diventa oggi orgoglio immenso. Continua a curare i tuoi pazienti come hai curato il tuo sogno.",
-                    emojiBadge = "❤️",
-                    heartCount = 27
-                ),
-                WishEntity(
-                    authorName = "Gli amici di sempre",
-                    targetGraduate = "Francesco Cusmai",
-                    message = "Francesco, neurologo e amico: una combinazione imbattibile. Venerdì 13 festa, e poi... si vedrà!",
-                    emojiBadge = "🎓",
-                    heartCount = 16
-                ),
-                WishEntity(
-                    authorName = "La tua famiglia",
-                    targetGraduate = "Chiara Esposto",
-                    message = "Chiara, la tua determinazione e il tuo sorriso hanno illuminato il reparto. Auguri di cuore, dottoressa!",
-                    emojiBadge = "✨",
-                    heartCount = 22
-                )
-            )
-            db.wishDao().insertWishes(initialWishes)
+            db.wishDao().insertWishes(SeedData.wishes)
         }
-
         if (db.photoDao().countPhotos() == 0) {
-            val initialPhotos = listOf(
-                SharedPhotoEntity(
-                    authorName = "Staff Organizzazione",
-                    caption = "L'Aula Magna \"G. De Benedictis\" del Policlinico di Bari è pronta per la seduta di specializzazione del 9 novembre!",
-                    imageResId = 1,
-                    imageUri = "",
-                    likesCount = 28
-                ),
-                SharedPhotoEntity(
-                    authorName = "Chiara Esposto",
-                    caption = "Tesi rilegata, corona d'alloro pronta: conto alla rovescia alla proclamazione!",
-                    imageResId = 2,
-                    imageUri = "",
-                    likesCount = 42
-                ),
-                SharedPhotoEntity(
-                    authorName = "Fedele & Lorenzo",
-                    caption = "Ultimo turno insieme da specializzandi, da oggi Neurologi ufficiali!",
-                    imageResId = 3,
-                    imageUri = "",
-                    likesCount = 35
-                )
-            )
-            db.photoDao().insertPhotos(initialPhotos)
+            db.photoDao().insertPhotos(SeedData.photos)
         }
-
         if (db.giftDao().countContributions() == 0) {
-            val initialTargets = listOf(
-                GiftTargetEntity(
-                    id = "gruppo",
-                    name = "Regalo Comune Specializzandi",
-                    specialization = "Specializzazione in Neurologia 2026",
-                    roleTitle = "Fedele, Sebastiano, Roberto, Dalila, Giorgia, Lorenzo, Francesco, Chiara",
-                    giftTitle = "Viaggio Congresso Europeo di Neurologia & Brindisi di Classe",
-                    giftDescription = "Quota comune per sostenere la partecipazione al congresso EAN (European Academy of Neurology) e la festa di venerdì 13 novembre!",
-                    targetAmount = 4800.0,
-                    collectedAmount = 2100.0,
-                    iban = "IT78 K030 6909 6061 0000 1234 567",
-                    ibanHolder = "Comitato Festa Neurologia Bari",
-                    satispayUrl = "https://tag.satispay.com/festaneurologiabari",
-                    paypalMeUrl = "https://paypal.me/festaneurologiabari2026"
-                ),
-                GiftTargetEntity(
-                    id = "luisi",
-                    name = "Dott. Fedele Luisi",
-                    specialization = "Epilessia & Neurofisiologia Clinica",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Stetoscopio Digitale Littmann & Fellowship Clinica",
-                    giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Fedele.",
-                    targetAmount = 900.0,
-                    collectedAmount = 520.0,
-                    iban = "IT44 X030 6909 6061 0000 9876 543",
-                    ibanHolder = "Fedele Luisi",
-                    satispayUrl = "https://tag.satispay.com/fedeleluisineuro",
-                    paypalMeUrl = "https://paypal.me/fedeleluisimd"
-                ),
-                GiftTargetEntity(
-                    id = "carlone",
-                    name = "Dott. Sebastiano Carlone",
-                    specialization = "Cefalee e Malattie Neurodegenerative",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Oftalmoscopio Professionale & Borsa Medico in Cuoio",
-                    giftDescription = "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Sebastiano.",
-                    targetAmount = 950.0,
-                    collectedAmount = 680.0,
-                    iban = "IT12 Y030 6909 6061 0000 4567 890",
-                    ibanHolder = "Sebastiano Carlone",
-                    satispayUrl = "https://tag.satispay.com/sebastianocarlone",
-                    paypalMeUrl = "https://paypal.me/sebastianocarlone"
-                ),
-                GiftTargetEntity(
-                    id = "prezioso",
-                    name = "Dott. Roberto Spiridione Prezioso",
-                    specialization = "Stroke Unit & Neuro-Vascolare",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Corso Neurosonologia Doppler & Attrezzatura Studio",
-                    giftDescription = "Regalo dedicato per la certificazione in ecocolordoppler transcranico e dotazione clinica di Roberto.",
-                    targetAmount = 850.0,
-                    collectedAmount = 430.0,
-                    iban = "IT99 Z030 6909 6061 0000 3210 987",
-                    ibanHolder = "Roberto Spiridione Prezioso",
-                    satispayUrl = "https://tag.satispay.com/robertoprezioso",
-                    paypalMeUrl = "https://paypal.me/robertoprezioso"
-                ),
-                GiftTargetEntity(
-                    id = "totaro",
-                    name = "Dott.ssa Dalila Totaro",
-                    specialization = "Sclerosi Multipla & Immunologia Neurologica",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Martello Riflessi Digitale & Corso RM Funzionale",
-                    giftDescription = "Contributo per la dotazione ambulatoriale e l'aggiornamento in neuroimaging funzionale di Dalila.",
-                    targetAmount = 800.0,
-                    collectedAmount = 350.0,
-                    iban = "IT55 A030 6909 6061 0000 1112 223",
-                    ibanHolder = "Dalila Totaro",
-                    satispayUrl = "https://tag.satispay.com/dalilatotaro",
-                    paypalMeUrl = "https://paypal.me/dalilatotaro"
-                ),
-                GiftTargetEntity(
-                    id = "ruta",
-                    name = "Dott.ssa Giorgia Ruta",
-                    specialization = "Neuropatologie Periferiche & EMG",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Elettromiografo Portatile & Stage Neurofisiologia",
-                    giftDescription = "Regalo per l'avvio dell'attività in elettrofisiologia clinica e lo studio delle neuropatie di Giorgia.",
-                    targetAmount = 880.0,
-                    collectedAmount = 410.0,
-                    iban = "IT66 B030 6909 6061 0000 3334 445",
-                    ibanHolder = "Giorgia Ruta",
-                    satispayUrl = "https://tag.satispay.com/gorgiaruta",
-                    paypalMeUrl = "https://paypal.me/giorgiaruta"
-                ),
-                GiftTargetEntity(
-                    id = "parrulli",
-                    name = "Dott. Lorenzo Parrulli",
-                    specialization = "Movimenti Patologici & Malattia di Parkinson",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Corso Tourette & Dispositivo Wearable Monitoring",
-                    giftDescription = "Regalo per la formazione sui disturbi del movimento e l'attività di ricerca clinica di Lorenzo.",
-                    targetAmount = 820.0,
-                    collectedAmount = 380.0,
-                    iban = "IT77 C030 6909 6061 0000 5556 667",
-                    ibanHolder = "Lorenzo Parrulli",
-                    satispayUrl = "https://tag.satispay.com/lorenzoparrulli",
-                    paypalMeUrl = "https://paypal.me/lorenzoparrulli"
-                ),
-                GiftTargetEntity(
-                    id = "cusmai",
-                    name = "Dott. Francesco Cusmai",
-                    specialization = "Neuroriabilitazione & Medicina Fisica",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Tappeto Rotante & Kit Valutazione Neurologica",
-                    giftDescription = "Contributo per la dotazione di neuroriabilitazione e l'attività ambulatoriale di Francesco.",
-                    targetAmount = 760.0,
-                    collectedAmount = 290.0,
-                    iban = "IT88 D030 6909 6061 0000 7778 889",
-                    ibanHolder = "Francesco Cusmai",
-                    satispayUrl = "https://tag.satispay.com/francescocusmai",
-                    paypalMeUrl = "https://paypal.me/francescocusmai"
-                ),
-                GiftTargetEntity(
-                    id = "esposto",
-                    name = "Dott.ssa Chiara Esposto",
-                    specialization = "Disturbi Cognitivi & Demenze",
-                    roleTitle = "Neo-Specialista in Neurologia",
-                    giftTitle = "Tablet Clinico & Corso Neuropsicologia",
-                    giftDescription = "Regalo per la valutazione neuropsicologica dei pazienti e l'aggiornamento sulle demenze di Chiara.",
-                    targetAmount = 790.0,
-                    collectedAmount = 360.0,
-                    iban = "IT33 E030 6909 6061 0000 9990 011",
-                    ibanHolder = "Chiara Esposto",
-                    satispayUrl = "https://tag.satispay.com/chiaraesposto",
-                    paypalMeUrl = "https://paypal.me/chiaraesposto"
-                )
-            )
-            db.giftDao().insertTargets(initialTargets)
-
-            val initialContributions = listOf(
-                GiftContributionEntity(
-                    donorName = "Zia Laura & Famiglia",
-                    targetGraduateId = "carlone",
-                    targetGraduateName = "Dott. Sebastiano Carlone",
-                    amount = 150.0,
-                    paymentMethod = "IBAN",
-                    note = "Per il nostro neurologo preferito! Con affetto infinito."
-                ),
-                GiftContributionEntity(
-                    donorName = "Colleghi Reparto Stroke",
-                    targetGraduateId = "prezioso",
-                    targetGraduateName = "Dott. Roberto Spiridione Prezioso",
-                    amount = 100.0,
-                    paymentMethod = "Satispay",
-                    note = "Per il futuro re delle trombolisi! Forza Roberto!"
-                ),
-                GiftContributionEntity(
-                    donorName = "Famiglia Luisi",
-                    targetGraduateId = "luisi",
-                    targetGraduateName = "Dott. Fedele Luisi",
-                    amount = 200.0,
-                    paymentMethod = "IBAN",
-                    note = "Orgogliosi del tuo percorso impeccabile."
-                ),
-                GiftContributionEntity(
-                    donorName = "Amici del Liceo",
-                    targetGraduateId = "gruppo",
-                    targetGraduateName = "Regalo Comune Specializzandi",
-                    amount = 120.0,
-                    paymentMethod = "PayPal",
-                    note = "Brindiamo a tutti voi venerdì 13!"
-                )
-            )
-            for (c in initialContributions) {
+            db.giftDao().insertTargets(SeedData.giftTargets)
+            for (c in SeedData.giftContributions) {
                 db.giftDao().insertContribution(c)
             }
         }
-
         if (db.notificationDao().countNotifications() == 0) {
-            val initialNotifications = listOf(
-                EventNotificationEntity(
-                    title = "🎓 Benvenuti all'evento di Specializzazione!",
-                    message = "L'app ufficiale per la Specializzazione in Neurologia a Bari è attiva. Controlla il programma, prenota il bus e conferma il tuo RSVP!",
-                    category = "Organizzazione",
-                    timestamp = System.currentTimeMillis() - 3600000 * 5,
-                    isRead = false
-                ),
-                EventNotificationEntity(
-                    title = "📍 Seduta del 9 Novembre all'Aula Magna",
-                    message = "La seduta di proclamazione si terrà il 9 novembre presso l'Aula Magna \"G. De Benedictis\" del Policlinico di Bari (AOUC Policlinico di Bari). Ora da definirsi.",
-                    category = "Seduta",
-                    timestamp = System.currentTimeMillis() - 3600000 * 3,
-                    isRead = false
-                ),
-                EventNotificationEntity(
-                    title = "🎉 Festa di Venerdì 13 Novembre",
-                    message = "La festa di specializzazione è fissata per venerdì 13 novembre. Luogo e ora saranno comunicati a breve: resta in attesa!",
-                    category = "Festa",
-                    timestamp = System.currentTimeMillis() - 3600000 * 2,
-                    isRead = false
-                ),
-                EventNotificationEntity(
-                    title = "🚌 Prenotazione Bus Navetta Aperta",
-                    message = "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico di Bari alla location della festa. Riserva il tuo posto!",
-                    category = "Navetta",
-                    timestamp = System.currentTimeMillis() - 3600000,
-                    isRead = false
-                )
-            )
-            db.notificationDao().insertNotifications(initialNotifications)
+            db.notificationDao().insertNotifications(SeedData.notifications)
         }
     }
 }

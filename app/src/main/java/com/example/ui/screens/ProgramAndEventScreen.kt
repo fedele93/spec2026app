@@ -22,12 +22,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.EventNotificationEntity
+import com.example.data.SeedData
 import com.example.data.WishEntity
 import com.example.ui.EventViewModel
 import com.example.ui.MapPoint
 import com.example.ui.components.InteractiveMapCanvas
 import com.example.ui.components.NotificationsHistoryDialog
 import com.example.ui.components.SendPushNotificationDialog
+import com.example.ui.components.ServerSettingsDialog
 import com.example.ui.components.WishTickerBanner
 import com.example.ui.theme.LaurelGold
 import com.example.ui.theme.LaurelGoldDark
@@ -52,6 +54,8 @@ fun ProgramAndEventScreen(
 
     var showSendPushDialog by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
+    var showServerSettings by remember { mutableStateOf(false) }
+    val serverStatus by viewModel.serverStatus.collectAsState()
 
     LazyColumn(
         modifier = modifier
@@ -107,13 +111,14 @@ fun ProgramAndEventScreen(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "SPECIALIZZAZIONE IN NEUROLOGIA",
+                                        text = SeedData.programBadge.uppercase(),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Black
                                     )
                                 }
                             }
 
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             // Notification button with badge
                             Box {
                                 IconButton(
@@ -143,19 +148,35 @@ fun ProgramAndEventScreen(
                                     }
                                 }
                             }
+                            // Server settings button (backend condiviso)
+                            IconButton(
+                                onClick = { showServerSettings = true },
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
+                                    .testTag("server_settings_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Impostazioni server",
+                                    tint = if (serverStatus.configured && !serverStatus.online) LaurelGold else Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
-                            text = "Seduta di Specializzazione & Festa",
+                            text = SeedData.programTitle,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White
                         )
 
                         Text(
-                            text = "8 Neo-Specialisti in Neurologia",
+                            text = SeedData.programSubtitle,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = LaurelGold,
@@ -165,7 +186,7 @@ fun ProgramAndEventScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Fedele Luisi • Sebastiano Carlone • Roberto Spiridione Prezioso • Dalila Totaro • Giorgia Ruta • Lorenzo Parrulli • Francesco Cusmai • Chiara Esposto",
+                            text = SeedData.graduates.joinToString(" • "),
                             color = Color.White.copy(alpha = 0.85f),
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(end = 8.dp)
@@ -186,7 +207,7 @@ fun ProgramAndEventScreen(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "9 Novembre (seduta) • 13 Novembre (festa)",
+                                    text = SeedData.programDateLabel,
                                     color = Color.White,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium
@@ -205,7 +226,7 @@ fun ProgramAndEventScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
+                                text = SeedData.programLocationLabel,
                                 color = Color.White,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
@@ -264,7 +285,11 @@ fun ProgramAndEventScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Invia aggiornamenti in tempo reale su seduta, navetta o festa con notifica di sistema Android.",
+                            text = when {
+                                !serverStatus.configured -> "Modalità locale: la notifica viene mostrata solo su questo telefono. Configura il server in ⚙️ per raggiungere tutti."
+                                viewModel.isAdmin -> "Invia aggiornamenti su seduta, navetta o festa: arrivano in push a tutti gli invitati (app e web)."
+                                else -> "Serve il token organizzatore (⚙️ Impostazioni) per inviare notifiche a tutti gli invitati."
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
@@ -297,57 +322,33 @@ fun ProgramAndEventScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    TimelineItem(
-                        time = "Ore 9/10",
-                        title = "Seduta di Laurea & Proclamazione",
-                        location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
-                        details = "Discussione delle tesi e proclamazione degli 8 neo-specialisti in Neurologia. L'ora esatta della seduta sarà comunicata a breve.",
-                        icon = Icons.Default.School,
-                        accentColor = NeuroPrimary,
-                        isLast = false
+                    val tlIcons = listOf(
+                        Icons.Default.School,
+                        Icons.Default.Celebration,
+                        Icons.Default.DirectionsBus,
+                        Icons.Default.Nightlife,
+                        Icons.Default.Cake
                     )
-
-                    TimelineItem(
-                        time = "Dopo",
-                        title = "Brindisi Accademico & Foto di Rito",
-                        location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
-                        details = "Consegna dei diplomi, corona d'alloro e foto di rito con colleghi, docenti e parenti al termine della seduta del 9 novembre.",
-                        icon = Icons.Default.Celebration,
-                        accentColor = LaurelGold,
-                        isLast = false
+                    val tlColors = listOf(
+                        NeuroPrimary,
+                        LaurelGold,
+                        SynapseCyan,
+                        Color(0xFF8B5CF6),
+                        Color(0xFFF43F5E)
                     )
-
-                    TimelineItem(
-                        time = "Ven 13",
-                        title = "Ritrovo & Imbarco Autobus Navetta",
-                        location = "Piazzale Policlinico di Bari",
-                        details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 54 posti verso la location della festa (luogo da definire).",
-                        icon = Icons.Default.DirectionsBus,
-                        accentColor = SynapseCyan,
-                        isLast = false,
-                        actionLabel = "Prenota Posto",
-                        onAction = onNavigateToBus
-                    )
-
-                    TimelineItem(
-                        time = "Ven 13",
-                        title = "Festa di Specializzazione",
-                        location = "Location da definire (Bari e dintorni)",
-                        details = "Venerdì 13 novembre: aperitivo, cena a buffet e brindisi tutti insieme per festeggiare i neo-neurologi. Luogo e ora saranno comunicati a breve.",
-                        icon = Icons.Default.Nightlife,
-                        accentColor = Color(0xFF8B5CF6),
-                        isLast = false
-                    )
-
-                    TimelineItem(
-                        time = "Ven 13",
-                        title = "Taglio della Torta & Dj Set",
-                        location = "Location da definire (Bari e dintorni)",
-                        details = "Taglio della torta di specializzazione, video celebrativo a sorpresa, musica e balli per chiudere in bellezza la serata.",
-                        icon = Icons.Default.Cake,
-                        accentColor = Color(0xFFF43F5E),
-                        isLast = true
-                    )
+                    SeedData.programTimeline.forEachIndexed { i, entry ->
+                        TimelineItem(
+                            time = entry.time,
+                            title = entry.title,
+                            location = entry.location,
+                            details = entry.details,
+                            icon = tlIcons.getOrElse(i) { Icons.Default.School },
+                            accentColor = tlColors.getOrElse(i) { NeuroPrimary },
+                            isLast = i == SeedData.programTimeline.lastIndex,
+                            actionLabel = if (entry.title.contains("Navetta", ignoreCase = true)) "Prenota Posto" else null,
+                            onAction = if (entry.title.contains("Navetta", ignoreCase = true)) onNavigateToBus else null
+                        )
+                    }
                 }
             }
         }
@@ -390,6 +391,19 @@ fun ProgramAndEventScreen(
         NotificationsHistoryDialog(
             notifications = notifications,
             onDismiss = { showHistoryDialog = false }
+        )
+    }
+
+    if (showServerSettings) {
+        ServerSettingsDialog(
+            status = serverStatus,
+            currentUrl = viewModel.serverUrl,
+            currentToken = viewModel.adminToken,
+            onSave = { url, token ->
+                viewModel.updateServerSettings(url, token)
+                showServerSettings = false
+            },
+            onDismiss = { showServerSettings = false }
         )
     }
 }

@@ -6,6 +6,24 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+// Legge una chiave (formato KEY=VALORE) con questa precedenza: variabile d'ambiente,
+// file .env (locale, non committato), file .env.example (default committati).
+fun envValue(key: String): String {
+  System.getenv(key)?.let { if (it.isNotBlank()) return it.trim() }
+  for (name in listOf(".env", ".env.example")) {
+    val envFile = rootProject.file(name)
+    if (!envFile.exists()) continue
+    val value = envFile.readLines()
+      .map { it.trim() }
+      .firstOrNull { it.startsWith("$key=") }
+      ?.substringAfter("=")
+      ?.trim()
+      ?.trim('"')
+    if (!value.isNullOrBlank()) return value
+  }
+  return ""
+}
+
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
@@ -14,10 +32,16 @@ android {
     applicationId = "com.aistudio.neuroparty.evntk"
     minSdk = 24
     targetSdk = 36
-    versionCode = 3
-    versionName = "1.1.0"
+    versionCode = 4
+    versionName = "1.2.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // Backend condiviso (repo neuroparty-backend). Valori letti da .env (o variabili d'ambiente in CI):
+    //   API_BASE_URL=https://festa.tuodominio.it   ADMIN_TOKEN=... (solo per gli organizzatori)
+    // Se API_BASE_URL è vuoto l'app funziona in modalità locale/demo come prima.
+    buildConfigField("String", "API_BASE_URL", "\"${envValue("API_BASE_URL")}\"")
+    buildConfigField("String", "ADMIN_TOKEN", "\"${envValue("ADMIN_TOKEN")}\"")
   }
 
   signingConfigs {
@@ -68,12 +92,30 @@ android {
   }
 }
 
+// Codegen: rigenera SeedData.kt da pwa/shared/event-data.json (singola sorgente dati).
+// Eseguito prima della compilazione Kotlin. Richiede Python 3 nel PATH.
+tasks.register<Exec>("genEventData") {
+  description = "Generates SeedData.kt from pwa/shared/event-data.json"
+  group = "codegen"
+  workingDir = rootDir
+  commandLine("python3", "tools/gen-event-data.py")
+  // rigenera sempre: il JSON è la sorgente di verità
+  outputs.upToDateWhen { false }
+}
+
+// Esegui il codegen prima della compilazione Kotlin (solo se Python è disponibile).
+tasks.matching { it.name.startsWith("compile") && it.name.contains("Kotlin") }
+  .configureEach { dependsOn("genEventData") }
+
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
 // to match the convention used in Web projects.
 secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
+  // Gestite manualmente in defaultConfig (vedi envValue) per avere sempre un valore di default.
+  ignoreList.add("API_BASE_URL")
+  ignoreList.add("ADMIN_TOKEN")
 }
 
 // Some unused dependencies are commented out below instead of being removed.
@@ -100,6 +142,7 @@ dependencies {
   // implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   // Uncomment to use Firestore:

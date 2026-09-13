@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.BusBookingEntity
+import com.example.data.SeedData
 import com.example.ui.EventViewModel
 import com.example.ui.theme.LaurelGold
 import com.example.ui.theme.NeuroDarkNavy
@@ -71,7 +72,7 @@ fun BusTransferScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Transfer andata e ritorno dal Policlinico di Bari alla sede della festa",
+                        text = SeedData.busScheduleSubtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -194,11 +195,11 @@ fun BusTransferScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         BusScheduleRow(
-                            time = "Ven 13 - da definire",
+                            time = SeedData.busAndata.timeLabel,
                             direction = "ANDATA",
-                            from = "Policlinico di Bari (Piazzale Principale)",
-                            to = "Location della festa (da definire)",
-                            notes = "Venerdì 13 novembre: orario di partenza in via di definizione, confermato appena nota la location"
+                            from = SeedData.busAndata.from,
+                            to = SeedData.busAndata.to,
+                            notes = SeedData.busAndata.notes
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -206,11 +207,11 @@ fun BusTransferScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         BusScheduleRow(
-                            time = "Ven 13 - notte",
+                            time = SeedData.busRitorno.timeLabel,
                             direction = "RITORNO",
-                            from = "Location della festa (da definire)",
-                            to = "Policlinico di Bari / Stazione Centrale",
-                            notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
+                            from = SeedData.busRitorno.from,
+                            to = SeedData.busRitorno.to,
+                            notes = SeedData.busRitorno.notes
                         )
                     }
                 }
@@ -406,16 +407,12 @@ fun BookBusDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var seats by remember { mutableStateOf("1") }
-    var stop by remember { mutableStateOf("Policlinico di Bari (Piazzale Principale)") }
+    var stop by remember { mutableStateOf(SeedData.busPickupStops.firstOrNull() ?: "") }
     var returnTrip by remember { mutableStateOf(true) }
     var phone by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
 
-    val stops = listOf(
-        "Policlinico di Bari (Piazzale Principale)",
-        "Policlinico di Bari (Fermata Metro/Navetta)",
-        "Stazione Ferroviaria Centrale di Bari"
-    )
+    val stops = SeedData.busPickupStops
 
     AlertDialog(
         onDismissRequest = onDismiss,

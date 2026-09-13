@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
+import com.example.data.SeedData
 import com.example.data.SharedPhotoEntity
 import com.example.data.WishEntity
 import com.example.ui.EventViewModel
@@ -457,17 +458,7 @@ fun PostWishDialog(
     var text by remember { mutableStateOf("") }
     var selectedEmoji by remember { mutableStateOf("🎓") }
 
-    val graduates = listOf(
-        "Tutti i Laureandi",
-        "Fedele Luisi",
-        "Sebastiano Carlone",
-        "Roberto Spiridione Prezioso",
-        "Dalila Totaro",
-        "Giorgia Ruta",
-        "Lorenzo Parrulli",
-        "Francesco Cusmai",
-        "Chiara Esposto"
-    )
+    val graduates = listOf("Tutti i Laureandi") + SeedData.graduates
     val emojis = listOf("🎓", "🧠", "🥂", "❤️", "⚡", "⭐", "🎉")
 
     AlertDialog(

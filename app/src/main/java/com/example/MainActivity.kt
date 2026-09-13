@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -26,6 +27,7 @@ import com.example.ui.screens.*
 import com.example.ui.theme.LaurelGold
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.NeuroPrimary
+import com.example.util.NotificationCheckWorker
 import com.example.util.NotificationHelper
 
 class MainActivity : ComponentActivity() {
@@ -35,6 +37,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         NotificationHelper.createNotificationChannel(this)
+        // Controllo periodico delle notifiche del server anche ad app chiusa (no-op senza server)
+        NotificationCheckWorker.schedule(this)
 
         setContent {
             MyApplicationTheme {
@@ -55,9 +59,21 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // Messaggi dal ViewModel (errori del server, conferme)
+                LaunchedEffect(Unit) {
+                    viewModel.uiMessage.collect { message ->
+                        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+
                 MainEventApp(viewModel = viewModel)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshFromServer()
     }
 }
 

@@ -6,18 +6,22 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
-// Legge una chiave dal file .env nella root (formato KEY=VALORE); le variabili d'ambiente hanno la precedenza.
+// Legge una chiave (formato KEY=VALORE) con questa precedenza: variabile d'ambiente,
+// file .env (locale, non committato), file .env.example (default committati).
 fun envValue(key: String): String {
   System.getenv(key)?.let { if (it.isNotBlank()) return it.trim() }
-  val envFile = rootProject.file(".env")
-  if (!envFile.exists()) return ""
-  return envFile.readLines()
-    .map { it.trim() }
-    .firstOrNull { it.startsWith("$key=") }
-    ?.substringAfter("=")
-    ?.trim()
-    ?.trim('"')
-    ?: ""
+  for (name in listOf(".env", ".env.example")) {
+    val envFile = rootProject.file(name)
+    if (!envFile.exists()) continue
+    val value = envFile.readLines()
+      .map { it.trim() }
+      .firstOrNull { it.startsWith("$key=") }
+      ?.substringAfter("=")
+      ?.trim()
+      ?.trim('"')
+    if (!value.isNullOrBlank()) return value
+  }
+  return ""
 }
 
 android {

@@ -56,7 +56,9 @@ Requisiti: `minSdk = 24`, `targetSdk = 36`, `compileSdk = 36`.
    ADMIN_TOKEN=lo-stesso-token-del-server
    ```
 
-   In CI puoi passare gli stessi valori come variabili d'ambiente o secret del repository.
+   `.env.example` contiene già `API_BASE_URL=https://neurospec.peukeia.eu`, quindi anche senza
+   `.env` (per esempio nella CI) l'APK punta al server. Precedenza: variabile d'ambiente,
+   poi `.env`, poi `.env.example`. `ADMIN_TOKEN` va messo solo in `.env` o in un secret di CI.
 3. Compila l'APK. In alternativa l'URL e il token si possono inserire dall'app: schermata
    **Programma → ⚙️** (icona ingranaggio nell'intestazione).
 

@@ -73,7 +73,7 @@ stessa struttura da `GET /api/event`: aggiorna anche `seed/event-data.json` nel 
 
 ## Pubblicazione
 
-- **Consigliata**: servita dal backend (Caddy) su `https://festa.tuodominio.it/` — nessuna
+- **Consigliata**: servita dal backend (Caddy) su `https://neurospec.peukeia.eu/` — nessuna
   configurazione aggiuntiva, notifiche push funzionanti.
 - **Alternativa**: GitHub Pages (Settings → Pages → branch `main`, cartella `/pwa`): la PWA parte
   in modalità demo; per usare il server inserisci l'URL in ⚙️ Impostazioni (il backend ha CORS

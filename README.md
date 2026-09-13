@@ -47,11 +47,11 @@ Requisiti: `minSdk = 24`, `targetSdk = 36`, `compileSdk = 36`.
 
 1. Metti online il backend seguendo il README di
    [neuroparty-backend](https://github.com/fedele93/neuroparty-backend) (Docker + Caddy su un
-   sottodominio, es. `https://festa.tuodominio.it`).
+   sottodominio, es. `https://neurospec.peukeia.eu`).
 2. Nella root di questo repo crea un file `.env` (è ignorato da git):
 
    ```bash
-   API_BASE_URL=https://festa.tuodominio.it
+   API_BASE_URL=https://neurospec.peukeia.eu
    # solo nella build degli organizzatori:
    ADMIN_TOKEN=lo-stesso-token-del-server
    ```

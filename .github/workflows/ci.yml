@@ -2,14 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [main, "vibe/**"]
+    branches: [main, "vibe/**", "claude/**"]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  android:
     name: Build & test Android app
     runs-on: ubuntu-latest
 
@@ -60,3 +61,78 @@ jobs:
 
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-reports
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroParty-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
+  pwa:
+    name: Test PWA (sintassi + end-to-end con backend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v4
+
+      - name: Checkout backend (repo neuroparty-backend, oppure branch "backend" di questo repo)
+        run: |
+          git clone --depth 1 https://github.com/fedele93/neuroparty-backend.git backend \
+            || git clone --depth 1 --branch backend --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" backend
+          ls backend
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Controllo sintassi JS e JSON
+        run: |
+          for f in pwa/js/*.js pwa/sw.js pwa/tests/*.mjs; do node --check "$f"; done
+          python3 -c "import json; json.load(open('pwa/shared/event-data.json')); json.load(open('pwa/manifest.webmanifest'))"
+
+      - name: Avvia backend locale
+        run: |
+          pip install -r backend/requirements.txt
+          cd backend
+          DATA_DIR=/tmp/npdata SEED_DEMO_DATA=true ADMIN_TOKEN=ci-token PWA_DIR="$GITHUB_WORKSPACE/pwa" \
+            nohup uvicorn app.main:app --host 127.0.0.1 --port 8765 > /tmp/backend.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/api/health && break; sleep 1; done
+
+      - name: Installa Playwright
+        run: |
+          npm init -y >/dev/null
+          npm i playwright@1
+          npx playwright install --with-deps chromium
+
+      - name: Test end-to-end
+        env:
+          BASE_URL: http://127.0.0.1:8765
+          ADMIN_TOKEN: ci-token
+          SCREENSHOT_DIR: pwa-screenshots
+        run: node pwa/tests/e2e.mjs
+
+      - name: Log backend (in caso di errore)
+        if: failure()
+        run: cat /tmp/backend.log
+
+      - name: Upload screenshot PWA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwa-screenshots
+          path: pwa-screenshots/

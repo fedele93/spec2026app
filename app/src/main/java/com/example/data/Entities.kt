@@ -2,6 +2,9 @@ package com.example.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.squareup.moshi.JsonClass
+
+// Le entità Room sono anche i modelli JSON dell'API del backend (stessi nomi di campo, camelCase).
 
 enum class RsvpStatus {
     CONFIRMED,
@@ -10,6 +13,7 @@ enum class RsvpStatus {
 }
 
 @Entity(tableName = "guests")
+@JsonClass(generateAdapter = true)
 data class GuestEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val fullName: String,
@@ -22,6 +26,7 @@ data class GuestEntity(
 )
 
 @Entity(tableName = "bus_bookings")
+@JsonClass(generateAdapter = true)
 data class BusBookingEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val passengerName: String,
@@ -34,6 +39,7 @@ data class BusBookingEntity(
 )
 
 @Entity(tableName = "wishes")
+@JsonClass(generateAdapter = true)
 data class WishEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val authorName: String,
@@ -45,6 +51,7 @@ data class WishEntity(
 )
 
 @Entity(tableName = "shared_photos")
+@JsonClass(generateAdapter = true)
 data class SharedPhotoEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val authorName: String,
@@ -56,6 +63,7 @@ data class SharedPhotoEntity(
 )
 
 @Entity(tableName = "gift_targets")
+@JsonClass(generateAdapter = true)
 data class GiftTargetEntity(
     @PrimaryKey val id: String, // es. "andrea", "elena", "marco", "gruppo"
     val name: String,
@@ -72,6 +80,7 @@ data class GiftTargetEntity(
 )
 
 @Entity(tableName = "gift_contributions")
+@JsonClass(generateAdapter = true)
 data class GiftContributionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val donorName: String,
@@ -85,6 +94,7 @@ data class GiftContributionEntity(
 )
 
 @Entity(tableName = "event_notifications")
+@JsonClass(generateAdapter = true)
 data class EventNotificationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,

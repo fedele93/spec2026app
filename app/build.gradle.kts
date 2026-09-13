@@ -6,6 +6,20 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+// Legge una chiave dal file .env nella root (formato KEY=VALORE); le variabili d'ambiente hanno la precedenza.
+fun envValue(key: String): String {
+  System.getenv(key)?.let { if (it.isNotBlank()) return it.trim() }
+  val envFile = rootProject.file(".env")
+  if (!envFile.exists()) return ""
+  return envFile.readLines()
+    .map { it.trim() }
+    .firstOrNull { it.startsWith("$key=") }
+    ?.substringAfter("=")
+    ?.trim()
+    ?.trim('"')
+    ?: ""
+}
+
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
@@ -14,10 +28,16 @@ android {
     applicationId = "com.aistudio.neuroparty.evntk"
     minSdk = 24
     targetSdk = 36
-    versionCode = 3
-    versionName = "1.1.0"
+    versionCode = 4
+    versionName = "1.2.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // Backend condiviso (repo neuroparty-backend). Valori letti da .env (o variabili d'ambiente in CI):
+    //   API_BASE_URL=https://festa.tuodominio.it   ADMIN_TOKEN=... (solo per gli organizzatori)
+    // Se API_BASE_URL è vuoto l'app funziona in modalità locale/demo come prima.
+    buildConfigField("String", "API_BASE_URL", "\"${envValue("API_BASE_URL")}\"")
+    buildConfigField("String", "ADMIN_TOKEN", "\"${envValue("ADMIN_TOKEN")}\"")
   }
 
   signingConfigs {
@@ -89,6 +109,9 @@ secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
+  // Gestite manualmente in defaultConfig (vedi envValue) per avere sempre un valore di default.
+  ignoreList.add("API_BASE_URL")
+  ignoreList.add("ADMIN_TOKEN")
 }
 
 // Some unused dependencies are commented out below instead of being removed.
@@ -115,6 +138,7 @@ dependencies {
   // implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   // Uncomment to use Firestore:

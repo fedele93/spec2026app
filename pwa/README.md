@@ -1,65 +1,80 @@
-# NeuroParty — PWA (versione iOS / Web installabile)
+# NeuroParty — PWA (iPhone, iPad, PC e web)
 
-Versione web installabile dell'app Android NeuroParty, pensata per girare anche su
-**iPhone via Safari** ("Aggiungi a schermata Home") e su Android via Chrome, senza store
-e senza account Apple. È una **PWA** (Progressive Web App): stessi dati, stessa UX
-dell'app nativa (5 schermate), con persistenza locale (`IndexedDB`) e notifiche web.
+Versione web installabile dell'app NeuroParty: gira in **Safari su iPhone** ("Aggiungi alla
+schermata Home"), in Chrome su Android ("Installa app") e in qualsiasi browser desktop. Stesse
+5 schermate dell'app Android (Programma, Invitati, Navetta, Auguri & Foto, Regali).
 
-## Cosa contiene
+## Due modalità
 
-- 8 Neo-specialisti in Neurologia (Fedele Luisi, Sebastiano Carlone, Roberto
-  Spiridione Prezioso, Dalila Totaro, Giorgia Ruta, Lorenzo Parrulli, Francesco
-  Cusmai, Chiara Esposto)
-- **Seduta**: 9 novembre, Aula Magna "G. De Benedictis" — AOUC Policlinico di Bari
-- **Festa**: venerdì 13 novembre (luogo e ora da definire)
-- 5 schermate a tab: Programma (timeline + mappa Leaflet + ticker auguri), Invitati
-  & RSVP, Navetta bus, Auguri & Foto, Regali (quote IBAN/Satispay/PayPal)
-- Notifiche push web locali (Notification API), offline via service worker
+| Modalità | Quando | Dati |
+|---|---|---|
+| **Server** (consigliata) | la PWA è servita dal backend ([neuroparty-backend](https://github.com/fedele93/neuroparty-backend)) allo stesso dominio, oppure l'URL del server è impostato in ⚙️ Impostazioni | condivisi fra tutti gli invitati; copia offline dell'ultimo snapshot |
+| **Demo locale** | nessun server raggiungibile al primo avvio (es. GitHub Pages senza backend) | solo su questo dispositivo (IndexedDB) |
 
-## Sorgente dati unica (PWA + Android)
+In modalità server la PWA interroga `GET /api/state` ogni 20 secondi e ridisegna la schermata
+quando i dati cambiano; le scritture vanno al backend e, in caso di errore (posti esauriti,
+permessi), mostrano il messaggio restituito dal server.
 
-Tutti i dati dell'evento vivono in **`pwa/shared/event-data.json`**: è l'unica
-sorgente di verità per PWA e app Android.
+## Notifiche push
 
-- **PWA**: `js/data.js` carica il JSON via `fetch` e ne deriva seed/constanti.
-- **Android**: lo script `tools/gen-event-data.py` converte il JSON in
-  `SeedData.kt` (Kotlin). Il task Gradle `genEventData` lo rigenera ad ogni build
-  e la CI verifica che sia sincronizzato.
+- Pulsante **"Attiva notifiche push"** nella schermata Programma: il browser si iscrive con la
+  chiave VAPID del server (`/api/push/vapid-public-key`) e riceve gli avvisi degli
+  organizzatori anche a browser chiuso (Chrome, Edge, Firefox; **iOS 16.4+ solo con la PWA
+  aggiunta alla Home**).
+- Gli organizzatori inseriscono il token in ⚙️ Impostazioni: compare il pulsante **"Invia
+  notifica"** che pubblica l'avviso a tutti (app Android inclusa).
 
-Per aggiornare date, nomi, orari, regali, ecc.: modifica `event-data.json` e
-rigenera l'Android con `python3 tools/gen-event-data.py` (la build Gradle lo
-fa automaticamente). Entrambe le piattaforme verranno aggiornate insieme.
+## Struttura
 
-## Come provarla in locale
-
-```bash
-cd pwa
-python3 -m http.server 8765
-# apri http://localhost:8765
+```
+index.html, manifest.webmanifest, sw.js   shell, manifest, service worker (cache + push)
+css/app.css
+js/app.js        routing tab, polling, toast/modali
+js/api.js        client HTTP (X-Client-Id, X-Admin-Token)
+js/data.js       Repo: modalità server (snapshot + cache) o locale (IndexedDB)
+js/db.js         wrapper IndexedDB (modalità locale)
+js/notify.js     permesso notifiche, Web Push subscribe
+js/screens.js    le 5 schermate
+shared/event-data.json   dati evento (fallback offline; sorgente per SeedData.kt Android)
+vendor/leaflet/  mappa (OpenStreetMap, nessun SDK Google)
+tests/e2e.mjs    test end-to-end Playwright
 ```
 
-Poi "Aggiungi a schermata Home" dal browser per installarla come app.
+## Provare in locale
 
-## Pubblicazione su GitHub Pages (gratuita)
+```bash
+# 1) backend con dati demo che serve anche questa cartella
+git clone https://github.com/fedele93/neuroparty-backend ../neuroparty-backend
+cd ../neuroparty-backend && python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+ADMIN_TOKEN=test SEED_DEMO_DATA=true PWA_DIR=../spec2026app/pwa uvicorn app.main:app --port 8765
+# 2) apri http://127.0.0.1:8765
+```
 
-1. Vai su **Settings → Pages** del repo.
-2. Sorgente: branch `main`, cartella `/pwa`.
-3. L'app sarà disponibile a `https://fedele93.github.io/spec2026app/`.
-4. Condividi quel link con gli invitati: su iOS Safari, "Aggiungi a schermata Home"
-   installa la PWA; su Android Chrome, "Installa app".
+Solo la PWA senza backend (modalità demo): `cd pwa && python3 -m http.server 8765`.
 
-## Note iOS
+## Test end-to-end
 
-- Le **notifiche push** web funzionano su iOS 16.4+ con la PWA installata e permesso
-  concesso (a differenza di Android dove sono più robuste). Per gli aggiornamenti
-  in tempo reale più affidabili su iPhone si consiglia di affiancare un gruppo di
-  messaggistica (es. WhatsApp/Signal).
-- Lo storage iOS della PWA è limitato (~50 MB): le foto caricate vengono salvate come
-  data-URL, perciò si consiglia di caricare immagini non troppo grandi (< 4.5 MB).
+```bash
+npm i playwright && npx playwright install chromium
+BASE_URL=http://127.0.0.1:8765 ADMIN_TOKEN=test node pwa/tests/e2e.mjs
+```
 
-## Stack
+Il test copre: caricamento dati dal server, notifiche, invitati (ricerca, aggiunta, stato,
+permessi di cancellazione), navetta (overbooking rifiutato), auguri, upload foto, quote regalo,
+invio notifica da organizzatore, persistenza dopo reload, polling, service worker e manifest.
+Gli screenshot finiscono in `pwa/tests/screenshots/`.
 
-- HTML/CSS/JS vanilla (niente build tooling), ES modules
-- `IndexedDB` per la persistenza (mirror del layer Room dell'app Android)
-- Leaflet + OpenStreetMap per la mappa (no SDK Google, coerente con la versione F-Droid)
-- Manifest + service worker per l'installazione e l'offline
+## Aggiornare i dati dell'evento
+
+`shared/event-data.json` è la sorgente per l'app Android (`python3 tools/gen-event-data.py`
+rigenera `SeedData.kt`) e il fallback offline della PWA. In modalità server la PWA legge la
+stessa struttura da `GET /api/event`: aggiorna anche `seed/event-data.json` nel repo del backend.
+
+## Pubblicazione
+
+- **Consigliata**: servita dal backend (Caddy) su `https://festa.tuodominio.it/` — nessuna
+  configurazione aggiuntiva, notifiche push funzionanti.
+- **Alternativa**: GitHub Pages (Settings → Pages → branch `main`, cartella `/pwa`): la PWA parte
+  in modalità demo; per usare il server inserisci l'URL in ⚙️ Impostazioni (il backend ha CORS
+  aperto).

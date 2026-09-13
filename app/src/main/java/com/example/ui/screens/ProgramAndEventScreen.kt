@@ -29,6 +29,7 @@ import com.example.ui.MapPoint
 import com.example.ui.components.InteractiveMapCanvas
 import com.example.ui.components.NotificationsHistoryDialog
 import com.example.ui.components.SendPushNotificationDialog
+import com.example.ui.components.ServerSettingsDialog
 import com.example.ui.components.WishTickerBanner
 import com.example.ui.theme.LaurelGold
 import com.example.ui.theme.LaurelGoldDark
@@ -53,6 +54,8 @@ fun ProgramAndEventScreen(
 
     var showSendPushDialog by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
+    var showServerSettings by remember { mutableStateOf(false) }
+    val serverStatus by viewModel.serverStatus.collectAsState()
 
     LazyColumn(
         modifier = modifier
@@ -115,6 +118,7 @@ fun ProgramAndEventScreen(
                                 }
                             }
 
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             // Notification button with badge
                             Box {
                                 IconButton(
@@ -143,6 +147,22 @@ fun ProgramAndEventScreen(
                                         Text("$unreadCount")
                                     }
                                 }
+                            }
+                            // Server settings button (backend condiviso)
+                            IconButton(
+                                onClick = { showServerSettings = true },
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
+                                    .testTag("server_settings_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Impostazioni server",
+                                    tint = if (serverStatus.configured && !serverStatus.online) LaurelGold else Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                             }
                         }
 
@@ -265,7 +285,11 @@ fun ProgramAndEventScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Invia aggiornamenti in tempo reale su seduta, navetta o festa con notifica di sistema Android.",
+                            text = when {
+                                !serverStatus.configured -> "Modalità locale: la notifica viene mostrata solo su questo telefono. Configura il server in ⚙️ per raggiungere tutti."
+                                viewModel.isAdmin -> "Invia aggiornamenti su seduta, navetta o festa: arrivano in push a tutti gli invitati (app e web)."
+                                else -> "Serve il token organizzatore (⚙️ Impostazioni) per inviare notifiche a tutti gli invitati."
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
@@ -367,6 +391,19 @@ fun ProgramAndEventScreen(
         NotificationsHistoryDialog(
             notifications = notifications,
             onDismiss = { showHistoryDialog = false }
+        )
+    }
+
+    if (showServerSettings) {
+        ServerSettingsDialog(
+            status = serverStatus,
+            currentUrl = viewModel.serverUrl,
+            currentToken = viewModel.adminToken,
+            onSave = { url, token ->
+                viewModel.updateServerSettings(url, token)
+                showServerSettings = false
+            },
+            onDismiss = { showServerSettings = false }
         )
     }
 }

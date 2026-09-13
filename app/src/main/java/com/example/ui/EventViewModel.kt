@@ -16,6 +16,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.UUID
 
 data class MapPoint(
     val id: String,
@@ -373,13 +375,20 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
             likesCount = 1
         )
         runAction("Foto condivisa con tutti ✓") {
+            val app = getApplication<Application>()
+            val resolver = app.contentResolver
+            val uri = Uri.parse(imageUri)
+            val bytes = withContext(Dispatchers.IO) { resolver.openInputStream(uri)?.use { it.readBytes() } }
+                ?: throw RemoteException("Impossibile leggere l'immagine selezionata")
             if (repository.remote == null) {
-                repository.insertPhoto(photo)
+                // L'URI del photo picker è temporaneo (non sopravvive al riavvio dell'app):
+                // copiamo il file nella memoria interna e salviamo un URI stabile.
+                val stored = withContext(Dispatchers.IO) {
+                    val dir = File(app.filesDir, "photos").apply { mkdirs() }
+                    File(dir, "${UUID.randomUUID()}.jpg").apply { writeBytes(bytes) }
+                }
+                repository.insertPhoto(photo.copy(imageUri = Uri.fromFile(stored).toString()))
             } else {
-                val resolver = getApplication<Application>().contentResolver
-                val uri = Uri.parse(imageUri)
-                val bytes = withContext(Dispatchers.IO) { resolver.openInputStream(uri)?.use { it.readBytes() } }
-                    ?: throw RemoteException("Impossibile leggere l'immagine selezionata")
                 repository.insertPhoto(photo, bytes, resolver.getType(uri) ?: "image/jpeg")
             }
         }

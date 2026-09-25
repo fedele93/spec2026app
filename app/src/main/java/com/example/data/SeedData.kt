@@ -7,6 +7,16 @@ import com.example.ui.MapPoint
 object SeedData {
     const val maxBusSeats: Int = 54
 
+    // Date (AAAA-MM-GG) e orari (HH:MM, vuoto = da definire) dal blocco "schedule" del JSON
+    val schedule: EventSchedule = EventSchedule(
+        ceremonyDate = "2026-11-09",
+        ceremonyTime = "",
+        partyDate = "2026-11-13",
+        partyTime = "",
+        busDepartureTime = "",
+        busReturnTime = "",
+    )
+
     val graduates: List<String> = listOf(
         "Fedele Luisi",
         "Sebastiano Carlone",
@@ -64,7 +74,7 @@ object SeedData {
 
     val programTimeline: List<ProgramTimelineEntry> = listOf(
         ProgramTimelineEntry(
-            time = "Ore 9/10",
+            time = "Lun 9",
             title = "Seduta di Laurea & Proclamazione",
             location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
             details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. L'ora esatta della seduta sarà comunicata a breve.",
@@ -534,6 +544,15 @@ data class ProgramTimelineEntry(
     val location: String,
     val details: String,
     val hasMore: Boolean
+)
+
+data class EventSchedule(
+    val ceremonyDate: String,
+    val ceremonyTime: String,
+    val partyDate: String,
+    val partyTime: String,
+    val busDepartureTime: String,
+    val busReturnTime: String
 )
 
 data class BusTripInfo(

@@ -7,6 +7,7 @@ Genera:  app/src/main/java/com/example/data/SeedData.kt
 """
 import json
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,13 +17,35 @@ DST = os.path.join(ROOT, "app", "src", "main", "java", "com", "example", "data",
 with open(SRC, encoding="utf-8") as f:
     d = json.load(f)
 
+# ---- Orari e segnaposto (stessa logica di app/schedule.py nel backend e di pwa/js/schedule.js) ----
+# {partyTime}                 -> orario oppure "da definire"
+# {partyTime|testo}           -> orario oppure "testo"
+# {partyTime|Ore $.|Da def.}  -> con orario il 2° pezzo ($ = orario), senza il 3°
+SCHEDULE_KEYS = ("ceremonyDate", "ceremonyTime", "partyDate", "partyTime", "busDepartureTime", "busReturnTime")
+SCHEDULE = {k: str((d.get("schedule") or {}).get(k) or "").strip() for k in SCHEDULE_KEYS}
+PLACEHOLDER = re.compile(r"\{(\w+)(?:\|([^|}]*))?(?:\|([^}]*))?\}")
+
+
+def resolve_text(text):
+    def sub(m):
+        key, a, b = m.group(1), m.group(2), m.group(3)
+        value = SCHEDULE.get(key, "")
+        if b is not None:
+            return a.replace("$", value) if value else b
+        if a is not None:
+            return value or a
+        return value or "da definire"
+    return PLACEHOLDER.sub(sub, text)
+
 # Distanze relative (ore) -> offset in millisecondi al primo avvio.
 def age_ms(age_hours):
     return f"(System.currentTimeMillis() - {int(round(float(age_hours or 0) * 3600000))}L)"
 
-def kt_str(s):
+def kt_str(s, raw=False):
     s = "" if s is None else str(s)
-    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    if not raw:
+        s = resolve_text(s)  # i testi dell'app Android nascono già con gli orari risolti
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$") + '"'
 
 def kt_bool(b):
     return "true" if b else "false"
@@ -36,6 +59,12 @@ out.append("// FILE GENERATO DA tools/gen-event-data.py a partire da pwa/shared/
 out.append("// NON modificare a mano: cambia il JSON e rigenera con: python3 tools/gen-event-data.py")
 out.append("object SeedData {")
 out.append("    const val maxBusSeats: Int = %d" % int(d.get("meta", {}).get("maxBusSeats", 54)))
+out.append("")
+out.append("    // Date (AAAA-MM-GG) e orari (HH:MM, vuoto = da definire) dal blocco \"schedule\" del JSON")
+out.append("    val schedule: EventSchedule = EventSchedule(")
+for k in SCHEDULE_KEYS:
+    out.append("        %s = %s," % (k, kt_str(SCHEDULE[k], raw=True)))
+out.append("    )")
 out.append("")
 out.append("    val graduates: List<String> = listOf(")
 out.append("".join("        %s,\n" % kt_str(g) for g in d.get("graduates", [])))
@@ -208,6 +237,15 @@ out.append("    val title: String,")
 out.append("    val location: String,")
 out.append("    val details: String,")
 out.append("    val hasMore: Boolean")
+out.append(")")
+out.append("")
+out.append("data class EventSchedule(")
+out.append("    val ceremonyDate: String,")
+out.append("    val ceremonyTime: String,")
+out.append("    val partyDate: String,")
+out.append("    val partyTime: String,")
+out.append("    val busDepartureTime: String,")
+out.append("    val busReturnTime: String")
 out.append(")")
 out.append("")
 out.append("data class BusTripInfo(")

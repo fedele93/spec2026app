@@ -5,6 +5,29 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-09-25
+
+Orari strutturati, calendario e aggiornamento dei regali dal JSON.
+
+### Aggiunto
+
+- Blocco `schedule` in `event-data.json` (date e orari di seduta, festa, navetta; vuoto = da
+  definire) e segnaposto nei testi, es. `{partyTime|Inizio ore $.|Orario da confermare.}`:
+  risolti dal backend (`app/schedule.py`), dalla PWA in locale (`pwa/js/schedule.js`) e dal
+  codegen Android. Quando l'orario sarà deciso basterà compilare `schedule`.
+- Calendario: `GET /api/event/calendar.ics` (seduta + festa, tutto il giorno finché manca
+  l'orario); pulsante **📅 Aggiungi al calendario** nell'intestazione della PWA (in modalità
+  demo il file è generato nel browser); su Android due chip "Seduta 9 nov" / "Festa 13 nov"
+  che aprono l'app Calendario con l'evento precompilato (`util/CalendarHelper.kt`).
+- Backend: variabile `GIFT_SYNC_UPDATE_TEXTS=true` per aggiornare al riavvio testi, IBAN,
+  link e obiettivo dei regali già in database a partire dal JSON (quote raccolte intatte).
+- Test: 3 nuovi test backend (segnaposto, calendario, aggiornamento regali) e 4 controlli e2e.
+
+### Modificato
+
+- `SeedData.kt` espone `schedule` (`EventSchedule`); cache del service worker `v2.2.0`.
+- Versione app: `versionName` 1.3.0 → 1.4.0, `versionCode` 5 → 6.
+
 ## [1.3.0] - 2026-09-25
 
 Nono neo-specialista e sede della festa confermata.

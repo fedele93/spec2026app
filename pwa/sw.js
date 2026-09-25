@@ -1,4 +1,4 @@
-const CACHE = "neuroparty-v2.1.0";
+const CACHE = "neuroparty-v2.2.0";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const ASSETS = [
   "./js/db.js",
   "./js/api.js",
   "./js/data.js",
+  "./js/schedule.js",
   "./js/notify.js",
   "./js/app.js",
   "./js/screens.js",

@@ -1,5 +1,6 @@
 // Schermate PWA - mirror delle 5 schermate Compose dell'app Android
-import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, reconnect } from "./data.js";
+import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, reconnect } from "./data.js";
+import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
 import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getClientId } from "./api.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
@@ -43,6 +44,7 @@ export async function program(el) {
       <div class="graduates">${GRADUATES.map(esc).join(" • ")}</div>
       <div class="meta">📅 ${esc(P.dateLabel)}</div>
       <div class="meta">📍 ${esc(P.locationLabel)}</div>
+      <a class="btn btn-ghost cal-btn" id="cal-add" href="${serverMode ? esc(getApiBase() + "/api/event/calendar.ics") : "#"}" ${serverMode ? 'target="_blank" rel="noopener"' : ""}>📅 Aggiungi al calendario</a>
     </div>
 
     ${ticker ? `<div class="ticker" id="ticker"><span class="emoji">${esc(ticker.emojiBadge || "🎓")}</span>
@@ -84,6 +86,8 @@ export async function program(el) {
     showNotifications(await Repo.allNotifications());
   };
   el.querySelector("#settings").onclick = () => settingsDialog();
+  const calBtn = el.querySelector("#cal-add");
+  if (calBtn && !serverMode) calBtn.onclick = (e) => { e.preventDefault(); downloadIcs(EVENT); toast("File calendario scaricato: aprilo per aggiungere seduta e festa 📅"); };
   const sendBtn = el.querySelector("#ntf-send");
   if (sendBtn) sendBtn.onclick = () => sendPushDialog();
   const onBtn = el.querySelector("#push-on");

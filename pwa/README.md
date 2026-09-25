@@ -34,6 +34,7 @@ js/api.js        client HTTP (X-Client-Id, X-Admin-Token)
 js/data.js       Repo: modalità server (snapshot + cache) o locale (IndexedDB)
 js/db.js         wrapper IndexedDB (modalità locale)
 js/notify.js     permesso notifiche, Web Push subscribe
+js/schedule.js   orari (blocco "schedule"), segnaposto nei testi, calendario .ics locale
 js/screens.js    le 5 schermate
 shared/event-data.json   dati evento (fallback offline; sorgente per SeedData.kt Android)
 vendor/leaflet/  mappa (OpenStreetMap, nessun SDK Google)
@@ -70,6 +71,16 @@ Gli screenshot finiscono in `pwa/tests/screenshots/`.
 `shared/event-data.json` è la sorgente per l'app Android (`python3 tools/gen-event-data.py`
 rigenera `SeedData.kt`) e il fallback offline della PWA. In modalità server la PWA legge la
 stessa struttura da `GET /api/event`: aggiorna anche `seed/event-data.json` nel repo del backend.
+
+### Orari da definire e calendario
+
+Il blocco `schedule` del JSON contiene date e orari (`ceremonyTime`, `partyTime`,
+`busDepartureTime`, `busReturnTime`; vuoto = da definire). Nei testi si usano segnaposto del
+tipo `{partyTime|Inizio ore $.|Orario da confermare.}` (con orario: 2° pezzo, `$` = orario;
+senza: 3° pezzo) risolti dal server, dalla PWA in locale e dal codegen Android. Quando decidi
+l'orario compila `schedule` e tutte le frasi si aggiornano. Il pulsante **📅 Aggiungi al
+calendario** nell'intestazione apre `GET /api/event/calendar.ics` (seduta + festa) o, in
+modalità demo, genera il file nel browser.
 
 ## Pubblicazione
 

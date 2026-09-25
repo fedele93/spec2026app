@@ -6,7 +6,7 @@
 // In modalità server i testi arrivano già risolti da GET /api/event; qui servono per il
 // fallback offline (shared/event-data.json). Risolvere due volte non cambia nulla.
 
-export const SCHEDULE_KEYS = ["ceremonyDate", "ceremonyTime", "partyDate", "partyTime", "busDepartureTime", "busReturnTime"];
+export const SCHEDULE_KEYS = ["ceremonyDate", "ceremonyTime", "partyDate", "partyTime", "partyEndTime", "busDepartureTime", "busReturnTime"];
 const PLACEHOLDER = /\{(\w+)(?:\|([^|}]*))?(?:\|([^}]*))?\}/g;
 
 export function getSchedule(ev) {
@@ -43,7 +43,7 @@ const pad = (n) => String(n).padStart(2, "0");
 const esc = (s) => String(s).replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 const parseTime = (s) => { const m = /^(\d{1,2})[:.](\d{2})$/.exec(s || ""); return m ? [Number(m[1]), Number(m[2])] : null; };
 
-function vevent(uid, summary, location, description, dateIso, timeStr, hours, url) {
+function vevent(uid, summary, location, description, dateIso, timeStr, hours, url, endStr = "") {
   const [y, mo, d] = dateIso.split("-").map(Number);
   const lines = ["BEGIN:VEVENT", `UID:${uid}`, "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")];
   const t = parseTime(timeStr);
@@ -53,7 +53,9 @@ function vevent(uid, summary, location, description, dateIso, timeStr, hours, ur
     lines.push(`DTEND;VALUE=DATE:${next.getUTCFullYear()}${pad(next.getUTCMonth() + 1)}${pad(next.getUTCDate())}`);
   } else {
     const start = new Date(y, mo - 1, d, t[0], t[1]);
-    const end = new Date(start.getTime() + hours * 3600000);
+    const te = parseTime(endStr);
+    let end = te ? new Date(y, mo - 1, d, te[0], te[1]) : new Date(start.getTime() + hours * 3600000);
+    if (end <= start) end = new Date(end.getTime() + 24 * 3600000); // fine "prima" dell'inizio = giorno dopo (21:30 -> 03:00)
     const fmt = (x) => `${x.getFullYear()}${pad(x.getMonth() + 1)}${pad(x.getDate())}T${pad(x.getHours())}${pad(x.getMinutes())}00`;
     lines.push(`DTSTART;TZID=Europe/Rome:${fmt(start)}`, `DTEND;TZID=Europe/Rome:${fmt(end)}`);
   }
@@ -74,7 +76,7 @@ export function buildIcs(ev, url = "") {
   if (sch.ceremonyDate) lines = lines.concat(vevent("neuroparty-seduta@neurospec", "Seduta di Specializzazione in Neurologia",
     seduta.address, resolveText(seduta.description || "", sch), sch.ceremonyDate, sch.ceremonyTime, 3, url));
   if (sch.partyDate) lines = lines.concat(vevent("neuroparty-festa@neurospec", "Festa di Specializzazione in Neurologia",
-    festa.address, resolveText(festa.description || "", sch), sch.partyDate, sch.partyTime, 5, url));
+    festa.address, resolveText(festa.description || "", sch), sch.partyDate, sch.partyTime, 5, url, sch.partyEndTime));
   lines.push("END:VCALENDAR");
   return lines.join("\r\n") + "\r\n";
 }

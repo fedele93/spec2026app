@@ -21,7 +21,7 @@ with open(SRC, encoding="utf-8") as f:
 # {partyTime}                 -> orario oppure "da definire"
 # {partyTime|testo}           -> orario oppure "testo"
 # {partyTime|Ore $.|Da def.}  -> con orario il 2° pezzo ($ = orario), senza il 3°
-SCHEDULE_KEYS = ("ceremonyDate", "ceremonyTime", "partyDate", "partyTime", "busDepartureTime", "busReturnTime")
+SCHEDULE_KEYS = ("ceremonyDate", "ceremonyTime", "partyDate", "partyTime", "partyEndTime", "busDepartureTime", "busReturnTime")
 SCHEDULE = {k: str((d.get("schedule") or {}).get(k) or "").strip() for k in SCHEDULE_KEYS}
 PLACEHOLDER = re.compile(r"\{(\w+)(?:\|([^|}]*))?(?:\|([^}]*))?\}")
 
@@ -244,6 +244,7 @@ out.append("    val ceremonyDate: String,")
 out.append("    val ceremonyTime: String,")
 out.append("    val partyDate: String,")
 out.append("    val partyTime: String,")
+out.append("    val partyEndTime: String,")
 out.append("    val busDepartureTime: String,")
 out.append("    val busReturnTime: String")
 out.append(")")

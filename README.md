@@ -93,7 +93,9 @@ Viene servita direttamente dal backend (Caddy) allo stesso sottodominio dell'API
   - `NotificationScheduleTest`: parsing della data "Programma invio" delle notifiche
 - **PWA** (Playwright end-to-end contro il backend): `node pwa/tests/e2e.mjs` (vedi `pwa/README.md`)
 - **Dati**: `python3 tools/check-event-data.py` controlla `event-data.json` (id, segnaposto orari,
-  coordinate, IBAN; con `--strict` gli IBAN segnaposto bloccano la release);
+  coordinate, IBAN; con `--strict` gli IBAN segnaposto sono un errore: la release lo usa solo
+  se la variabile di repository `STRICT_EVENT_DATA` vale `true`, così finché l'app serve per i
+  test si può pubblicare anche con IBAN finti);
   `python3 tools/gen-snapshot-fixture.py` rigenera il fixture `snapshot.json` dal backend
   (`--check` in CI verifica che sia allineato)
 - La CI (`.github/workflows/ci.yml`) esegue tutto ad ogni push/PR e pubblica l'APK di debug e

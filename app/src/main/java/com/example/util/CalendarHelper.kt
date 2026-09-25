@@ -9,7 +9,8 @@ import java.util.Calendar
 /**
  * Apre l'app Calendario del telefono con l'evento precompilato (nessuna dipendenza Google:
  * è un semplice Intent ACTION_INSERT). Date in formato "AAAA-MM-GG", orario "HH:MM" oppure
- * vuoto = evento di tutto il giorno.
+ * vuoto = evento di tutto il giorno. endTime opzionale ("HH:MM"): se è prima dell'inizio
+ * l'evento finisce il giorno dopo (es. 21:30 -> 03:00); altrimenti si usa durationHours.
  */
 object CalendarHelper {
 
@@ -20,22 +21,29 @@ object CalendarHelper {
         description: String,
         dateIso: String,
         time: String,
-        durationHours: Int
+        durationHours: Int,
+        endTime: String = ""
     ) {
         val parts = dateIso.split("-").mapNotNull { it.toIntOrNull() }
         if (parts.size != 3) {
             Toast.makeText(context, "Data dell'evento non ancora disponibile", Toast.LENGTH_SHORT).show()
             return
         }
-        val hm = Regex("^(\\d{1,2})[:.](\\d{2})$").find(time.trim())?.groupValues?.let { it[1].toInt() to it[2].toInt() }
+        val timeRe = Regex("^(\\d{1,2})[:.](\\d{2})$")
+        val hm = timeRe.find(time.trim())?.groupValues?.let { it[1].toInt() to it[2].toInt() }
+        val endHm = timeRe.find(endTime.trim())?.groupValues?.let { it[1].toInt() to it[2].toInt() }
         val start = Calendar.getInstance().apply {
             clear()
             set(parts[0], parts[1] - 1, parts[2], hm?.first ?: 0, hm?.second ?: 0, 0)
         }
-        val endMillis = if (hm == null) {
-            start.timeInMillis + 24L * 3600_000L
-        } else {
-            start.timeInMillis + durationHours * 3600_000L
+        val endMillis = when {
+            hm == null -> start.timeInMillis + 24L * 3600_000L
+            endHm != null -> {
+                val end = (start.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, endHm.first); set(Calendar.MINUTE, endHm.second) }
+                if (end.timeInMillis <= start.timeInMillis) end.add(Calendar.DAY_OF_MONTH, 1)
+                end.timeInMillis
+            }
+            else -> start.timeInMillis + durationHours * 3600_000L
         }
         val intent = Intent(Intent.ACTION_INSERT)
             .setData(CalendarContract.Events.CONTENT_URI)

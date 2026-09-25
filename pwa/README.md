@@ -75,7 +75,7 @@ stessa struttura da `GET /api/event`: aggiorna anche `seed/event-data.json` nel 
 ### Orari da definire e calendario
 
 Il blocco `schedule` del JSON contiene date e orari (`ceremonyTime`, `partyTime`,
-`busDepartureTime`, `busReturnTime`; vuoto = da definire). Nei testi si usano segnaposto del
+`partyEndTime`, `busDepartureTime`, `busReturnTime`; vuoto = da definire). Nei testi si usano segnaposto del
 tipo `{partyTime|Inizio ore $.|Orario da confermare.}` (con orario: 2° pezzo, `$` = orario;
 senza: 3° pezzo) risolti dal server, dalla PWA in locale e dal codegen Android. Quando decidi
 l'orario compila `schedule` e tutte le frasi si aggiornano. Il pulsante **📅 Aggiungi al

@@ -267,7 +267,8 @@ fun ProgramAndEventScreen(
                                     description = festa?.description ?: "",
                                     dateIso = sch.partyDate,
                                     time = sch.partyTime,
-                                    durationHours = 5
+                                    durationHours = 5,
+                                    endTime = sch.partyEndTime
                                 )
                             }
                         }

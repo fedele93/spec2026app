@@ -12,7 +12,8 @@ object SeedData {
         ceremonyDate = "2026-11-09",
         ceremonyTime = "",
         partyDate = "2026-11-13",
-        partyTime = "",
+        partyTime = "21:30",
+        partyEndTime = "03:00",
         busDepartureTime = "",
         busReturnTime = "",
     )
@@ -57,12 +58,12 @@ object SeedData {
             id = "festa",
             title = "Festa di Specializzazione",
             subtitle = "Aperitivo, Cena, Dj Set & Torta",
-            timeLabel = "Venerdì 13 novembre - ora da definire",
+            timeLabel = "Venerdì 13 novembre - dalle 21:30 alle 03:00",
             address = "Il Giardino dei Tempi - Orto Botanico, Via Giovanni Amendola 247, 70126 Bari",
             latitude = 41.0985,
             longitude = 16.8945,
             iconType = "PARTY",
-            description = "La festa di venerdì 13 novembre si terrà al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari), tra il verde dell'orto botanico e le sale per eventi. Orario da confermare. Dress code: Elegant Chic."
+            description = "La festa di venerdì 13 novembre si terrà al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari), tra il verde dell'orto botanico e le sale per eventi. Dalle ore 21:30 fino alle 03:00. Dress code: Elegant Chic."
         ),
     )
 
@@ -95,10 +96,10 @@ object SeedData {
             hasMore = true
         ),
         ProgramTimelineEntry(
-            time = "Ven 13",
+            time = "Ven 13 ore 21:30",
             title = "Festa di Specializzazione",
             location = "Il Giardino dei Tempi - Orto Botanico, Bari",
-            details = "Venerdì 13 novembre al Giardino dei Tempi (Via Giovanni Amendola 247, 70126 Bari): aperitivo, cena a buffet e brindisi tutti insieme per festeggiare i 9 neo-neurologi. L'orario sarà comunicato a breve.",
+            details = "Venerdì 13 novembre al Giardino dei Tempi (Via Giovanni Amendola 247, 70126 Bari): aperitivo, cena a buffet e brindisi tutti insieme per festeggiare i 9 neo-neurologi. Dalle ore 21:30 fino alle 03:00.",
             hasMore = true
         ),
         ProgramTimelineEntry(
@@ -523,7 +524,7 @@ object SeedData {
         ),
         EventNotificationEntity(
             title = "🎉 Festa di Venerdì 13 Novembre",
-            message = "La festa di specializzazione si terrà venerdì 13 novembre al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). L'orario sarà comunicato a breve!",
+            message = "La festa di specializzazione si terrà venerdì 13 novembre al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, Bari), dalle 21:30 alle 03:00. Vi aspettiamo!",
             category = "Festa",
             timestamp = (System.currentTimeMillis() - 7200000L),
             isRead = false
@@ -551,6 +552,7 @@ data class EventSchedule(
     val ceremonyTime: String,
     val partyDate: String,
     val partyTime: String,
+    val partyEndTime: String,
     val busDepartureTime: String,
     val busReturnTime: String
 )

@@ -16,7 +16,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "pwa", "shared", "event-data.json")
-SCHEDULE_KEYS = {"ceremonyDate", "ceremonyTime", "partyDate", "partyTime", "busDepartureTime", "busReturnTime"}
+SCHEDULE_KEYS = {"ceremonyDate", "ceremonyTime", "partyDate", "partyTime", "partyEndTime", "busDepartureTime", "busReturnTime"}
 PLACEHOLDER = re.compile(r"\{(\w+)(?:\|[^}]*)?\}")
 IBAN_RE = re.compile(r"^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$")
 

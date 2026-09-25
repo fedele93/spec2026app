@@ -38,8 +38,11 @@ jobs:
             gradle wrapper --gradle-version 9.3.1 --distribution-type bin
           fi
 
-      - name: Controllo event-data.json (blocca la release con IBAN segnaposto)
-        run: python3 tools/check-event-data.py --strict
+      # Con la variabile di repository STRICT_EVENT_DATA=true (Settings → Secrets and variables →
+      # Actions → Variables) gli IBAN segnaposto bloccano la release; senza, solo un avviso
+      # (utile finché l'app serve per i test).
+      - name: Controllo event-data.json (IBAN segnaposto = avviso, o errore con STRICT_EVENT_DATA=true)
+        run: python3 tools/check-event-data.py ${{ vars.STRICT_EVENT_DATA == 'true' && '--strict' || '' }}
 
       - name: Decode release keystore
         env:

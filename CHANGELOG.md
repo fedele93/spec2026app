@@ -22,8 +22,9 @@ controllo dei dati, backup e wrapper Gradle.
 - Export CSV di invitati e navetta dalla PWA (⚙️ Impostazioni, solo organizzatori) e
   `GET /api/export/{guests,bus}.csv`.
 - `tools/check-event-data.py`: controllo di `event-data.json` (id, segnaposto orari, coordinate,
-  destinatari degli auguri, IBAN). In CI avvisa; nel workflow di release `--strict` blocca la
-  pubblicazione finché restano IBAN segnaposto. Il backend scrive lo stesso avviso nel log.
+  destinatari degli auguri, IBAN). In CI avvisa; nel workflow di release blocca la pubblicazione
+  con IBAN segnaposto solo se la variabile di repository `STRICT_EVENT_DATA` vale `true`.
+  Il backend scrive lo stesso avviso nel log.
 - `tools/gen-snapshot-fixture.py`: rigenera `snapshot.json` dal backend; la CI verifica con
   `--check` che il fixture sia allineato a JSON e backend.
 - `tools/bootstrap-gradlew.sh` per creare e committare il Gradle wrapper; la CI genera il
@@ -34,6 +35,8 @@ controllo dei dati, backup e wrapper Gradle.
 
 ### Modificato
 
+- Orario della festa confermato: **dalle 21:30 alle 03:00** (`schedule.partyTime` e nuovo
+  `schedule.partyEndTime`, usato anche dal calendario .ics e dal chip calendario Android).
 - Fixture `snapshot.json` rigenerato (campo `scheduledAt` nelle notifiche).
 - Cache del service worker `v2.3.0`; `versionName` 1.4.0 → 1.5.0, `versionCode` 6 → 7.
 

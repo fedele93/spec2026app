@@ -37,8 +37,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Generate Gradle wrapper
-        run: gradle wrapper --gradle-version 9.3.1 --distribution-type bin
+      - name: Generate Gradle wrapper (solo se non è committato nel repo)
+        run: |
+          if [ ! -x ./gradlew ] || [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            gradle wrapper --gradle-version 9.3.1 --distribution-type bin
+          fi
+
+      - name: Controllo event-data.json (IBAN segnaposto = avviso)
+        run: python3 tools/check-event-data.py
 
       - name: Codegen check (SeedData.kt sincronizzato col JSON)
         run: |
@@ -84,9 +90,14 @@ jobs:
       - name: Checkout app
         uses: actions/checkout@v4
 
-      - name: Checkout backend (repo neuroparty-backend, oppure branch "backend" di questo repo)
+      - name: Checkout backend (stesso branch di questo repo se esiste, altrimenti main)
         run: |
-          git clone --depth 1 https://github.com/fedele93/neuroparty-backend.git backend \
+          # App e backend evolvono insieme: se nel repo del backend esiste un branch con lo stesso
+          # nome di questo (es. claude/xyz), i test usano quello; altrimenti main.
+          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          git clone --depth 1 --branch "$BRANCH" --single-branch https://github.com/fedele93/neuroparty-backend.git backend \
+            && echo "Backend: branch $BRANCH" \
+            || git clone --depth 1 https://github.com/fedele93/neuroparty-backend.git backend \
             || git clone --depth 1 --branch backend --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" backend
           ls backend
 
@@ -104,6 +115,11 @@ jobs:
         run: |
           for f in pwa/js/*.js pwa/sw.js pwa/tests/*.mjs; do node --check "$f"; done
           python3 -c "import json; json.load(open('pwa/shared/event-data.json')); json.load(open('pwa/manifest.webmanifest'))"
+
+      - name: Fixture snapshot.json dei test Android allineato al backend
+        run: |
+          pip install -r backend/requirements-dev.txt
+          python3 tools/gen-snapshot-fixture.py --backend backend --check
 
       - name: Avvia backend locale
         run: |

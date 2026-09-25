@@ -98,7 +98,7 @@ fun InteractiveMapCanvas(
                     drawLine(Color(0x1A38BDF8), Offset(0f, y.toFloat()), Offset(canvasWidth, y.toFloat()), strokeWidth = 1f)
                 }
 
-                // Highway / Route path connecting Policlinico -> Fermata Bus -> Villa
+                // Highway / Route path connecting Policlinico -> Fermata Bus -> Giardino dei Tempi
                 val p1 = Offset(canvasWidth * 0.22f, canvasHeight * 0.32f)
                 val p2 = Offset(canvasWidth * 0.38f, canvasHeight * 0.52f)
                 val p3 = Offset(canvasWidth * 0.78f, canvasHeight * 0.75f)
@@ -188,7 +188,7 @@ fun InteractiveMapCanvas(
                                 text = when (point.id) {
                                     "seduta" -> "Seduta Laurea"
                                     "bus" -> "Fermata Bus"
-                                    else -> "Villa Festa"
+                                    else -> "Giardino dei Tempi"
                                 },
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal

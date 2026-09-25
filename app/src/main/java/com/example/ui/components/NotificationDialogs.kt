@@ -34,18 +34,22 @@ import java.util.*
 @Composable
 fun SendPushNotificationDialog(
     onDismiss: () -> Unit,
-    onSendNotification: (title: String, body: String, category: String) -> Unit
+    onSendNotification: (title: String, body: String, category: String, sendAt: Long?) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var body by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Seduta") }
+    // Programmazione opzionale: "gg/mm hh:mm" (anno corrente) oppure "gg/mm/aaaa hh:mm"
+    var whenText by remember { mutableStateOf("") }
+    val sendAt = remember(whenText) { parseSendAt(whenText) }
+    val whenInvalid = whenText.isNotBlank() && sendAt == null
 
     val categories = listOf("Seduta", "Festa", "Navetta", "Organizzazione")
 
     val quickTemplates = listOf(
         Pair("🎓 Seduta del 9 Novembre!", "La seduta di proclamazione è in corso all'Aula Magna \"G. De Benedictis\" del Policlinico di Bari."),
         Pair("🚌 Partenza Navetta Imminente", "L'autobus è in sosta al Piazzale Principale del Policlinico di Bari. Partenza tra 15 minuti!"),
-        Pair("🥂 Benvenuti alla Festa!", "Venerdì 13 novembre: aperitivo di benvenuto aperto! Vi aspettiamo per il primo brindisi insieme."),
+        Pair("🥂 Benvenuti alla Festa!", "Venerdì 13 novembre al Giardino dei Tempi: aperitivo di benvenuto aperto! Vi aspettiamo per il primo brindisi insieme."),
         Pair("🎂 Taglio della Torta & Dj Set", "Tutti attorno alla torta di specializzazione per il momento più atteso della serata!"),
         Pair("📸 Caricate le vostre foto!", "Aprite la sezione Foto dell'app e condividete gli scatti più belli con i neo-specialisti!")
     )
@@ -159,22 +163,41 @@ fun SendPushNotificationDialog(
                         .fillMaxWidth()
                         .testTag("notification_body_input")
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = whenText,
+                    onValueChange = { whenText = it },
+                    label = { Text("Programma invio (es. 13/11 19:45) - opzionale") },
+                    singleLine = true,
+                    isError = whenInvalid,
+                    supportingText = {
+                        Text(
+                            if (whenInvalid) "Formato: gg/mm hh:mm oppure gg/mm/aaaa hh:mm"
+                            else "Vuoto = invio immediato. Con il server la notifica parte da sola all'ora indicata."
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("notification_when_input")
+                )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (title.isNotBlank() && body.isNotBlank()) {
-                        onSendNotification(title, body, selectedCategory)
+                    if (title.isNotBlank() && body.isNotBlank() && !whenInvalid) {
+                        onSendNotification(title, body, selectedCategory, sendAt)
                         onDismiss()
                     }
                 },
-                enabled = title.isNotBlank() && body.isNotBlank(),
+                enabled = title.isNotBlank() && body.isNotBlank() && !whenInvalid,
                 modifier = Modifier.testTag("submit_notification_button")
             ) {
                 Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Invia Push")
+                Text(if (sendAt != null) "Programma" else "Invia Push")
             }
         },
         dismissButton = {
@@ -293,4 +316,17 @@ fun NotificationsHistoryDialog(
             }
         }
     )
+}
+
+/** "13/11 19:45" o "13/11/2026 19:45" -> timestamp in ms nel fuso del telefono; null se non valido. */
+internal fun parseSendAt(text: String, now: Calendar = Calendar.getInstance()): Long? {
+    val m = Regex("^\\s*(\\d{1,2})/(\\d{1,2})(?:/(\\d{4}))?\\s+(\\d{1,2})[:.](\\d{2})\\s*$").find(text) ?: return null
+    val (d, mo, y, h, mi) = m.destructured
+    val day = d.toInt(); val month = mo.toInt(); val hour = h.toInt(); val minute = mi.toInt()
+    if (day !in 1..31 || month !in 1..12 || hour !in 0..23 || minute !in 0..59) return null
+    val cal = Calendar.getInstance().apply {
+        clear()
+        set(y.toIntOrNull() ?: now.get(Calendar.YEAR), month - 1, day, hour, minute, 0)
+    }
+    return cal.timeInMillis
 }

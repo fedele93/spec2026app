@@ -32,8 +32,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Generate Gradle wrapper
-        run: gradle wrapper --gradle-version 9.3.1 --distribution-type bin
+      - name: Generate Gradle wrapper (solo se non è committato nel repo)
+        run: |
+          if [ ! -x ./gradlew ] || [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            gradle wrapper --gradle-version 9.3.1 --distribution-type bin
+          fi
+
+      - name: Controllo event-data.json (blocca la release con IBAN segnaposto)
+        run: python3 tools/check-event-data.py --strict
 
       - name: Decode release keystore
         env:

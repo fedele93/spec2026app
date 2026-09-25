@@ -36,6 +36,7 @@ import com.example.ui.theme.LaurelGoldDark
 import com.example.ui.theme.NeuroDarkNavy
 import com.example.ui.theme.NeuroPrimary
 import com.example.ui.theme.SynapseCyan
+import com.example.util.CalendarHelper
 
 @Composable
 fun ProgramAndEventScreen(
@@ -232,6 +233,44 @@ fun ProgramAndEventScreen(
                                 fontWeight = FontWeight.Medium
                             )
                         }
+
+                        // Aggiungi seduta e festa al calendario del telefono (Intent di sistema)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(top = 12.dp)
+                        ) {
+                            val sch = SeedData.schedule
+                            val seduta = SeedData.mapPoints.firstOrNull { it.id == "seduta" }
+                            val festa = SeedData.mapPoints.firstOrNull { it.id == "festa" }
+                            CalendarChip(
+                                label = "📅 Seduta 9 nov",
+                                tag = "calendar_ceremony_button"
+                            ) {
+                                CalendarHelper.addEvent(
+                                    context,
+                                    title = "Seduta di Specializzazione in Neurologia",
+                                    location = seduta?.address ?: SeedData.programLocationLabel,
+                                    description = seduta?.description ?: "",
+                                    dateIso = sch.ceremonyDate,
+                                    time = sch.ceremonyTime,
+                                    durationHours = 3
+                                )
+                            }
+                            CalendarChip(
+                                label = "📅 Festa 13 nov",
+                                tag = "calendar_party_button"
+                            ) {
+                                CalendarHelper.addEvent(
+                                    context,
+                                    title = "Festa di Specializzazione in Neurologia",
+                                    location = festa?.address ?: "",
+                                    description = festa?.description ?: "",
+                                    dateIso = sch.partyDate,
+                                    time = sch.partyTime,
+                                    durationHours = 5
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -381,8 +420,8 @@ fun ProgramAndEventScreen(
     if (showSendPushDialog) {
         SendPushNotificationDialog(
             onDismiss = { showSendPushDialog = false },
-            onSendNotification = { title, body, category ->
-                viewModel.sendBroadcastNotification(context, title, body, category)
+            onSendNotification = { title, body, category, sendAt ->
+                viewModel.sendBroadcastNotification(context, title, body, category, sendAt)
             }
         )
     }
@@ -511,5 +550,26 @@ fun TimelineItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CalendarChip(label: String, tag: String, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White.copy(alpha = 0.14f),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .testTag(tag)
+    ) {
+        Text(
+            text = label,
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
+        )
     }
 }

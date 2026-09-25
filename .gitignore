@@ -20,3 +20,8 @@ pwa/tests/screenshots/
 package.json
 package-lock.json
 node_modules/
+
+# File creati dagli script Python in tools/
+__pycache__/
+# cartella dati del backend (se avviato per errore da qui)
+data/

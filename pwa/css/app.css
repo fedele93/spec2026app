@@ -118,6 +118,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); b
 .btn-ghost { background: var(--outline); color: var(--on-surface); }
 .btn:disabled { opacity: .5; }
 .btn-row { display: flex; gap: 8px; }
+details.catering summary { cursor: pointer; list-style: none; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+details.catering summary::-webkit-details-marker { display: none; }
+details.catering summary::before { content: "▸"; color: var(--primary); }
+details.catering[open] summary::before { content: "▾"; }
+.hero .cal-btn { display: inline-block; width: auto; margin-top: 12px; padding: 8px 14px; font-size: 13px; text-decoration: none; background: rgba(255,255,255,.14); color: #fff; }
 
 /* status pills */
 .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }

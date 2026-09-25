@@ -5,11 +5,12 @@
 //   modalità demo con IndexedDB (dati solo su questo dispositivo), come l'app Android senza rete.
 import { getAll, count, add, put, bulkAdd, del, getMeta, setMeta } from "./db.js";
 import { api, ApiError, getApiBase } from "./api.js";
+import { getSchedule, resolvePlaceholders } from "./schedule.js";
 
 export const RsvpStatus = { CONFIRMED: "CONFIRMED", PENDING: "PENDING", DECLINED: "DECLINED" };
 
 const EMPTY_EVENT = {
-  meta: { maxBusSeats: 54 }, graduates: [],
+  meta: { maxBusSeats: 54 }, schedule: {}, graduates: [],
   program: { badge: "", title: "", subtitle: "", dateLabel: "", locationLabel: "", timeline: [] },
   busSchedule: { subtitle: "", andata: {}, ritorno: {}, pickupStops: [] }, mapPoints: []
 };
@@ -20,14 +21,21 @@ export let GRADUATES = [];
 export let MAP_POINTS = [];
 export let PROGRAM = EMPTY_EVENT.program;
 export let BUS_SCHEDULE = EMPTY_EVENT.busSchedule;
+export let SCHEDULE = getSchedule(EMPTY_EVENT);
+export let EVENT = EMPTY_EVENT; // evento completo con i testi già risolti (per il calendario)
 
 function applyEvent(ev) {
   const e = { ...EMPTY_EVENT, ...(ev || {}) };
+  SCHEDULE = getSchedule(e);
+  // Segnaposto degli orari ({partyTime|...}): già risolti dal server, da risolvere per il JSON locale.
+  EVENT = { ...e, program: resolvePlaceholders(e.program ?? EMPTY_EVENT.program, SCHEDULE),
+    busSchedule: resolvePlaceholders(e.busSchedule ?? EMPTY_EVENT.busSchedule, SCHEDULE),
+    mapPoints: resolvePlaceholders(e.mapPoints ?? [], SCHEDULE) };
   MAX_BUS_SEATS = e.meta?.maxBusSeats ?? 54;
   GRADUATES = e.graduates ?? [];
-  MAP_POINTS = e.mapPoints ?? [];
-  PROGRAM = e.program ?? EMPTY_EVENT.program;
-  BUS_SCHEDULE = e.busSchedule ?? EMPTY_EVENT.busSchedule;
+  MAP_POINTS = EVENT.mapPoints;
+  PROGRAM = EVENT.program;
+  BUS_SCHEDULE = EVENT.busSchedule;
 }
 
 async function loadLocalEventFile() {
@@ -227,7 +235,7 @@ const LocalRepo = {
   },
 
   allNotifications: () => getAll("notifications"),
-  addNotification: (n) => add("notifications", { ...n, timestamp: Date.now(), isRead: false }).then(notify),
+  addNotification: ({ sendAt, ...n }) => add("notifications", { ...n, timestamp: Date.now(), isRead: false }).then(notify), // niente programmazione in demo
   unreadCount: async () => (await getAll("notifications")).filter((n) => !n.isRead).length,
   markAllRead: async () => {
     const all = await getAll("notifications");

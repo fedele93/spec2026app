@@ -70,6 +70,15 @@ l'app è aperta, altrimenti da un controllo periodico in background (WorkManager
 perché l'app non usa Firebase per restare compatibile con F-Droid). La PWA riceve invece vere
 notifiche Web Push anche a browser chiuso.
 
+### Strumenti per gli organizzatori
+
+- **Notifiche programmate**: nel dialogo "Invia notifica" (app e PWA) si può indicare data e
+  ora; il server pubblica e invia in push da solo al momento giusto (partenza navetta,
+  taglio della torta). Nella PWA le notifiche in attesa si possono annullare.
+- **Riepilogo per il catering** nella tab Invitati: coperti per categoria ed esigenze
+  alimentari con i nomi; `GET /api/guests/summary` dà gli stessi numeri in JSON.
+- **Export CSV** di invitati e navetta (PWA → ⚙️ Impostazioni, con il token organizzatore).
+
 ## PWA (iPhone e web)
 
 La cartella `pwa/` contiene la versione web installabile: vedi [pwa/README.md](pwa/README.md).
@@ -81,7 +90,12 @@ Viene servita direttamente dal backend (Caddy) allo stesso sottodominio dell'API
   - `SnapshotParsingTest`: i modelli Kotlin leggono una risposta reale di `/api/snapshot`
   - `EventRepositoryRoomTest`: Room in memoria, dati demo, contributi, sincronizzazione snapshot
   - `BusCapacityTest`: regola dei 54 posti
+  - `NotificationScheduleTest`: parsing della data "Programma invio" delle notifiche
 - **PWA** (Playwright end-to-end contro il backend): `node pwa/tests/e2e.mjs` (vedi `pwa/README.md`)
+- **Dati**: `python3 tools/check-event-data.py` controlla `event-data.json` (id, segnaposto orari,
+  coordinate, IBAN; con `--strict` gli IBAN segnaposto bloccano la release);
+  `python3 tools/gen-snapshot-fixture.py` rigenera il fixture `snapshot.json` dal backend
+  (`--check` in CI verifica che sia allineato)
 - La CI (`.github/workflows/ci.yml`) esegue tutto ad ogni push/PR e pubblica l'APK di debug e
   gli screenshot della PWA come artifact.
 
@@ -89,6 +103,12 @@ Viene servita direttamente dal backend (Caddy) allo stesso sottodominio dell'API
 
 Il progetto usa Gradle (distribuzione 9.3.1). La build di debug non richiede
 keystore; la build di release è configurata per usare un keystore firmato.
+
+Il repo non contiene ancora lo script `gradlew`: la prima volta crealo con
+`tools/bootstrap-gradlew.sh` (usa Gradle se installato, altrimenti lo scarica) e committa
+`gradlew`, `gradlew.bat` e `gradle/wrapper/gradle-wrapper.jar`. Da quel momento chiunque
+cloni il repo compila senza installare Gradle; la CI usa il wrapper committato e lo genera
+solo se manca.
 
 ```bash
 # Debug APK

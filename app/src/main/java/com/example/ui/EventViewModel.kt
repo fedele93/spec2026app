@@ -428,9 +428,12 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         context: Context,
         title: String,
         body: String,
-        category: String
+        category: String,
+        sendAt: Long? = null
     ) {
-        runAction("Notifica inviata a tutti ✓") {
+        // La programmazione esiste solo con il server: in locale la notifica parte subito.
+        val scheduled = sendAt != null && repository.remote != null && sendAt > System.currentTimeMillis() + 30_000L
+        runAction(if (scheduled) "Notifica programmata: partirà da sola all'ora indicata ⏳" else "Notifica inviata a tutti ✓") {
             val notification = EventNotificationEntity(
                 title = title.trim(),
                 message = body.trim(),
@@ -438,7 +441,8 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
                 timestamp = System.currentTimeMillis(),
                 isRead = false
             )
-            val id = repository.insertNotification(notification)
+            val id = repository.insertNotification(notification, if (scheduled) sendAt else null)
+            if (scheduled) return@runAction  // niente notifica locale: la manderà il server a tempo debito
             if (repository.remote != null) {
                 // già mostrata da noi: non rifarla scattare al prossimo polling
                 prefs.lastSeenNotificationTs = maxOf(prefs.lastSeenNotificationTs, System.currentTimeMillis())

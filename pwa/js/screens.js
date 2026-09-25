@@ -2,7 +2,7 @@
 import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, reconnect } from "./data.js";
 import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
-import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getClientId } from "./api.js";
+import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getClientId, downloadCsv } from "./api.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -196,6 +196,9 @@ function sendPushDialog() {
     <div class="field"><label>Titolo</label><input id="p-title" placeholder="Titolo notifica (es. 🚌 Partenza)"></div>
     <div class="field"><label>Messaggio</label><textarea id="p-body" rows="3" placeholder="Messaggio / dettagli per gli invitati"></textarea></div>
     <div class="field"><label>Categoria</label><select id="p-cat">${cats.map((c) => `<option>${c}</option>`).join("")}</select></div>
+    ${serverMode ? `<div class="field"><label>Programma l'invio (opzionale)</label><input id="p-when" type="datetime-local" min="${localDateTimeValue(Date.now())}">
+      <div class="muted" style="font-size:11px;margin-top:4px;">Vuoto = invio immediato. Con una data futura la notifica parte da sola all'ora indicata (es. partenza navetta, taglio della torta).</div></div>
+    <div id="p-scheduled"></div>` : ""}
     <button class="btn btn-primary" id="p-send" style="margin-top:12px;">Invia Push</button>`,
     (bg, close) => {
       bg.querySelectorAll("[data-tpl]").forEach((c) => c.onclick = () => {
@@ -204,21 +207,50 @@ function sendPushDialog() {
         bg.querySelector("#p-body").value = t[1];
         bg.querySelector("#p-cat").value = t[2];
       });
+      const whenInput = bg.querySelector("#p-when");
+      const paintScheduled = async () => {
+        const box = bg.querySelector("#p-scheduled");
+        if (!box || !isAdmin()) return;
+        let list = [];
+        try { list = await api.scheduledNotifications(); } catch { return; }
+        box.innerHTML = list.length ? `<div class="muted" style="margin:8px 0 4px;">⏳ Programmate (${list.length}):</div>` + list.map((n) => `
+          <div class="row" style="align-items:center;gap:8px;" data-sched="${n.id}">
+            <div class="grow"><div class="name" style="font-size:13px;">${esc(n.title)}</div><div class="muted" style="font-size:11px;">${esc(fmtDateTime(n.scheduledAt))} · ${esc(n.category)}</div></div>
+            <button class="btn btn-ghost" style="width:auto;padding:6px 10px;" data-cancel="${n.id}">Annulla</button></div>`).join("") : "";
+        box.querySelectorAll("[data-cancel]").forEach((b) => b.onclick = async () => {
+          if (await tryAction(() => api.deleteNotification(Number(b.dataset.cancel)), "Notifica programmata annullata")) paintScheduled();
+        });
+      };
+      paintScheduled();
       bg.querySelector("#p-send").onclick = async () => {
         const title = bg.querySelector("#p-title").value.trim();
         const body = bg.querySelector("#p-body").value.trim();
         const category = bg.querySelector("#p-cat").value;
         if (!title || !body) { toast("Inserisci titolo e messaggio"); return; }
+        const sendAt = whenInput && whenInput.value ? new Date(whenInput.value).getTime() : null;
+        if (sendAt && sendAt < Date.now() - 60000) { toast("La data di invio è nel passato"); return; }
         const btn = bg.querySelector("#p-send"); btn.disabled = true;
-        const ok = await tryAction(() => Repo.addNotification({ title, message: body, category }));
+        const payload = { title, message: body, category };
+        if (sendAt) payload.sendAt = sendAt;
+        const ok = await tryAction(() => Repo.addNotification(payload));
         btn.disabled = false;
         if (!ok) return;
         if (!serverMode) await showLocalNotification(title, body);
         close();
-        toast(serverMode ? "Notifica inviata a tutti ✓" : "Notifica mostrata ✓");
+        toast(!serverMode ? "Notifica mostrata ✓" : sendAt ? `Notifica programmata per ${fmtDateTime(sendAt)} ⏳` : "Notifica inviata a tutti ✓");
         render();
       };
     });
+}
+
+// "2026-11-13T19:45" per <input type="datetime-local"> nel fuso del dispositivo
+function localDateTimeValue(ts) {
+  const d = new Date(ts);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fmtDateTime(ts) {
+  return new Date(ts).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
 function settingsDialog() {
@@ -232,9 +264,15 @@ function settingsDialog() {
     </div>
     <div class="field"><label>Token organizzatore (X-Admin-Token)</label><input id="s-token" type="password" value="${esc(getAdminToken())}" placeholder="Solo per gli organizzatori"></div>
     <div class="muted" style="margin-bottom:10px;">Con il token puoi inviare notifiche push a tutti e cancellare qualsiasi invitato o prenotazione.</div>
+    ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📄 Esporta per ristorante e autista</b>
+      <div class="muted" style="margin-bottom:8px;">File CSV (si aprono con Excel) con tutti gli invitati e le prenotazioni della navetta.</div>
+      <div class="btn-row"><button class="btn btn-ghost" id="s-exp-guests">Esporta invitati</button><button class="btn btn-ghost" id="s-exp-bus">Esporta navetta</button></div></div>` : ""}
     <div class="field"><label>URL del server (avanzato)</label><input id="s-api" value="${esc(localStorage.getItem("np.apiBase") || "")}" placeholder="vuoto = stesso dominio della PWA"></div>
     <div class="btn-row"><button class="btn btn-primary" id="s-save">Salva</button><button class="btn btn-ghost" id="s-test">Prova connessione</button></div>`,
     (bg, close) => {
+      const expG = bg.querySelector("#s-exp-guests"), expB = bg.querySelector("#s-exp-bus");
+      if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
+      if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
       bg.querySelector("#s-test").onclick = async () => {
         const prev = getApiBase();
         setApiBase(bg.querySelector("#s-api").value);
@@ -280,6 +318,7 @@ export async function rsvp(el) {
         ${statCard("In Attesa", pending.length, "da confermare", "#D97706")}
         ${statCard("Menu Speciali", special, "intolleranze/diete", "#0284C7")}
       </div>
+      ${cateringSummary(confirmed, pending)}
       <div class="card">
         <input id="g-search" placeholder="🔍 Cerca invitato o categoria..." value="${esc(query)}">
         <div class="chips" style="margin-top:10px;">
@@ -324,6 +363,35 @@ export async function rsvp(el) {
     el.querySelector("#add-guest").onclick = () => guestDialog(async () => { guests = await Repo.allGuests(); paint(); });
   }
   paint();
+}
+
+// Riepilogo per il ristorante: coperti per categoria ed esigenze alimentari con i nomi.
+// Stessa logica di GET /api/guests/summary nel backend (calcolata qui per funzionare anche offline/demo).
+const NO_DIET = new Set(["", "nessuna", "nessuna restrizione", "no", "-", "niente", "nessuno"]);
+function cateringSummary(confirmed, pending) {
+  const byCat = new Map();
+  for (const g of confirmed) {
+    const c = byCat.get(g.category) || { category: g.category, guests: 0, covers: 0 };
+    c.guests += 1; c.covers += g.guestsCount || 0; byCat.set(g.category, c);
+  }
+  const diets = new Map();
+  for (const g of confirmed) {
+    const note = (g.dietaryNotes || "").trim();
+    if (NO_DIET.has(note.toLowerCase())) continue;
+    const d = diets.get(note.toLowerCase()) || { note, guests: [], covers: 0 };
+    d.guests.push(g.fullName); d.covers += g.guestsCount || 0; diets.set(note.toLowerCase(), d);
+  }
+  const cats = [...byCat.values()].sort((a, b) => b.covers - a.covers);
+  const dts = [...diets.values()].sort((a, b) => b.covers - a.covers);
+  const pendingCovers = pending.reduce((s, g) => s + (g.guestsCount || 0), 0);
+  return `<details class="card catering" id="catering">
+    <summary><b>🍽️ Riepilogo per il catering</b> <span class="muted">· ${confirmed.reduce((s, g) => s + (g.guestsCount || 0), 0)} coperti confermati${pendingCovers ? ` (+${pendingCovers} in attesa)` : ""}</span></summary>
+    <div class="muted" style="margin:8px 0 4px;font-size:12px;"><b>Per categoria</b></div>
+    ${cats.length ? cats.map((c) => `<div class="row" style="padding:4px 0;"><div class="grow">${esc(c.category)}</div><div>${c.covers} coperti <span class="muted">(${c.guests} inv.)</span></div></div>`).join("") : '<div class="muted">Nessun confermato.</div>'}
+    <div class="muted" style="margin:10px 0 4px;font-size:12px;"><b>Esigenze alimentari</b></div>
+    ${dts.length ? dts.map((d) => `<div class="row" style="padding:4px 0;flex-direction:column;align-items:stretch;"><div><b>${esc(d.note)}</b> · ${d.covers} ${d.covers === 1 ? "persona" : "persone"}</div><div class="muted" style="font-size:12px;">${d.guests.map(esc).join(", ")}</div></div>`).join("") : '<div class="muted">Nessun menu speciale segnalato.</div>'}
+    <div class="muted" style="margin-top:8px;font-size:11px;">Gli organizzatori possono scaricare il CSV completo da ⚙️ Impostazioni.</div>
+  </details>`;
 }
 
 function statCard(title, value, sub, color) {

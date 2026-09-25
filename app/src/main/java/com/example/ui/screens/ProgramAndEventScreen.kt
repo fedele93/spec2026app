@@ -420,8 +420,8 @@ fun ProgramAndEventScreen(
     if (showSendPushDialog) {
         SendPushNotificationDialog(
             onDismiss = { showSendPushDialog = false },
-            onSendNotification = { title, body, category ->
-                viewModel.sendBroadcastNotification(context, title, body, category)
+            onSendNotification = { title, body, category, sendAt ->
+                viewModel.sendBroadcastNotification(context, title, body, category, sendAt)
             }
         )
     }

@@ -5,6 +5,38 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-09-25
+
+Strumenti per gli organizzatori: notifiche programmate, riepilogo catering, export CSV,
+controllo dei dati, backup e wrapper Gradle.
+
+### Aggiunto
+
+- Notifiche programmate: campo "Programma invio" nel dialogo notifiche (Android: `gg/mm hh:mm`,
+  PWA: selettore data/ora); il backend pubblica e invia in push all'ora indicata
+  (`sendAt` nel POST, `GET /api/notifications/scheduled`, `DELETE /api/notifications/{id}`).
+  Nella PWA le notifiche in attesa sono elencate nel dialogo e annullabili.
+- Riepilogo per il catering nella tab Invitati (Android `CateringSummaryCard`, PWA riquadro
+  espandibile): coperti per categoria ed esigenze alimentari con i nomi; backend
+  `GET /api/guests/summary`.
+- Export CSV di invitati e navetta dalla PWA (⚙️ Impostazioni, solo organizzatori) e
+  `GET /api/export/{guests,bus}.csv`.
+- `tools/check-event-data.py`: controllo di `event-data.json` (id, segnaposto orari, coordinate,
+  destinatari degli auguri, IBAN). In CI avvisa; nel workflow di release `--strict` blocca la
+  pubblicazione finché restano IBAN segnaposto. Il backend scrive lo stesso avviso nel log.
+- `tools/gen-snapshot-fixture.py`: rigenera `snapshot.json` dal backend; la CI verifica con
+  `--check` che il fixture sia allineato a JSON e backend.
+- `tools/bootstrap-gradlew.sh` per creare e committare il Gradle wrapper; la CI genera il
+  wrapper solo se manca.
+- Backend: `scripts/backup.sh` (copia consistente del DB, rotazione 7 giorni) e
+  `scripts/install-backup-cron.sh` (backup notturno).
+- Test: `NotificationScheduleTest` (Android), 5 test backend, 11 controlli e2e.
+
+### Modificato
+
+- Fixture `snapshot.json` rigenerato (campo `scheduledAt` nelle notifiche).
+- Cache del service worker `v2.3.0`; `versionName` 1.4.0 → 1.5.0, `versionCode` 6 → 7.
+
 ## [1.4.0] - 2026-09-25
 
 Orari strutturati, calendario e aggiornamento dei regali dal JSON.

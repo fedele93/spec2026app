@@ -82,6 +82,18 @@ l'orario compila `schedule` e tutte le frasi si aggiornano. Il pulsante **📅 A
 calendario** nell'intestazione apre `GET /api/event/calendar.ics` (seduta + festa) o, in
 modalità demo, genera il file nel browser.
 
+### Per gli organizzatori
+
+Con il token inserito in ⚙️ Impostazioni:
+
+- **Notifiche programmate**: nel dialogo "Invia notifica" il campo *Programma l'invio* fa
+  partire la notifica da sola all'ora scelta (partenza navetta, taglio della torta...). Le
+  notifiche in attesa sono elencate nello stesso dialogo e si possono annullare.
+- **Export CSV**: pulsanti *Esporta invitati* e *Esporta navetta* in Impostazioni (file per
+  il ristorante e per l'autista, apribili con Excel).
+- Nella tab Invitati il riquadro **Riepilogo per il catering** mostra coperti per categoria ed
+  esigenze alimentari con i nomi (visibile a tutti, anche offline).
+
 ## Pubblicazione
 
 - **Consigliata**: servita dal backend (Caddy) su `https://neurospec.peukeia.eu/` — nessuna

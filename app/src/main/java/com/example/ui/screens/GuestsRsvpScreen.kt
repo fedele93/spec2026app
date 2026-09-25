@@ -117,6 +117,11 @@ fun GuestsRsvpScreen(
                 }
             }
 
+            // Riepilogo per il ristorante: coperti per categoria ed esigenze alimentari con i nomi
+            item {
+                CateringSummaryCard(confirmedGuests = confirmedGuests, pendingGuests = pendingGuests)
+            }
+
             // Search Bar
             item {
                 OutlinedTextField(
@@ -555,4 +560,78 @@ fun AddGuestDialog(
             }
         }
     )
+}
+
+private val NO_DIET = setOf("", "nessuna", "nessuna restrizione", "no", "-", "niente", "nessuno")
+
+/** Stessa logica di GET /api/guests/summary nel backend, calcolata sui dati locali (funziona anche offline). */
+@Composable
+fun CateringSummaryCard(confirmedGuests: List<GuestEntity>, pendingGuests: List<GuestEntity>, modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    val covers = confirmedGuests.sumOf { it.guestsCount }
+    val pendingCovers = pendingGuests.sumOf { it.guestsCount }
+    val byCategory = confirmedGuests.groupBy { it.category }
+        .map { (cat, list) -> Triple(cat, list.size, list.sumOf { it.guestsCount }) }
+        .sortedByDescending { it.third }
+    val diets = confirmedGuests
+        .filter { it.dietaryNotes.trim().lowercase() !in NO_DIET }
+        .groupBy { it.dietaryNotes.trim().lowercase() }
+        .map { (_, list) -> Triple(list.first().dietaryNotes.trim(), list.sumOf { it.guestsCount }, list.map { it.fullName }) }
+        .sortedByDescending { it.second }
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { expanded = !expanded }
+            .testTag("catering_summary_card")
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "🍽️ Riepilogo per il catering",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Comprimi" else "Espandi",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Text(
+                text = "$covers coperti confermati" + if (pendingCovers > 0) " (+$pendingCovers in attesa)" else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (expanded) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text("Per categoria", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                if (byCategory.isEmpty()) {
+                    Text("Nessun confermato.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                byCategory.forEach { (cat, guests, catCovers) ->
+                    Row(modifier = Modifier.padding(vertical = 3.dp)) {
+                        Text(cat, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                        Text("$catCovers coperti ($guests inv.)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Esigenze alimentari", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                if (diets.isEmpty()) {
+                    Text("Nessun menu speciale segnalato.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                diets.forEach { (note, dietCovers, names) ->
+                    Column(modifier = Modifier.padding(vertical = 3.dp)) {
+                        Text("$note · $dietCovers " + if (dietCovers == 1) "persona" else "persone", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                        Text(names.joinToString(", "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
 }

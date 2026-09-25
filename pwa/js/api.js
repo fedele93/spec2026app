@@ -112,8 +112,24 @@ export const api = {
 
   notifications: (since = 0) => request(`/api/notifications${since ? `?since=${since}` : ""}`),
   sendNotification: (n) => request("/api/notifications", { method: "POST", json: n }),
+  scheduledNotifications: () => request("/api/notifications/scheduled"),
+  deleteNotification: (id) => request(`/api/notifications/${id}`, { method: "DELETE" }),
+  guestsSummary: () => request("/api/guests/summary"),
 
   vapidPublicKey: () => request("/api/push/vapid-public-key"),
   pushSubscribe: (sub) => request("/api/push/subscribe", { method: "POST", json: sub }),
   pushUnsubscribe: (endpoint) => request("/api/push/unsubscribe", { method: "POST", json: { endpoint } })
 };
+
+// Scarica un CSV riservato agli organizzatori (il token viaggia nell'header, non nell'URL).
+export async function downloadCsv(kind) {
+  const res = await fetch(`${getApiBase()}/api/export/${kind}.csv`, { headers: headers() });
+  if (!res.ok) throw await parseError(res);
+  const blob = await res.blob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = kind === "guests" ? "invitati.csv" : "navetta.csv";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}

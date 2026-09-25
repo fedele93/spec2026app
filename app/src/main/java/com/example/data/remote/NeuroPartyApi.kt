@@ -99,7 +99,8 @@ data class ContributionRequest(
 )
 
 @JsonClass(generateAdapter = true)
-data class NotificationRequest(val title: String, val message: String, val category: String)
+/** sendAt (ms): se nel futuro il server programma la notifica invece di inviarla subito. */
+data class NotificationRequest(val title: String, val message: String, val category: String, val sendAt: Long? = null)
 
 // ---- Interfaccia Retrofit -----------------------------------------------------------
 

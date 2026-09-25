@@ -231,14 +231,15 @@ class EventRepository(private val db: AppDatabase) {
 
     // ------------------------------------------------------------------ notifiche
 
-    /** Salva la notifica; con il server la invia in push a tutti (richiede il token organizzatore). Ritorna l'id. */
-    suspend fun insertNotification(notification: EventNotificationEntity): Long {
+    /** Salva la notifica; con il server la invia in push a tutti (richiede il token organizzatore). Ritorna l'id.
+     *  Con sendAt nel futuro (solo con il server) la notifica viene programmata e pubblicata a quell'ora. */
+    suspend fun insertNotification(notification: EventNotificationEntity, sendAt: Long? = null): Long {
         val api = remote
         return if (api == null) {
             db.notificationDao().insertNotification(notification)
         } else {
             val created = writeRemote(api) {
-                it.sendNotification(NotificationRequest(notification.title, notification.message, notification.category))
+                it.sendNotification(NotificationRequest(notification.title, notification.message, notification.category, sendAt))
             }
             created.id
         }

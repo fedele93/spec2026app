@@ -235,7 +235,7 @@ const LocalRepo = {
   },
 
   allNotifications: () => getAll("notifications"),
-  addNotification: (n) => add("notifications", { ...n, timestamp: Date.now(), isRead: false }).then(notify),
+  addNotification: ({ sendAt, ...n }) => add("notifications", { ...n, timestamp: Date.now(), isRead: false }).then(notify), // niente programmazione in demo
   unreadCount: async () => (await getAll("notifications")).filter((n) => !n.isRead).length,
   markAllRead: async () => {
     const all = await getAll("notifications");

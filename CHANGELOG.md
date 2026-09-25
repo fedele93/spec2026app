@@ -5,6 +5,32 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-25
+
+Nono neo-specialista e sede della festa confermata.
+
+### Aggiunto
+
+- Donato Regina è il nono neo-specialista: compare fra i laureandi (hero, selettore degli
+  auguri), con il proprio regalo personale (`giftTargets`, id `regina`) e un augurio demo.
+- Backend: i regali di `event-data.json` mancanti nel database vengono aggiunti anche su un
+  server già avviato (senza toccare le quote raccolte) e la versione dati viene incrementata,
+  così app e PWA ricaricano lo snapshot e mostrano subito il nuovo regalo.
+- Backend: test `test_new_gift_target_added_to_existing_database`.
+
+### Modificato
+
+- Festa di specializzazione: venerdì 13 novembre a **Il Giardino dei Tempi - Orto Botanico**,
+  Via Giovanni Amendola 247, Bari (orario ancora da definire). Aggiornati timeline, punto
+  sulla mappa (coordinate indicative, da verificare), navetta, notifiche iniziali e preset
+  delle notifiche push su Android e PWA.
+- Sottotitolo, testi e regalo comune parlano di 9 neo-specialisti.
+- Etichetta della mappa Android "Villa Festa" → "Giardino dei Tempi"; descrizione della PWA
+  con le due date e la sede.
+- Fixture `snapshot.json` dei test Android rigenerata dal backend con i nuovi dati (10 regali).
+- Versione app: `versionName` 1.2.0 → 1.3.0, `versionCode` 4 → 5; cache del service worker
+  `neuroparty-v2.0.0` → `neuroparty-v2.1.0` (invalida il vecchio `event-data.json` offline).
+
 ## [1.2.0] - 2026-09-13
 
 Backend condiviso, PWA collegata al server e sincronizzazione dell'app Android.

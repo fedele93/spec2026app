@@ -16,6 +16,7 @@ object SeedData {
         "Lorenzo Parrulli",
         "Francesco Cusmai",
         "Chiara Esposto",
+        "Donato Regina",
 
     )
 
@@ -40,33 +41,33 @@ object SeedData {
             latitude = 41.117,
             longitude = 16.8715,
             iconType = "BUS",
-            description = "Navetta riservata 54 posti verso la location della festa (luogo da definire). Orari e fermate di andata e ritorno saranno confermati prossimamente."
+            description = "Navetta riservata 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari e fermate di andata e ritorno saranno confermati prossimamente."
         ),
         MapPoint(
             id = "festa",
             title = "Festa di Specializzazione",
             subtitle = "Aperitivo, Cena, Dj Set & Torta",
             timeLabel = "Venerdì 13 novembre - ora da definire",
-            address = "Location da definire (Bari e dintorni)",
-            latitude = 41.11,
-            longitude = 16.86,
+            address = "Il Giardino dei Tempi - Orto Botanico, Via Giovanni Amendola 247, 70126 Bari",
+            latitude = 41.0985,
+            longitude = 16.8945,
             iconType = "PARTY",
-            description = "La location della festa di venerdì 13 novembre sarà comunicata a breve. Dress code: Elegant Chic."
+            description = "La festa di venerdì 13 novembre si terrà al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari), tra il verde dell'orto botanico e le sale per eventi. Orario da confermare. Dress code: Elegant Chic."
         ),
     )
 
     val programBadge: String = "SPECIALIZZAZIONE IN NEUROLOGIA"
     val programTitle: String = "Seduta di Specializzazione & Festa"
-    val programSubtitle: String = "8 Neo-Specialisti in Neurologia"
+    val programSubtitle: String = "9 Neo-Specialisti in Neurologia"
     val programDateLabel: String = "9 Novembre (seduta) • 13 Novembre (festa)"
-    val programLocationLabel: String = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari"
+    val programLocationLabel: String = "Aula Magna \"G. De Benedictis\" (seduta) • Il Giardino dei Tempi (festa)"
 
     val programTimeline: List<ProgramTimelineEntry> = listOf(
         ProgramTimelineEntry(
             time = "Ore 9/10",
             title = "Seduta di Laurea & Proclamazione",
             location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
-            details = "Discussione delle tesi e proclamazione degli 8 neo-specialisti in Neurologia. L'ora esatta della seduta sarà comunicata a breve.",
+            details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. L'ora esatta della seduta sarà comunicata a breve.",
             hasMore = true
         ),
         ProgramTimelineEntry(
@@ -80,31 +81,31 @@ object SeedData {
             time = "Ven 13",
             title = "Ritrovo & Imbarco Autobus Navetta",
             location = "Piazzale Policlinico di Bari",
-            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 54 posti verso la location della festa (luogo da definire).",
+            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orario di partenza da definire.",
             hasMore = true
         ),
         ProgramTimelineEntry(
             time = "Ven 13",
             title = "Festa di Specializzazione",
-            location = "Location da definire (Bari e dintorni)",
-            details = "Venerdì 13 novembre: aperitivo, cena a buffet e brindisi tutti insieme per festeggiare i Neo-neurologi. Luogo e ora saranno comunicati a breve.",
+            location = "Il Giardino dei Tempi - Orto Botanico, Bari",
+            details = "Venerdì 13 novembre al Giardino dei Tempi (Via Giovanni Amendola 247, 70126 Bari): aperitivo, cena a buffet e brindisi tutti insieme per festeggiare i 9 neo-neurologi. L'orario sarà comunicato a breve.",
             hasMore = true
         ),
         ProgramTimelineEntry(
             time = "Ven 13",
             title = "Taglio della Torta & Dj Set",
-            location = "Location da definire (Bari e dintorni)",
+            location = "Il Giardino dei Tempi - Orto Botanico, Bari",
             details = "Taglio della torta di specializzazione, video celebrativo a sorpresa, musica e balli per chiudere in bellezza la serata.",
             hasMore = false
         ),
     )
 
-    val busScheduleSubtitle: String = "Transfer andata e ritorno dal Policlinico di Bari alla sede della festa"
+    val busScheduleSubtitle: String = "Transfer andata e ritorno dal Policlinico di Bari al Giardino dei Tempi"
     val busAndata: BusTripInfo = BusTripInfo(
-        timeLabel = "Ven 13 - da definire", from = "Policlinico di Bari (Piazzale Principale)", to = "Location della festa (da definire)", notes = "Venerdì 13 novembre: orario di partenza in via di definizione, confermato appena nota la location"
+        timeLabel = "Ven 13 - da definire", from = "Policlinico di Bari (Piazzale Principale)", to = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", notes = "Venerdì 13 novembre: orario di partenza in via di definizione, sarà confermato con l'orario della festa"
     )
     val busRitorno: BusTripInfo = BusTripInfo(
-        timeLabel = "Ven 13 - notte", from = "Location della festa (da definire)", to = "Policlinico di Bari / Stazione Centrale", notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
+        timeLabel = "Ven 13 - notte", from = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", to = "Policlinico di Bari / Stazione Centrale", notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
     )
     val busPickupStops: List<String> = listOf(
         "Policlinico di Bari (Piazzale Principale)",
@@ -272,6 +273,14 @@ object SeedData {
             heartCount = 22,
             createdAt = (System.currentTimeMillis() - 612000L)
         ),
+        WishEntity(
+            authorName = "I colleghi della Stroke Unit",
+            targetGraduate = "Donato Regina",
+            message = "Donato, calma nelle urgenze e sorriso nelle guardie: un neurologo con cui tutti vorrebbero lavorare. Auguri!",
+            emojiBadge = "🧠",
+            heartCount = 14,
+            createdAt = (System.currentTimeMillis() - 288000L)
+        ),
     )
 
     val photos: List<SharedPhotoEntity> = listOf(
@@ -306,7 +315,7 @@ object SeedData {
             id = "gruppo",
             name = "Regalo Comune Specializzandi",
             specialization = "Specializzazione in Neurologia 2026",
-            roleTitle = "Fedele, Sebastiano, Roberto, Dalila, Giorgia, Lorenzo, Francesco, Chiara",
+            roleTitle = "Fedele, Sebastiano, Roberto, Dalila, Giorgia, Lorenzo, Francesco, Chiara, Donato",
             giftTitle = "Viaggio Congresso Europeo di Neurologia & Brindisi di Classe",
             giftDescription = "Quota comune per sostenere la partecipazione al congresso EAN (European Academy of Neurology) e la festa di venerdì 13 novembre!",
             targetAmount = 4800.0,
@@ -428,6 +437,20 @@ object SeedData {
             satispayUrl = "https://tag.satispay.com/chiaraesposto",
             paypalMeUrl = "https://paypal.me/chiaraesposto"
         ),
+        GiftTargetEntity(
+            id = "regina",
+            name = "Dott. Donato Regina",
+            specialization = "Neurologia d'Urgenza & Neuro-Oncologia",
+            roleTitle = "Neo-Specialista in Neurologia",
+            giftTitle = "Ecografo Palmare & Corso Neuro-Oncologia",
+            giftDescription = "Contributo per la dotazione diagnostica al letto del paziente e l'aggiornamento in neuro-oncologia di Donato.",
+            targetAmount = 800.0,
+            collectedAmount = 250.0,
+            iban = "IT22 F030 6909 6061 0000 2223 334",
+            ibanHolder = "Donato Regina",
+            satispayUrl = "https://tag.satispay.com/donatoregina",
+            paypalMeUrl = "https://paypal.me/donatoregina"
+        ),
     )
 
     val giftContributions: List<GiftContributionEntity> = listOf(
@@ -490,14 +513,14 @@ object SeedData {
         ),
         EventNotificationEntity(
             title = "🎉 Festa di Venerdì 13 Novembre",
-            message = "La festa di specializzazione è fissata per venerdì 13 novembre. Luogo e ora saranno comunicati a breve: resta in attesa!",
+            message = "La festa di specializzazione si terrà venerdì 13 novembre al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). L'orario sarà comunicato a breve!",
             category = "Festa",
             timestamp = (System.currentTimeMillis() - 7200000L),
             isRead = false
         ),
         EventNotificationEntity(
             title = "🚌 Prenotazione Bus Navetta Aperta",
-            message = "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico di Bari alla location della festa. Riserva il tuo posto!",
+            message = "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico di Bari al Giardino dei Tempi. Riserva il tuo posto!",
             category = "Navetta",
             timestamp = (System.currentTimeMillis() - 3600000L),
             isRead = false

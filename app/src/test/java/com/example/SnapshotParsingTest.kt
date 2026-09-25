@@ -27,8 +27,8 @@ class SnapshotParsingTest {
         val snap = loadSnapshot()
         assertTrue(snap.version >= 1)
         assertEquals(7, snap.guests.size)
-        assertEquals(9, snap.giftTargets.size)
-        assertTrue(snap.wishes.size >= 9)
+        assertEquals(10, snap.giftTargets.size)
+        assertTrue(snap.wishes.size >= 10)
         assertTrue(snap.notifications.size >= 4)
 
         val guest = snap.guests.first { it.fullName == "Dott. Luca Gatti" }

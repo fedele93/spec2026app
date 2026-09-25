@@ -177,7 +177,7 @@ function sendPushDialog() {
   const templates = [
     ["🎓 Seduta del 9 Novembre!", 'La seduta di proclamazione è in corso all\'Aula Magna "G. De Benedictis" del Policlinico di Bari.', "Seduta"],
     ["🚌 Partenza Navetta Imminente", "L'autobus è in sosta al Piazzale Principale del Policlinico di Bari. Partenza tra 15 minuti!", "Navetta"],
-    ["🥂 Benvenuti alla Festa!", "Venerdì 13 novembre: aperitivo di benvenuto aperto! Vi aspettiamo per il primo brindisi insieme.", "Festa"],
+    ["🥂 Benvenuti alla Festa!", "Venerdì 13 novembre al Giardino dei Tempi: aperitivo di benvenuto aperto! Vi aspettiamo per il primo brindisi insieme.", "Festa"],
     ["🎂 Taglio della Torta & Dj Set", "Tutti attorno alla torta di specializzazione per il momento più atteso della serata!", "Festa"],
     ["📸 Caricate le vostre foto!", "Aprite la sezione Foto dell'app e condividete gli scatti più belli con i neo-specialisti!", "Festa"]
   ];

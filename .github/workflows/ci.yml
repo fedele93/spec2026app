@@ -90,9 +90,14 @@ jobs:
       - name: Checkout app
         uses: actions/checkout@v4
 
-      - name: Checkout backend (repo neuroparty-backend, oppure branch "backend" di questo repo)
+      - name: Checkout backend (stesso branch di questo repo se esiste, altrimenti main)
         run: |
-          git clone --depth 1 https://github.com/fedele93/neuroparty-backend.git backend \
+          # App e backend evolvono insieme: se nel repo del backend esiste un branch con lo stesso
+          # nome di questo (es. claude/xyz), i test usano quello; altrimenti main.
+          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          git clone --depth 1 --branch "$BRANCH" --single-branch https://github.com/fedele93/neuroparty-backend.git backend \
+            && echo "Backend: branch $BRANCH" \
+            || git clone --depth 1 https://github.com/fedele93/neuroparty-backend.git backend \
             || git clone --depth 1 --branch backend --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" backend
           ls backend
 

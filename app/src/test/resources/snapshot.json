@@ -1,6 +1,6 @@
 {
     "version": 6,
-    "serverTime": 1790367737400,
+    "serverTime": 1790767738619,
     "event": {
         "meta": {
             "maxBusSeats": 54
@@ -123,7 +123,21 @@
                 "iconType": "PARTY",
                 "description": "La festa di venerd\u00ec 13 novembre si terr\u00e0 al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari), tra il verde dell'orto botanico e le sale per eventi. Dalle ore 21:30 fino alle 03:00. Dress code: Elegant Chic."
             }
-        ]
+        ],
+        "giftCollector": {
+            "name": "Dott. Paolo Roberto",
+            "roleTitle": "Cassiere delle quote uniche",
+            "description": "Se preferisci fare un solo versamento per tutti i neo-specialisti, Paolo raccoglie la tua quota e la gira a ciascuno di loro: scegli tu se dividerla in parti uguali o personalizzarla.",
+            "iban": "IT00 A000 0000 0000 0000 0000 000",
+            "ibanHolder": "Paolo Roberto",
+            "paypalMeUrl": "https://paypal.me/paoloroberto",
+            "paymentMethods": [
+                "IBAN",
+                "PayPal",
+                "Contanti"
+            ],
+            "transferReason": "Regalo specializzazione Neurologia 2026"
+        }
     },
     "guests": [
         {
@@ -134,7 +148,7 @@
             "guestsCount": 2,
             "dietaryNotes": "Nessuna",
             "contactInfo": "348 9988776",
-            "updatedAt": 1790367737253,
+            "updatedAt": 1790767738469,
             "ownerClientId": null
         },
         {
@@ -145,7 +159,7 @@
             "guestsCount": 0,
             "dietaryNotes": "Turno di guardia in Neuro-Rianimazione",
             "contactInfo": "r.deluca@policlinico.it",
-            "updatedAt": 1790367737253,
+            "updatedAt": 1790767738469,
             "ownerClientId": null
         },
         {
@@ -156,7 +170,7 @@
             "guestsCount": 1,
             "dietaryNotes": "Opzione Vegetariana",
             "contactInfo": "333 4567891",
-            "updatedAt": 1790367737253,
+            "updatedAt": 1790767738469,
             "ownerClientId": null
         },
         {
@@ -167,7 +181,7 @@
             "guestsCount": 1,
             "dietaryNotes": "Nessuna",
             "contactInfo": "giulia.colombo@gmail.com",
-            "updatedAt": 1790367737253,
+            "updatedAt": 1790767738469,
             "ownerClientId": null
         },
         {
@@ -178,7 +192,7 @@
             "guestsCount": 2,
             "dietaryNotes": "Nessuna",
             "contactInfo": "329 5544332",
-            "updatedAt": 1790367737253,
+            "updatedAt": 1790767738469,
             "ownerClientId": null
         },
         {
@@ -189,7 +203,7 @@
             "guestsCount": 4,
             "dietaryNotes": "1 Celiaco (menu senza glutine)",
             "contactInfo": "340 1122334",
-            "updatedAt": 1790367737253,
+            "updatedAt": 1790767738469,
             "ownerClientId": null
         },
         {
@@ -200,7 +214,7 @@
             "guestsCount": 2,
             "dietaryNotes": "Nessuna restrizione",
             "contactInfo": "giancarlo.bianchi@unipol.it",
-            "updatedAt": 1790367737253,
+            "updatedAt": 1790767738469,
             "ownerClientId": null
         }
     ],
@@ -213,7 +227,7 @@
             "returnTripWanted": true,
             "contactPhone": "347 0001122",
             "notes": "Arriviamo in treno",
-            "bookedAt": 1790367737300,
+            "bookedAt": 1790767738515,
             "ownerClientId": "dev-fixture"
         },
         {
@@ -224,7 +238,7 @@
             "returnTripWanted": true,
             "contactPhone": "333 4567891",
             "notes": "Pronta subito dopo le proclamazioni",
-            "bookedAt": 1790367737249,
+            "bookedAt": 1790767738464,
             "ownerClientId": null
         },
         {
@@ -235,7 +249,7 @@
             "returnTripWanted": true,
             "contactPhone": "340 5566778",
             "notes": "Con festoni e regali",
-            "bookedAt": 1790367737249,
+            "bookedAt": 1790767738464,
             "ownerClientId": null
         },
         {
@@ -246,7 +260,7 @@
             "returnTripWanted": true,
             "contactPhone": "349 1122339",
             "notes": "Tutti insieme",
-            "bookedAt": 1790367737249,
+            "bookedAt": 1790767738464,
             "ownerClientId": null
         }
     ],
@@ -258,7 +272,7 @@
             "message": "Auguri a tutti e nove! Ci vediamo al Giardino dei Tempi.",
             "emojiBadge": "\ud83e\udd42",
             "heartCount": 1,
-            "createdAt": 1790367737309
+            "createdAt": 1790767738527
         },
         {
             "id": 10,
@@ -267,7 +281,7 @@
             "message": "Donato, calma nelle urgenze e sorriso nelle guardie: un neurologo con cui tutti vorrebbero lavorare. Auguri!",
             "emojiBadge": "\ud83e\udde0",
             "heartCount": 14,
-            "createdAt": 1790367449247
+            "createdAt": 1790767450459
         },
         {
             "id": 9,
@@ -276,7 +290,7 @@
             "message": "Chiara, la tua determinazione e il tuo sorriso hanno illuminato il reparto. Auguri di cuore, dottoressa!",
             "emojiBadge": "\u2728",
             "heartCount": 22,
-            "createdAt": 1790367125247
+            "createdAt": 1790767126459
         },
         {
             "id": 8,
@@ -285,7 +299,7 @@
             "message": "Francesco, neurologo e amico: una combinazione imbattibile. Venerd\u00ec 13 festa, e poi... si vedr\u00e0!",
             "emojiBadge": "\ud83c\udf93",
             "heartCount": 16,
-            "createdAt": 1790364137247
+            "createdAt": 1790764138459
         },
         {
             "id": 7,
@@ -294,7 +308,7 @@
             "message": "Lorenzo caro, ogni sacrificio di questi anni diventa oggi orgoglio immenso. Continua a curare i tuoi pazienti come hai curato il tuo sogno.",
             "emojiBadge": "\u2764\ufe0f",
             "heartCount": 27,
-            "createdAt": 1790360537247
+            "createdAt": 1790760538459
         },
         {
             "id": 6,
@@ -303,7 +317,7 @@
             "message": "Giorgia, ce l'hai fatta! Da oggi neurologa a tutti gli effetti: orgogliose di te e del percorso condiviso.",
             "emojiBadge": "\ud83c\udf89",
             "heartCount": 20,
-            "createdAt": 1790356937246
+            "createdAt": 1790756938459
         },
         {
             "id": 5,
@@ -312,7 +326,7 @@
             "message": "Dalila, la tua sensibilit\u00e0 clinica e la cura dei pazienti sono state un esempio per tutti. Auguri di vera specialista!",
             "emojiBadge": "\u2b50",
             "heartCount": 12,
-            "createdAt": 1790353337246
+            "createdAt": 1790753338459
         },
         {
             "id": 4,
@@ -321,7 +335,7 @@
             "message": "Adesso sei ufficialmente un 'Brain Master'! Venerd\u00ec 13 si brinda senza sosta alla tua salute!",
             "emojiBadge": "\ud83e\udd42",
             "heartCount": 15,
-            "createdAt": 1790349737246
+            "createdAt": 1790749738459
         },
         {
             "id": 3,
@@ -330,7 +344,7 @@
             "message": "Sebastiano, vedere coronato il tuo sogno di diventare neurologo ci riempie di orgoglio e gioia immensa. Ti vogliamo bene!",
             "emojiBadge": "\u2764\ufe0f",
             "heartCount": 31,
-            "createdAt": 1790346137246
+            "createdAt": 1790746138459
         },
         {
             "id": 2,
@@ -339,7 +353,7 @@
             "message": "Grande Fedele! Tra turni di notte interminabili ed EEG complessi sei arrivato al traguardo pi\u00f9 bello. Fieri di te!",
             "emojiBadge": "\u26a1",
             "heartCount": 18,
-            "createdAt": 1790342537246
+            "createdAt": 1790742538459
         },
         {
             "id": 1,
@@ -348,7 +362,7 @@
             "message": "Congratulazioni di cuore ai nostri nuovi specialisti! Avete dimostrato dedizione, rigore scientifico e grande umanit\u00e0. Buona strada in Neurologia!",
             "emojiBadge": "\ud83e\udde0",
             "heartCount": 24,
-            "createdAt": 1790338937246
+            "createdAt": 1790738938459
         }
     ],
     "photos": [
@@ -357,9 +371,9 @@
             "authorName": "Staff Organizzazione",
             "caption": "Sopralluogo al Giardino dei Tempi: la sala \u00e8 pronta!",
             "imageResId": 0,
-            "imageUri": "https://festa.example.org/uploads/d5142f3f9b974639a8de1a56dded5e5b.jpg",
+            "imageUri": "https://festa.example.org/uploads/d62b8052cd924677b8c15a857199681f.jpg",
             "likesCount": 1,
-            "createdAt": 1790367737373
+            "createdAt": 1790767738560
         },
         {
             "id": 3,
@@ -368,7 +382,7 @@
             "imageResId": 3,
             "imageUri": "",
             "likesCount": 35,
-            "createdAt": 1790356937247
+            "createdAt": 1790756938459
         },
         {
             "id": 2,
@@ -377,7 +391,7 @@
             "imageResId": 2,
             "imageUri": "",
             "likesCount": 42,
-            "createdAt": 1790346137247
+            "createdAt": 1790746138459
         },
         {
             "id": 1,
@@ -386,24 +400,10 @@
             "imageResId": 1,
             "imageUri": "",
             "likesCount": 28,
-            "createdAt": 1790335337247
+            "createdAt": 1790735338459
         }
     ],
     "giftTargets": [
-        {
-            "id": "gruppo",
-            "name": "Regalo Comune Specializzandi",
-            "specialization": "Specializzazione in Neurologia 2026",
-            "roleTitle": "Fedele, Sebastiano, Roberto, Dalila, Giorgia, Lorenzo, Francesco, Chiara, Donato",
-            "giftTitle": "Viaggio Congresso Europeo di Neurologia & Brindisi di Classe",
-            "giftDescription": "Quota comune per sostenere la partecipazione al congresso EAN (European Academy of Neurology) e la festa di venerd\u00ec 13 novembre!",
-            "targetAmount": 4800.0,
-            "collectedAmount": 2100.0,
-            "iban": "IT78 K030 6909 6061 0000 1234 567",
-            "ibanHolder": "Comitato Festa Neurologia Bari",
-            "satispayUrl": "https://tag.satispay.com/festaneurologiabari",
-            "paypalMeUrl": "https://paypal.me/festaneurologiabari2026"
-        },
         {
             "id": "luisi",
             "name": "Dott. Fedele Luisi",
@@ -411,8 +411,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Stetoscopio Digitale Littmann & Fellowship Clinica",
             "giftDescription": "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attivit\u00e0 ospedaliera di Fedele.",
-            "targetAmount": 900.0,
-            "collectedAmount": 520.0,
             "iban": "IT44 X030 6909 6061 0000 9876 543",
             "ibanHolder": "Fedele Luisi",
             "satispayUrl": "https://tag.satispay.com/fedeleluisineuro",
@@ -425,8 +423,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Oftalmoscopio Professionale & Borsa Medico in Cuoio",
             "giftDescription": "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Sebastiano.",
-            "targetAmount": 950.0,
-            "collectedAmount": 680.0,
             "iban": "IT12 Y030 6909 6061 0000 4567 890",
             "ibanHolder": "Sebastiano Carlone",
             "satispayUrl": "https://tag.satispay.com/sebastianocarlone",
@@ -439,8 +435,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Corso Neurosonologia Doppler & Attrezzatura Studio",
             "giftDescription": "Regalo dedicato per la certificazione in ecocolordoppler transcranico e dotazione clinica di Roberto.",
-            "targetAmount": 850.0,
-            "collectedAmount": 430.0,
             "iban": "IT99 Z030 6909 6061 0000 3210 987",
             "ibanHolder": "Roberto Spiridione Prezioso",
             "satispayUrl": "https://tag.satispay.com/robertoprezioso",
@@ -453,8 +447,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Martello Riflessi Digitale & Corso RM Funzionale",
             "giftDescription": "Contributo per la dotazione ambulatoriale e l'aggiornamento in neuroimaging funzionale di Dalila.",
-            "targetAmount": 800.0,
-            "collectedAmount": 350.0,
             "iban": "IT55 A030 6909 6061 0000 1112 223",
             "ibanHolder": "Dalila Totaro",
             "satispayUrl": "https://tag.satispay.com/dalilatotaro",
@@ -467,8 +459,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Elettromiografo Portatile & Stage Neurofisiologia",
             "giftDescription": "Regalo per l'avvio dell'attivit\u00e0 in elettrofisiologia clinica e lo studio delle neuropatie di Giorgia.",
-            "targetAmount": 880.0,
-            "collectedAmount": 410.0,
             "iban": "IT66 B030 6909 6061 0000 3334 445",
             "ibanHolder": "Giorgia Ruta",
             "satispayUrl": "https://tag.satispay.com/gorgiaruta",
@@ -481,8 +471,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Corso Tourette & Dispositivo Wearable Monitoring",
             "giftDescription": "Regalo per la formazione sui disturbi del movimento e l'attivit\u00e0 di ricerca clinica di Lorenzo.",
-            "targetAmount": 820.0,
-            "collectedAmount": 380.0,
             "iban": "IT77 C030 6909 6061 0000 5556 667",
             "ibanHolder": "Lorenzo Parrulli",
             "satispayUrl": "https://tag.satispay.com/lorenzoparrulli",
@@ -495,8 +483,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Tappeto Rotante & Kit Valutazione Neurologica",
             "giftDescription": "Contributo per la dotazione di neuroriabilitazione e l'attivit\u00e0 ambulatoriale di Francesco.",
-            "targetAmount": 760.0,
-            "collectedAmount": 290.0,
             "iban": "IT88 D030 6909 6061 0000 7778 889",
             "ibanHolder": "Francesco Cusmai",
             "satispayUrl": "https://tag.satispay.com/francescocusmai",
@@ -509,8 +495,6 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Tablet Clinico & Corso Neuropsicologia",
             "giftDescription": "Regalo per la valutazione neuropsicologica dei pazienti e l'aggiornamento sulle demenze di Chiara.",
-            "targetAmount": 790.0,
-            "collectedAmount": 360.0,
             "iban": "IT33 E030 6909 6061 0000 9990 011",
             "ibanHolder": "Chiara Esposto",
             "satispayUrl": "https://tag.satispay.com/chiaraesposto",
@@ -523,69 +507,10 @@
             "roleTitle": "Neo-Specialista in Neurologia",
             "giftTitle": "Ecografo Palmare & Corso Neuro-Oncologia",
             "giftDescription": "Contributo per la dotazione diagnostica al letto del paziente e l'aggiornamento in neuro-oncologia di Donato.",
-            "targetAmount": 800.0,
-            "collectedAmount": 330.0,
             "iban": "IT22 F030 6909 6061 0000 2223 334",
             "ibanHolder": "Donato Regina",
             "satispayUrl": "https://tag.satispay.com/donatoregina",
             "paypalMeUrl": "https://paypal.me/donatoregina"
-        }
-    ],
-    "giftContributions": [
-        {
-            "id": 5,
-            "donorName": "Amici di Donato",
-            "targetGraduateId": "regina",
-            "targetGraduateName": "Dott. Donato Regina",
-            "amount": 80.0,
-            "paymentMethod": "Satispay",
-            "note": "Per il nuovo ecografo!",
-            "isAnonymous": false,
-            "contributedAt": 1790367737384
-        },
-        {
-            "id": 4,
-            "donorName": "Amici del Liceo",
-            "targetGraduateId": "gruppo",
-            "targetGraduateName": "Regalo Comune Specializzandi",
-            "amount": 120.0,
-            "paymentMethod": "PayPal",
-            "note": "Brindiamo a tutti voi venerd\u00ec 13!",
-            "isAnonymous": false,
-            "contributedAt": 1790360537247
-        },
-        {
-            "id": 3,
-            "donorName": "Famiglia Luisi",
-            "targetGraduateId": "luisi",
-            "targetGraduateName": "Dott. Fedele Luisi",
-            "amount": 200.0,
-            "paymentMethod": "IBAN",
-            "note": "Orgogliosi del tuo percorso impeccabile.",
-            "isAnonymous": false,
-            "contributedAt": 1790356937247
-        },
-        {
-            "id": 2,
-            "donorName": "Colleghi Reparto Stroke",
-            "targetGraduateId": "prezioso",
-            "targetGraduateName": "Dott. Roberto Spiridione Prezioso",
-            "amount": 100.0,
-            "paymentMethod": "Satispay",
-            "note": "Per il futuro re delle trombolisi! Forza Roberto!",
-            "isAnonymous": false,
-            "contributedAt": 1790353337247
-        },
-        {
-            "id": 1,
-            "donorName": "Zia Laura & Famiglia",
-            "targetGraduateId": "carlone",
-            "targetGraduateName": "Dott. Sebastiano Carlone",
-            "amount": 150.0,
-            "paymentMethod": "IBAN",
-            "note": "Per il nostro neurologo preferito! Con affetto infinito.",
-            "isAnonymous": false,
-            "contributedAt": 1790349737247
         }
     ],
     "notifications": [
@@ -594,7 +519,7 @@
             "title": "\ud83d\udccd Festa al Giardino dei Tempi",
             "message": "Confermata la sede della festa di venerd\u00ec 13 novembre: Il Giardino dei Tempi - Orto Botanico, Via Giovanni Amendola 247, Bari.",
             "category": "Festa",
-            "timestamp": 1790367737394,
+            "timestamp": 1790767738600,
             "scheduledAt": null,
             "isRead": false
         },
@@ -603,7 +528,7 @@
             "title": "\ud83d\ude8c Prenotazione Bus Navetta Aperta",
             "message": "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico di Bari al Giardino dei Tempi. Riserva il tuo posto!",
             "category": "Navetta",
-            "timestamp": 1790364137247,
+            "timestamp": 1790764138461,
             "scheduledAt": null,
             "isRead": false
         },
@@ -612,7 +537,7 @@
             "title": "\ud83c\udf89 Festa di Venerd\u00ec 13 Novembre",
             "message": "La festa di specializzazione si terr\u00e0 venerd\u00ec 13 novembre al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, Bari), dalle 21:30 alle 03:00. Vi aspettiamo!",
             "category": "Festa",
-            "timestamp": 1790360537247,
+            "timestamp": 1790760538461,
             "scheduledAt": null,
             "isRead": false
         },
@@ -621,7 +546,7 @@
             "title": "\ud83d\udccd Seduta del 9 Novembre all'Aula Magna",
             "message": "La seduta di proclamazione si terr\u00e0 il 9 novembre presso l'Aula Magna \"G. De Benedictis\" del Policlinico di Bari (AOUC Policlinico di Bari). Ora da definirsi.",
             "category": "Seduta",
-            "timestamp": 1790356937247,
+            "timestamp": 1790756938461,
             "scheduledAt": null,
             "isRead": false
         },
@@ -630,7 +555,7 @@
             "title": "\ud83c\udf93 Benvenuti all'evento di Specializzazione!",
             "message": "L'app ufficiale per la Specializzazione in Neurologia a Bari \u00e8 attiva. Controlla il programma, prenota il bus e conferma il tuo RSVP!",
             "category": "Organizzazione",
-            "timestamp": 1790349737247,
+            "timestamp": 1790749738461,
             "scheduledAt": null,
             "isRead": false
         }

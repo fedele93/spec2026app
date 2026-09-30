@@ -7,6 +7,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.data.*
+import com.example.data.remote.GiftPoolContribution
+import com.example.data.remote.PoolContributionRequest
 import com.example.data.remote.RemoteClient
 import com.example.data.remote.RemoteException
 import com.example.util.NotificationHelper
@@ -143,11 +145,15 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         SharingStarted.WhileSubscribed(5000),
         emptyList()
     )
-    val giftContributions = repository.giftContributions.stateIn(
+    val giftCollector = repository.giftCollector.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
-        emptyList()
+        null
     )
+
+    /** Quote uniche registrate da questo dispositivo: aggiornate quando si apre la tab Regali e dopo ogni modifica. */
+    private val _myPoolContributions = MutableStateFlow<List<GiftPoolContribution>>(emptyList())
+    val myPoolContributions: StateFlow<List<GiftPoolContribution>> = _myPoolContributions.asStateFlow()
 
     // Notifications
     val notifications = repository.allNotifications.stateIn(
@@ -398,26 +404,39 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         runAction { repository.incrementPhotoLikes(photoId) }
     }
 
-    // Gift contribution operations
-    fun contributeToGift(
-        donorName: String,
-        targetId: String,
-        targetName: String,
-        amount: Double,
-        paymentMethod: String,
-        blessingNote: String,
-        isAnonymous: Boolean
-    ) {
-        val contribution = GiftContributionEntity(
-            donorName = if (isAnonymous) "Un invitato generoso" else donorName.trim().ifEmpty { "Invitato" },
-            targetGraduateId = targetId,
-            targetGraduateName = targetName,
-            amount = amount,
-            paymentMethod = paymentMethod,
-            note = blessingNote.trim(),
-            isAnonymous = isAnonymous
-        )
-        runAction { repository.addGiftContribution(contribution) }
+    // Quota unica al cassiere
+    fun refreshMyPoolContributions() {
+        viewModelScope.launch {
+            try {
+                _myPoolContributions.value = repository.myPoolContributions()
+            } catch (_: Exception) {
+                // offline o server non raggiungibile: si tiene l'ultimo elenco noto
+            }
+        }
+    }
+
+    fun addPoolContribution(request: PoolContributionRequest) {
+        viewModelScope.launch {
+            try {
+                val c = repository.addPoolContribution(request)
+                _myPoolContributions.value = repository.myPoolContributions()
+                _uiMessage.emit("Quota di ${formatEuro(c.totalAmount)} registrata: grazie! 🎉")
+            } catch (e: Exception) {
+                _uiMessage.emit(e.message ?: "Operazione non riuscita")
+            }
+        }
+    }
+
+    fun deletePoolContribution(id: Long) {
+        viewModelScope.launch {
+            try {
+                repository.deletePoolContribution(id)
+                _myPoolContributions.value = repository.myPoolContributions()
+                _uiMessage.emit("Quota annullata")
+            } catch (e: Exception) {
+                _uiMessage.emit(e.message ?: "Operazione non riuscita")
+            }
+        }
     }
 
     /**

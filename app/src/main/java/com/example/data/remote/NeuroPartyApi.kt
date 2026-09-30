@@ -2,7 +2,7 @@ package com.example.data.remote
 
 import com.example.data.BusBookingEntity
 import com.example.data.EventNotificationEntity
-import com.example.data.GiftContributionEntity
+import com.example.data.GiftCollectorEntity
 import com.example.data.GiftTargetEntity
 import com.example.data.GuestEntity
 import com.example.data.RsvpStatus
@@ -16,6 +16,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.PUT
 import retrofit2.http.POST
 import retrofit2.http.Part
@@ -29,28 +30,67 @@ data class StateDto(
     val version: Long,
     val serverTime: Long,
     val adminEnabled: Boolean = false,
+    val treasurerEnabled: Boolean = false,
     val pushSubscriptions: Int = 0
 )
 
-/** Tutte le collezioni in una sola risposta (GET /api/snapshot). Il campo "event" viene ignorato. */
+/** Tutte le collezioni pubbliche in una sola risposta (GET /api/snapshot).
+ *  Del campo "event" si legge solo il cassiere delle quote uniche (il resto è nel JSON locale). */
 @JsonClass(generateAdapter = true)
 data class SnapshotDto(
     val version: Long,
     val serverTime: Long,
+    val event: SnapshotEventDto? = null,
     val guests: List<GuestEntity> = emptyList(),
     val busBookings: List<BusBookingEntity> = emptyList(),
     val wishes: List<WishEntity> = emptyList(),
     val photos: List<SharedPhotoEntity> = emptyList(),
     val giftTargets: List<GiftTargetEntity> = emptyList(),
-    val giftContributions: List<GiftContributionEntity> = emptyList(),
     val notifications: List<EventNotificationEntity> = emptyList()
 )
 
 @JsonClass(generateAdapter = true)
-data class ContributionResponse(
-    val contribution: GiftContributionEntity,
-    val target: GiftTargetEntity
+data class SnapshotEventDto(val giftCollector: GiftCollectorDto? = null)
+
+/** Blocco "giftCollector" (GET /api/gifts/collector e snapshot.event). */
+@JsonClass(generateAdapter = true)
+data class GiftCollectorDto(
+    val name: String = "",
+    val roleTitle: String = "",
+    val description: String = "",
+    val iban: String = "",
+    val ibanHolder: String = "",
+    val paypalMeUrl: String = "",
+    val paymentMethods: List<String> = listOf("IBAN", "PayPal", "Contanti"),
+    val transferReason: String = ""
+) {
+    fun toEntity(): GiftCollectorEntity = GiftCollectorEntity(
+        name = name, roleTitle = roleTitle, description = description, iban = iban, ibanHolder = ibanHolder,
+        paypalMeUrl = paypalMeUrl, paymentMethodsCsv = paymentMethods.joinToString(","), transferReason = transferReason
+    )
+}
+
+/** Parte di una quota unica destinata a un neo-specialista. */
+@JsonClass(generateAdapter = true)
+data class GiftPoolAllocation(val graduateId: String, val graduateName: String = "", val amount: Double)
+
+/** Quota unica versata al cassiere e ripartita fra i neo-specialisti (POST/GET /api/gifts/pool...). */
+@JsonClass(generateAdapter = true)
+data class GiftPoolContribution(
+    val id: Long = 0,
+    val donorName: String,
+    val contact: String = "",
+    val paymentMethod: String = "IBAN", // IBAN | PayPal | Contanti
+    val splitMode: String = "EQUAL", // EQUAL | CUSTOM
+    val totalAmount: Double,
+    val note: String = "",
+    val status: String = "PENDING", // PENDING | RECEIVED
+    val createdAt: Long = 0,
+    val receivedAt: Long? = null,
+    val allocations: List<GiftPoolAllocation> = emptyList()
 )
+
+val GiftPoolContribution.isReceived: Boolean get() = status == "RECEIVED"
 
 @JsonClass(generateAdapter = true)
 data class BusSummaryDto(val maxSeats: Int, val bookedSeats: Int, val availableSeats: Int)
@@ -89,14 +129,24 @@ data class WishRequest(
 )
 
 @JsonClass(generateAdapter = true)
-data class ContributionRequest(
+data class PoolAllocationRequest(val graduateId: String, val amount: Double)
+
+/** Quota unica: con splitMode EQUAL il server divide totalAmount fra graduateIds (vuoto = tutti);
+ *  con CUSTOM usa allocations e il totale è la somma. */
+@JsonClass(generateAdapter = true)
+data class PoolContributionRequest(
     val donorName: String,
-    val targetGraduateId: String,
-    val amount: Double,
-    val paymentMethod: String,
-    val note: String,
-    val isAnonymous: Boolean
+    val contact: String = "",
+    val paymentMethod: String = "IBAN",
+    val splitMode: String = "EQUAL",
+    val totalAmount: Double? = null,
+    val graduateIds: List<String> = emptyList(),
+    val allocations: List<PoolAllocationRequest> = emptyList(),
+    val note: String = ""
 )
+
+@JsonClass(generateAdapter = true)
+data class PoolStatusRequest(val status: String)
 
 @JsonClass(generateAdapter = true)
 /** sendAt (ms): se nel futuro il server programma la notifica invece di inviarla subito. */
@@ -146,8 +196,22 @@ interface NeuroPartyApi {
     @POST("api/photos/{id}/like")
     suspend fun likePhoto(@Path("id") id: Long): SharedPhotoEntity
 
-    @POST("api/gifts/contributions")
-    suspend fun addContribution(@Body body: ContributionRequest): ContributionResponse
+    @GET("api/gifts/collector")
+    suspend fun giftCollector(): GiftCollectorDto
+
+    @POST("api/gifts/pool")
+    suspend fun addPoolContribution(@Body body: PoolContributionRequest): GiftPoolContribution
+
+    /** Le quote uniche registrate da questo dispositivo (X-Client-Id). */
+    @GET("api/gifts/pool/mine")
+    suspend fun myPoolContributions(): List<GiftPoolContribution>
+
+    @DELETE("api/gifts/pool/{id}")
+    suspend fun deletePoolContribution(@Path("id") id: Long): Response<Unit>
+
+    /** Solo cassiere/organizzatori (il cruscotto completo è nella PWA). */
+    @PATCH("api/gifts/pool/{id}/status")
+    suspend fun setPoolStatus(@Path("id") id: Long, @Body body: PoolStatusRequest): GiftPoolContribution
 
     @GET("api/notifications")
     suspend fun notifications(@Query("since") since: Long = 0): List<EventNotificationEntity>

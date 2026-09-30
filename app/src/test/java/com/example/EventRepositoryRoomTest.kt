@@ -6,7 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.data.AppDatabase
 import com.example.data.EventNotificationEntity
 import com.example.data.EventRepository
-import com.example.data.GiftContributionEntity
+import com.example.data.remote.PoolContributionRequest
 import com.example.data.GuestEntity
 import com.example.data.RsvpStatus
 import com.example.data.SeedData
@@ -57,18 +57,18 @@ class EventRepositoryRoomTest {
     }
 
     @Test
-    fun `contributo regalo aggiorna il totale raccolto in modalita locale`() = runTest {
+    fun `quota unica in modalita locale viene ripartita e si puo annullare`() = runTest {
         repository.prepopulateIfNeeded()
-        val before = repository.giftTargets.first().first { it.id == "luisi" }.collectedAmount
-        repository.addGiftContribution(
-            GiftContributionEntity(
-                donorName = "Test", targetGraduateId = "luisi", targetGraduateName = "Dott. Fedele Luisi",
-                amount = 75.0, paymentMethod = "IBAN"
-            )
+        assertEquals(SeedData.giftCollector.name, repository.giftCollector.first()!!.name)
+        val c = repository.addPoolContribution(
+            PoolContributionRequest(donorName = "Test", totalAmount = 100.0, paymentMethod = "PayPal", graduateIds = listOf("luisi", "carlone", "totaro"))
         )
-        val after = repository.giftTargets.first().first { it.id == "luisi" }.collectedAmount
-        assertEquals(before + 75.0, after, 0.001)
-        assertEquals(SeedData.giftContributions.size + 1, repository.giftContributions.first().size)
+        assertEquals(100.0, c.totalAmount, 0.001)
+        assertEquals(listOf(33.34, 33.33, 33.33), c.allocations.map { it.amount })
+        assertEquals("Dott. Fedele Luisi", c.allocations.first().graduateName)
+        assertEquals(1, repository.myPoolContributions().size)
+        repository.deletePoolContribution(c.id)
+        assertTrue(repository.myPoolContributions().isEmpty())
     }
 
     @Test

@@ -27,7 +27,7 @@ class SnapshotParsingTest {
         val snap = loadSnapshot()
         assertTrue(snap.version >= 1)
         assertEquals(7, snap.guests.size)
-        assertEquals(10, snap.giftTargets.size)
+        assertEquals(9, snap.giftTargets.size)
         assertTrue(snap.wishes.size >= 10)
         assertTrue(snap.notifications.size >= 4)
 
@@ -36,9 +36,15 @@ class SnapshotParsingTest {
         assertEquals(2, guest.guestsCount)
         assertTrue(guest.id > 0)
 
-        val gruppo = snap.giftTargets.first { it.id == "gruppo" }
-        assertEquals(4800.0, gruppo.targetAmount, 0.001)
-        assertNotNull(gruppo.iban)
+        // nessun importo nei regali e nessun "regalo comune": al suo posto il cassiere delle quote uniche
+        assertTrue(snap.giftTargets.none { it.id == "gruppo" })
+        val luisi = snap.giftTargets.first { it.id == "luisi" }
+        assertTrue(luisi.iban.isNotBlank() && luisi.paypalMeUrl.isNotBlank())
+        val collector = snap.event?.giftCollector
+        assertNotNull(collector)
+        assertEquals("Dott. Paolo Roberto", collector!!.name)
+        assertEquals(listOf("IBAN", "PayPal", "Contanti"), collector.paymentMethods)
+        assertEquals("IBAN,PayPal,Contanti", collector.toEntity().paymentMethodsCsv)
 
         val uploaded = snap.photos.firstOrNull { it.imageUri.isNotBlank() }
         assertNotNull("il server deve restituire URL assoluti per le foto caricate", uploaded)

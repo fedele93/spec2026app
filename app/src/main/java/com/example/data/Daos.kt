@@ -98,32 +98,26 @@ interface GiftDao {
     @Query("SELECT * FROM gift_targets ORDER BY id ASC")
     fun getAllTargets(): Flow<List<GiftTargetEntity>>
 
+    @Query("SELECT * FROM gift_targets ORDER BY id ASC")
+    suspend fun getAllTargetsOnce(): List<GiftTargetEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTargets(targets: List<GiftTargetEntity>)
 
-    @Update
-    suspend fun updateTarget(target: GiftTargetEntity)
-
-    @Query("SELECT * FROM gift_contributions ORDER BY contributedAt DESC")
-    fun getAllContributions(): Flow<List<GiftContributionEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertContribution(contribution: GiftContributionEntity): Long
-
-    @Query("UPDATE gift_targets SET collectedAmount = collectedAmount + :amount WHERE id = :targetId")
-    suspend fun addAmountToTarget(targetId: String, amount: Double)
-
-    @Query("SELECT COUNT(*) FROM gift_contributions")
-    suspend fun countContributions(): Int
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertContributions(contributions: List<GiftContributionEntity>)
+    @Query("SELECT COUNT(*) FROM gift_targets")
+    suspend fun countTargets(): Int
 
     @Query("DELETE FROM gift_targets")
     suspend fun deleteAllTargets()
 
-    @Query("DELETE FROM gift_contributions")
-    suspend fun deleteAllContributions()
+    @Query("SELECT * FROM gift_collector WHERE id = 1")
+    fun getCollector(): Flow<GiftCollectorEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertCollector(collector: GiftCollectorEntity)
+
+    @Query("DELETE FROM gift_collector")
+    suspend fun deleteCollector()
 }
 
 @Dao

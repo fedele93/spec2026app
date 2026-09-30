@@ -1,12 +1,11 @@
 // Schermate PWA - mirror delle 5 schermate Compose dell'app Android
-import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, reconnect } from "./data.js";
+import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, GIFT_COLLECTOR, splitEqually, reconnect } from "./data.js";
 import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
-import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getClientId, downloadCsv } from "./api.js";
+import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getClientId, downloadCsv } from "./api.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const euro = (n) => `€ ${Number(n || 0).toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 // Esegue un'azione sul repository mostrando l'eventuale errore del server (403, 409, offline...)
 async function tryAction(fn, okMsg) {
@@ -264,15 +263,22 @@ function settingsDialog() {
     </div>
     <div class="field"><label>Token organizzatore (X-Admin-Token)</label><input id="s-token" type="password" value="${esc(getAdminToken())}" placeholder="Solo per gli organizzatori"></div>
     <div class="muted" style="margin-bottom:10px;">Con il token puoi inviare notifiche push a tutti e cancellare qualsiasi invitato o prenotazione.</div>
+    <div class="field"><label>Token cassiere quote uniche (X-Treasurer-Token)</label><input id="s-treasurer" type="password" value="${esc(getTreasurerToken())}" placeholder="Solo per chi raccoglie le quote uniche"></div>
+    <div class="muted" style="margin-bottom:10px;">Con il token cassiere la tab Regali mostra il cruscotto delle quote uniche (chi, quanto, per chi) e il CSV per Excel.</div>
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📄 Esporta per ristorante e autista</b>
       <div class="muted" style="margin-bottom:8px;">File CSV (si aprono con Excel) con tutti gli invitati e le prenotazioni della navetta.</div>
       <div class="btn-row"><button class="btn btn-ghost" id="s-exp-guests">Esporta invitati</button><button class="btn btn-ghost" id="s-exp-bus">Esporta navetta</button></div></div>` : ""}
+    ${serverMode && isTreasurer() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📒 Esporta quote uniche per il cassiere</b>
+      <div class="muted" style="margin-bottom:8px;">CSV con una riga per quota, una colonna per neo-specialista e i totali: si apre con Excel.</div>
+      <button class="btn btn-ghost" id="s-exp-pool">Esporta quote uniche</button></div>` : ""}
     <div class="field"><label>URL del server (avanzato)</label><input id="s-api" value="${esc(localStorage.getItem("np.apiBase") || "")}" placeholder="vuoto = stesso dominio della PWA"></div>
     <div class="btn-row"><button class="btn btn-primary" id="s-save">Salva</button><button class="btn btn-ghost" id="s-test">Prova connessione</button></div>`,
     (bg, close) => {
       const expG = bg.querySelector("#s-exp-guests"), expB = bg.querySelector("#s-exp-bus");
       if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
       if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
+      const expP = bg.querySelector("#s-exp-pool");
+      if (expP) expP.onclick = () => tryAction(() => downloadCsv("gift-pool"), "quote-uniche.csv scaricato");
       bg.querySelector("#s-test").onclick = async () => {
         const prev = getApiBase();
         setApiBase(bg.querySelector("#s-api").value);
@@ -283,6 +289,7 @@ function settingsDialog() {
       bg.querySelector("#s-save").onclick = async () => {
         const changedApi = (bg.querySelector("#s-api").value.trim().replace(/\/+$/, "")) !== (localStorage.getItem("np.apiBase") || "");
         setAdminToken(bg.querySelector("#s-token").value);
+        setTreasurerToken(bg.querySelector("#s-treasurer").value);
         setApiBase(bg.querySelector("#s-api").value);
         close();
         if (changedApi || !serverMode) { await reconnect(); updateStatusBar(); }
@@ -609,102 +616,176 @@ function photoDialog(onDone) {
 }
 
 // ============================ REGALI ============================
+// Nessuna cifra raccolta è visibile. Due modi per partecipare:
+//  - quota unica al cassiere (registrata sul server con la ripartizione, visibile solo a lui);
+//  - regalo diretto a un neo-specialista: copia IBAN / PayPal / Satispay, senza registrare nulla.
+const POOL_STATUS = { PENDING: "In attesa", RECEIVED: "Ricevuta" };
+const eur2 = (n) => `${Number(n || 0).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+async function copyText(text, okMsg) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg); }
+  catch { toast("Copia non disponibile: seleziona il testo e copialo a mano"); }
+}
+
 export async function gifts(el) {
   const targets = await Repo.allGiftTargets();
-  const contributions = await Repo.allGiftContributions();
-  const totalCollected = targets.reduce((s, t) => s + (t.collectedAmount || 0), 0);
-  const totalGoal = targets.reduce((s, t) => s + (t.targetAmount || 0), 0);
-  const overallPct = totalGoal > 0 ? Math.min(100, (totalCollected / totalGoal) * 100) : 0;
-  const sortedContribs = [...contributions].sort((a, b) => b.contributedAt - a.contributedAt);
+  const collector = GIFT_COLLECTOR;
+  const serverMode = Repo.mode === "server";
+  const mine = await Repo.myPoolContributions();
+  const showBoard = isTreasurer() && (!serverMode || Status.treasurerEnabled);
   el.innerHTML = `
     <h2 class="section">Regali di Specializzazione</h2>
-    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Partecipa ai regali con quote differenziali verso i diversi laureandi</div>
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;"><div><div class="muted">Raccolta Totale Quote</div><b style="font-size:22px;color:var(--gold-dark);">${euro(totalCollected)}</b></div><span class="pill pill-pend">Obiettivo: ${euro(totalGoal)}</span></div>
-      <div class="gift"><div class="gbar"><span style="width:${overallPct}%"></span></div></div>
-      <div class="muted">${contributions.length} quote versate dagli invitati finora</div>
+    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Scegli come partecipare: una quota unica tramite il cassiere, oppure un regalo diretto a ciascun neo-specialista. Nessuna cifra raccolta viene mostrata.</div>
+
+    <div class="card collector">
+      <div class="gname">👛 Quota unica tramite ${esc(collector.name || "il cassiere")}</div>
+      <div class="grole">${esc(collector.roleTitle)}</div>
+      <div class="muted" style="margin-top:6px;">${esc(collector.description)}</div>
+      <div class="muted" style="margin-top:6px;">Metodi: ${(collector.paymentMethods || []).map((m) => `<b>${esc(m)}</b>`).join(" · ")}</div>
+      <button class="btn btn-gold" id="pool-open" style="margin-top:12px;">🤝 Partecipa con una quota unica</button>
+      ${mine.length ? `<div class="mine"><b>Le tue quote registrate</b>${mine.map((c) => `
+        <div class="row"><div class="grow"><div class="name">${eur2(c.totalAmount)} · ${esc(c.paymentMethod)} · <span class="pill ${c.status === "RECEIVED" ? "pill-conf" : "pill-pend"}">${POOL_STATUS[c.status] || c.status}</span></div>
+          <div class="cat">${esc(c.donorName)} · ${c.allocations.length === targets.length ? "tutti i neo-specialisti" : c.allocations.map((a) => esc(shortName(a.graduateName))).join(", ")} · ${fmtTime(c.createdAt)}</div></div>
+          ${c.status !== "RECEIVED" ? `<button class="icon-btn" data-pool-del="${c.id}" aria-label="Annulla quota">🗑️</button>` : ""}</div>`).join("")}</div>` : ""}
     </div>
-    <h2 class="section">Destinatari & Obiettivi Regalo</h2>
-    ${targets.map((t) => {
-      const pct = t.targetAmount > 0 ? Math.min(100, (t.collectedAmount / t.targetAmount) * 100) : 0;
-      const group = t.id === "gruppo";
-      return `<div class="card gift">
-        <div class="gname">${group ? "👥" : "👤"} ${esc(t.name)}</div>
+
+    <div id="pool-board"></div>
+
+    <h2 class="section">Regalo diretto a un neo-specialista</h2>
+    <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Copia l'IBAN o apri PayPal/Satispay: l'importo lo decidi tu e non serve registrarlo qui.</div>
+    ${targets.map((t) => `<div class="card gift" data-target="${esc(t.id)}">
+        <div class="gname">👤 ${esc(t.name)}</div>
         <div class="grole">${esc(t.specialization)} · ${esc(t.roleTitle)}</div>
         <div class="gtitle">🎁 ${esc(t.giftTitle)}</div>
         <div class="muted" style="margin-top:4px;">${esc(t.giftDescription)}</div>
-        <div class="gbar"><span style="width:${pct}%"></span></div>
-        <div style="display:flex;justify-content:space-between;"><span class="muted">Raccolti: ${euro(t.collectedAmount)} / ${euro(t.targetAmount)}</span><span class="muted">${pct.toFixed(0)}%</span></div>
-        <button class="btn ${group ? "btn-gold" : "btn-primary"}" style="margin-top:10px;" data-cont="${esc(t.id)}">🤝 Dona Quota per ${esc(t.name)}</button>
-      </div>`;
-    }).join("")}
-    ${sortedContribs.length ? `<h2 class="section">Ultime Quote Versate & Dediche</h2>${sortedContribs.map((c) => `
-      <div class="card" style="padding:12px;display:flex;gap:12px;align-items:center;">
-        <div style="width:40px;height:40px;border-radius:50%;background:#FEF3C7;color:var(--gold-dark);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${Math.round(c.amount)}€</div>
-        <div class="grow" style="min-width:0;">
-          <div class="name" style="font-size:13px;">${esc(c.donorName)} → ${esc(c.targetGraduateName)}</div>
-          ${c.note ? `<div class="muted">“${esc(c.note)}”</div>` : ""}
-          <div class="muted" style="font-size:11px;">Metodo: ${esc(c.paymentMethod)} • ${fmtTime(c.contributedAt)}</div>
+        <div class="muted" style="margin-top:8px;"><b>Intestatario:</b> ${esc(t.ibanHolder)}</div>
+        <div class="mono iban">${esc(t.iban)}</div>
+        <div class="pay">
+          <button class="btn btn-primary" data-copy-iban="${esc(t.id)}">📋 Copia IBAN</button>
+          ${t.paypalMeUrl ? `<a class="btn paypal" href="${esc(t.paypalMeUrl)}" target="_blank" rel="noopener">PayPal</a>` : ""}
+          ${t.satispayUrl ? `<a class="btn satispay" href="${esc(t.satispayUrl)}" target="_blank" rel="noopener">Satispay</a>` : ""}
         </div>
-      </div>`).join("")}` : ""}
+      </div>`).join("")}
   `;
-  el.querySelectorAll("[data-cont]").forEach((b) => b.onclick = () => contributionDialog(b.dataset.cont, targets, () => gifts(el)));
+  el.querySelector("#pool-open").onclick = () => poolDialog(targets, collector, () => gifts(el));
+  el.querySelectorAll("[data-copy-iban]").forEach((b) => {
+    const t = targets.find((x) => x.id === b.dataset.copyIban);
+    b.onclick = () => copyText(t.iban, `IBAN di ${shortName(t.name)} copiato!`);
+  });
+  el.querySelectorAll("[data-pool-del]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Annullare questa quota? Il cassiere non la vedrà più.")) return;
+    if (await tryAction(() => Repo.deletePoolContribution(Number(b.dataset.poolDel)), "Quota annullata")) gifts(el);
+  });
+  if (showBoard) await poolBoard(el.querySelector("#pool-board"), targets);
 }
 
-function contributionDialog(targetId, targets, onDone) {
-  const t = targets.find((x) => x.id === targetId);
-  const presets = [25, 50, 100, 150];
-  const methods = ["IBAN Bonifico", "Satispay", "PayPal", "Contanti"];
-  openModal(`<h3>🎁 Quota Regalo • ${esc(t.name)}</h3>
-    <div class="muted" style="margin-bottom:10px;">${esc(t.giftTitle)}</div>
-    <div class="field"><label>Scegli l'importo della tua quota differenziale</label>
-      <div class="chips" id="c-presets">${presets.map((p) => `<button class="chip ${p === 50 ? "active" : ""}" data-amt="${p}">${p} €</button>`).join("")}</div>
-      <input id="c-amount" type="number" min="1" step="0.01" placeholder="Oppure inserisci quota personalizzata (€)"></div>
-    <div class="field"><label>Metodo di pagamento</label><div class="chips" id="c-methods">${methods.map((m, i) => `<button class="chip ${i === 0 ? "active" : ""}" data-m="${m}">${m}</button>`).join("")}</div></div>
-    <div class="card" id="c-pay" style="background:var(--bg);"></div>
-    <div class="field"><label>Il tuo nome *</label><input id="c-donor"></div>
-    <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:10px;"><input id="c-anon" type="checkbox" style="width:auto;"> Regalo anonimo</label>
-    <div class="field"><label>Dedica / Biglietto di auguri</label><textarea id="c-note" rows="2" placeholder="es. Brindiamo a te stasera!"></textarea></div>
-    <button class="btn btn-gold" id="c-save" style="margin-top:10px;">Conferma Versamento (50€)</button>`,
+// "Dott. Fedele Luisi" -> "Fedele Luisi"
+function shortName(n) { return String(n || "").replace(/^Dott\.(ssa)?\s*/i, ""); }
+
+// Dialogo della quota unica: importo, ripartizione (parti uguali o personalizzata), metodo, dati per pagare.
+function poolDialog(targets, collector, onDone) {
+  const presets = [50, 100, 150, 200];
+  const methods = (collector.paymentMethods || []).filter((m) => ["IBAN", "PayPal", "Contanti"].includes(m));
+  openModal(`<h3>🤝 Quota unica • ${esc(collector.name || "cassiere")}</h3>
+    <div class="muted" style="margin-bottom:10px;">Un solo versamento: ${esc(shortName(collector.name) || "il cassiere")} lo ripartisce fra i neo-specialisti secondo le tue indicazioni.</div>
+    <div class="field"><label>Il tuo nome e cognome *</label><input id="q-donor" placeholder="Serve al cassiere per riconoscere il versamento"></div>
+    <div class="field"><label>Contatto (facoltativo: telefono o e-mail)</label><input id="q-contact"></div>
+    <div class="field"><label>Come vuoi ripartire la quota?</label>
+      <div class="chips" id="q-modes"><button class="chip active" data-mode="EQUAL">In parti uguali</button><button class="chip" data-mode="CUSTOM">Personalizza</button></div></div>
+    <div id="q-equal">
+      <div class="field"><label>Importo totale</label>
+        <div class="chips" id="q-presets">${presets.map((p) => `<button class="chip ${p === 100 ? "active" : ""}" data-amt="${p}">${p} €</button>`).join("")}</div>
+        <input id="q-amount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Oppure un altro importo (€)"></div>
+      <div class="field"><label>Per chi (togli la spunta per escludere qualcuno, es. te stesso)</label>
+        <div class="split-list" id="q-who">${targets.map((t) => `<label class="split-row"><input type="checkbox" data-who="${esc(t.id)}" checked> <span class="grow">${esc(t.name)}</span><span class="muted" data-each="${esc(t.id)}"></span></label>`).join("")}</div></div>
+    </div>
+    <div id="q-custom" hidden>
+      <div class="field"><label>Importo per ciascun neo-specialista (lascia vuoto chi non vuoi includere)</label>
+        <div class="split-list">${targets.map((t) => `<label class="split-row"><span class="grow">${esc(t.name)}</span><input type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" data-custom="${esc(t.id)}" style="width:96px;"></label>`).join("")}</div></div>
+    </div>
+    <div class="field"><label>Metodo di pagamento</label><div class="chips" id="q-methods">${methods.map((m, i) => `<button class="chip ${i === 0 ? "active" : ""}" data-m="${m}">${m}</button>`).join("")}</div></div>
+    <div class="card" id="q-pay" style="background:var(--bg);"></div>
+    <div class="field"><label>Nota per il cassiere (facoltativa)</label><textarea id="q-note" rows="2" placeholder="es. Consegno i contanti sabato"></textarea></div>
+    <button class="btn btn-gold" id="q-save" style="margin-top:10px;">Registra quota (100,00 €)</button>`,
     (bg, close) => {
-      let amount = 50, method = methods[0];
-      const saveBtn = bg.querySelector("#c-save");
-      const amountInput = bg.querySelector("#c-amount");
-      const refresh = () => { saveBtn.textContent = `Conferma Versamento (${Math.round(amount)}€)`; };
-      bg.querySelectorAll("#c-presets .chip").forEach((c) => c.onclick = () => {
-        bg.querySelectorAll("#c-presets .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active");
-        amount = Number(c.dataset.amt); amountInput.value = ""; refresh();
-      });
-      amountInput.oninput = () => { bg.querySelectorAll("#c-presets .chip").forEach((x) => x.classList.remove("active")); amount = Number(amountInput.value) || 0; refresh(); };
-      const payBox = bg.querySelector("#c-pay");
-      const paintPay = () => {
-        if (method === "IBAN Bonifico") payBox.innerHTML = `<div class="muted"><b>Intestatario:</b> ${esc(t.ibanHolder)}</div><div class="mono" style="color:var(--primary);font-weight:700;margin:4px 0;">${esc(t.iban)}</div><button class="btn btn-ghost" id="c-copy">📋 Copia Coordinate IBAN</button>`;
-        else if (method === "Satispay") payBox.innerHTML = `<div class="muted">Paga comodamente tramite Satispay:</div><a class="btn" style="background:#EF4444;color:#fff;text-decoration:none;margin-top:6px;" href="${esc(t.satispayUrl)}" target="_blank" rel="noopener">Apri Satispay</a>`;
-        else if (method === "PayPal") payBox.innerHTML = `<div class="muted">Invia la quota tramite PayPal.me:</div><a class="btn" style="background:#0070BA;color:#fff;text-decoration:none;margin-top:6px;" href="${esc(t.paypalMeUrl)}" target="_blank" rel="noopener">Apri PayPal.me</a>`;
-        else payBox.innerHTML = `<div class="muted">Puoi consegnare la quota in contanti durante la festa agli organizzatori.</div>`;
-        const copy = payBox.querySelector("#c-copy");
-        if (copy) copy.onclick = async () => { try { await navigator.clipboard.writeText(t.iban); toast("IBAN copiato negli appunti!"); } catch { toast("Copia non disponibile: seleziona il testo"); } };
+      let mode = "EQUAL", method = methods[0] || "IBAN", amount = 100;
+      const $ = (sel) => bg.querySelector(sel);
+      const $$ = (sel) => [...bg.querySelectorAll(sel)];
+      const selectedIds = () => $$("[data-who]:checked").map((c) => c.dataset.who);
+      const customRows = () => $$("[data-custom]").map((i) => ({ graduateId: i.dataset.custom, amount: Number(i.value) || 0 })).filter((a) => a.amount > 0);
+      const totalNow = () => mode === "EQUAL" ? amount : customRows().reduce((s, a) => s + a.amount, 0);
+      const refresh = () => {
+        $("#q-save").textContent = `Registra quota (${eur2(totalNow())})`;
+        const ids = selectedIds();
+        const parts = ids.length && amount > 0 ? splitEqually(Math.round(amount * 100), ids.length) : [];
+        $$("[data-each]").forEach((sp) => { const i = ids.indexOf(sp.dataset.each); sp.textContent = i >= 0 && parts.length ? eur2(parts[i] / 100) : "—"; });
       };
-      paintPay();
-      bg.querySelectorAll("#c-methods .chip").forEach((c) => c.onclick = () => {
-        bg.querySelectorAll("#c-methods .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active"); method = c.dataset.m; paintPay();
+      $$("#q-modes .chip").forEach((c) => c.onclick = () => {
+        $$("#q-modes .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active");
+        mode = c.dataset.mode; $("#q-equal").hidden = mode !== "EQUAL"; $("#q-custom").hidden = mode !== "CUSTOM"; refresh();
       });
-      const anon = bg.querySelector("#c-anon"), donorInput = bg.querySelector("#c-donor");
-      anon.onchange = () => { donorInput.disabled = anon.checked; };
-      saveBtn.onclick = async () => {
-        if (!amount || amount <= 0) { toast("Inserisci un importo valido"); return; }
-        const donor = donorInput.value.trim();
-        if (!anon.checked && !donor) { toast("Inserisci il tuo nome (o scegli regalo anonimo)"); return; }
-        const ok = await tryAction(() => Repo.addContribution({
-          donorName: donor || "Invitato",
-          targetGraduateId: t.id,
-          targetGraduateName: t.name,
-          amount,
-          paymentMethod: method,
-          note: bg.querySelector("#c-note").value.trim(),
-          isAnonymous: anon.checked
-        }), `Grazie per il tuo contributo di ${Math.round(amount)}€!`);
+      $$("#q-presets .chip").forEach((c) => c.onclick = () => {
+        $$("#q-presets .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active");
+        amount = Number(c.dataset.amt); $("#q-amount").value = ""; refresh();
+      });
+      $("#q-amount").oninput = () => { $$("#q-presets .chip").forEach((x) => x.classList.remove("active")); amount = Number($("#q-amount").value) || 0; refresh(); };
+      $$("[data-who]").forEach((c) => c.onchange = refresh);
+      $$("[data-custom]").forEach((i) => i.oninput = refresh);
+      const paintPay = () => {
+        const reason = `${collector.transferReason || "Regalo specializzazione"} - ${$("#q-donor").value.trim() || "Nome Cognome"}`;
+        const box = $("#q-pay");
+        if (method === "IBAN") box.innerHTML = `<div class="muted"><b>Intestatario:</b> ${esc(collector.ibanHolder)}</div><div class="mono iban">${esc(collector.iban)}</div>
+          <div class="muted"><b>Causale suggerita:</b> <span class="mono" id="q-reason">${esc(reason)}</span></div>
+          <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" id="q-copy-iban">📋 Copia IBAN</button><button class="btn btn-ghost" id="q-copy-reason">📋 Copia causale</button></div>`;
+        else if (method === "PayPal") box.innerHTML = `<div class="muted">Invia la quota con PayPal.me indicando nel messaggio il tuo nome:</div><a class="btn paypal" style="margin-top:8px;" href="${esc(collector.paypalMeUrl)}" target="_blank" rel="noopener">Apri PayPal.me</a>`;
+        else box.innerHTML = `<div class="muted">Consegna i contanti a ${esc(shortName(collector.name) || "al cassiere")} (in reparto o alla festa): registra comunque la quota qui, così sa cosa aspettarsi.</div>`;
+        const ci = $("#q-copy-iban"), cr = $("#q-copy-reason");
+        if (ci) ci.onclick = () => copyText(collector.iban, "IBAN del cassiere copiato!");
+        if (cr) cr.onclick = () => copyText(reason, "Causale copiata!");
+      };
+      $$("#q-methods .chip").forEach((c) => c.onclick = () => { $$("#q-methods .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active"); method = c.dataset.m; paintPay(); });
+      $("#q-donor").oninput = () => { if (method === "IBAN") paintPay(); };
+      paintPay(); refresh();
+      $("#q-save").onclick = async () => {
+        const donorName = $("#q-donor").value.trim();
+        if (!donorName) { toast("Inserisci nome e cognome: servono al cassiere"); return; }
+        const body = { donorName, contact: $("#q-contact").value.trim(), paymentMethod: method, splitMode: mode, note: $("#q-note").value.trim() };
+        if (mode === "EQUAL") {
+          if (!amount || amount <= 0) { toast("Inserisci un importo valido"); return; }
+          if (!selectedIds().length) { toast("Scegli almeno un neo-specialista"); return; }
+          body.totalAmount = amount; body.graduateIds = selectedIds();
+        } else {
+          body.allocations = customRows();
+          if (!body.allocations.length) { toast("Indica almeno un importo"); return; }
+        }
+        const ok = await tryAction(() => Repo.addPoolContribution(body), `Quota di ${eur2(totalNow())} registrata: grazie! 🎉`);
         if (ok) { close(); onDone(); }
       };
     });
+}
+
+// Cruscotto del cassiere (token cassiere o organizzatore): totali per neo-specialista, elenco quote, stato, CSV.
+async function poolBoard(box, targets) {
+  let board;
+  try { board = await Repo.poolBoard(); }
+  catch (e) { box.innerHTML = `<div class="card"><div class="muted">Cruscotto cassiere non disponibile: ${esc(e.message)}</div></div>`; return; }
+  const s = board.summary, serverMode = Repo.mode === "server";
+  box.innerHTML = `<details class="card board" open>
+    <summary><b>📒 Cassa quote uniche</b> <span class="muted">${s.contributions} quote · ${eur2(s.totalAmount)} (ricevute ${eur2(s.receivedAmount)}, in attesa ${eur2(s.pendingAmount)})</span></summary>
+    <div class="muted" style="margin:8px 0 4px;"><b>Quanto spetta a ciascuno</b> (tra parentesi la parte già ricevuta)</div>
+    <table class="tbl"><tbody>${s.byGraduate.map((g) => `<tr><td>${esc(shortName(g.graduateName))}</td><td class="num"><b>${eur2(g.amount)}</b> <span class="muted">(${eur2(g.receivedAmount)})</span></td></tr>`).join("")}</tbody></table>
+    ${serverMode ? `<button class="btn btn-primary" id="pool-csv" style="margin-top:10px;">📄 Scarica per Excel (CSV)</button>` : ""}
+    <div class="muted" style="margin:12px 0 4px;"><b>Quote registrate</b> · tocca lo stato per segnarla ricevuta</div>
+    ${board.contributions.length ? board.contributions.map((c) => `<div class="row">
+      <div class="grow"><div class="name">${esc(c.donorName)} · ${eur2(c.totalAmount)} · ${esc(c.paymentMethod)}</div>
+        <div class="cat">${c.allocations.length === targets.length && c.splitMode === "EQUAL" ? `parti uguali (${eur2(c.allocations[0]?.amount)} ciascuno)` : c.allocations.map((a) => `${esc(shortName(a.graduateName))} ${eur2(a.amount)}`).join(", ")}</div>
+        <div class="cat">${fmtTime(c.createdAt)}${c.contact ? ` · ${esc(c.contact)}` : ""}${c.note ? ` · “${esc(c.note)}”` : ""}</div></div>
+      <button class="pill ${c.status === "RECEIVED" ? "pill-conf" : "pill-pend"}" data-pool-status="${c.id}" data-next="${c.status === "RECEIVED" ? "PENDING" : "RECEIVED"}">${POOL_STATUS[c.status] || c.status}</button>
+    </div>`).join("") : `<div class="muted">Nessuna quota registrata finora.</div>`}
+  </details>`;
+  const csv = box.querySelector("#pool-csv");
+  if (csv) csv.onclick = () => tryAction(() => downloadCsv("gift-pool"), "quote-uniche.csv scaricato");
+  box.querySelectorAll("[data-pool-status]").forEach((b) => b.onclick = async () => {
+    if (await tryAction(() => Repo.setPoolStatus(Number(b.dataset.poolStatus), b.dataset.next), b.dataset.next === "RECEIVED" ? "Segnata come ricevuta ✓" : "Rimessa in attesa")) poolBoard(box, targets);
+  });
 }

@@ -1,10 +1,12 @@
 // Client HTTP verso il backend (repo neuroparty-backend).
 // - X-Client-Id: identifica questo dispositivo (chi crea un record può cancellarlo)
 // - X-Admin-Token: abilita le azioni da organizzatore (notifiche push, cancellazioni)
+// - X-Treasurer-Token: cassiere delle quote uniche (cruscotto, stato "ricevuta", CSV)
 
 const LS_API = "np.apiBase";
 const LS_TOKEN = "np.adminToken";
 const LS_CLIENT = "np.clientId";
+const LS_TREASURER = "np.treasurerToken";
 
 function ls(key, fallback = "") {
   try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
@@ -34,6 +36,10 @@ export function setApiBase(url) { lsSet(LS_API, (url || "").trim().replace(/\/+$
 export function getAdminToken() { return ls(LS_TOKEN); }
 export function setAdminToken(token) { lsSet(LS_TOKEN, (token || "").trim()); }
 export function isAdmin() { return !!getAdminToken(); }
+export function getTreasurerToken() { return ls(LS_TREASURER); }
+export function setTreasurerToken(token) { lsSet(LS_TREASURER, (token || "").trim()); }
+// Il cruscotto delle quote uniche è visibile al cassiere e agli organizzatori (il server accetta entrambi i token).
+export function isTreasurer() { return !!getTreasurerToken() || isAdmin(); }
 
 export class ApiError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -43,6 +49,8 @@ function headers(extra = {}) {
   const h = { "X-Client-Id": getClientId(), ...extra };
   const t = getAdminToken();
   if (t) h["X-Admin-Token"] = t;
+  const tt = getTreasurerToken();
+  if (tt) h["X-Treasurer-Token"] = tt;
   return h;
 }
 
@@ -107,8 +115,14 @@ export const api = {
   likePhoto: (id) => request(`/api/photos/${id}/like`, { method: "POST" }),
 
   giftTargets: () => request("/api/gifts/targets"),
-  contributions: () => request("/api/gifts/contributions"),
-  addContribution: (c) => request("/api/gifts/contributions", { method: "POST", json: c }),
+  giftCollector: () => request("/api/gifts/collector"),
+  // quota unica al cassiere: registrazione, le proprie quote, cancellazione (finché in attesa)
+  addPoolContribution: (c) => request("/api/gifts/pool", { method: "POST", json: c }),
+  myPoolContributions: () => request("/api/gifts/pool/mine"),
+  deletePoolContribution: (id) => request(`/api/gifts/pool/${id}`, { method: "DELETE" }),
+  // cruscotto del cassiere (token cassiere o organizzatore)
+  poolBoard: () => request("/api/gifts/pool"),
+  setPoolStatus: (id, status) => request(`/api/gifts/pool/${id}/status`, { method: "PATCH", json: { status } }),
 
   notifications: (since = 0) => request(`/api/notifications${since ? `?since=${since}` : ""}`),
   sendNotification: (n) => request("/api/notifications", { method: "POST", json: n }),
@@ -121,14 +135,16 @@ export const api = {
   pushUnsubscribe: (endpoint) => request("/api/push/unsubscribe", { method: "POST", json: { endpoint } })
 };
 
-// Scarica un CSV riservato agli organizzatori (il token viaggia nell'header, non nell'URL).
+const CSV_NAMES = { guests: "invitati.csv", bus: "navetta.csv", "gift-pool": "quote-uniche.csv" };
+
+// Scarica un CSV riservato (organizzatori, o cassiere per le quote uniche): il token viaggia nell'header, non nell'URL.
 export async function downloadCsv(kind) {
   const res = await fetch(`${getApiBase()}/api/export/${kind}.csv`, { headers: headers() });
   if (!res.ok) throw await parseError(res);
   const blob = await res.blob();
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = kind === "guests" ? "invitati.csv" : "navetta.csv";
+  a.download = CSV_NAMES[kind] || `${kind}.csv`;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);

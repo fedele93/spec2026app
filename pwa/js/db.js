@@ -1,6 +1,6 @@
 // IndexedDB wrapper - mirror del layer Room dell'app Android
 const DB_NAME = "neuroparty-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // v2: quote uniche al cassiere (giftPool) al posto delle quote per singolo regalo
 
 const STORES = {
   guests: { keyPath: "id", autoIncrement: true },
@@ -8,7 +8,7 @@ const STORES = {
   wishes: { keyPath: "id", autoIncrement: true },
   photos: { keyPath: "id", autoIncrement: true },
   giftTargets: { keyPath: "id", autoIncrement: false },
-  giftContributions: { keyPath: "id", autoIncrement: true },
+  giftPool: { keyPath: "id", autoIncrement: true },
   notifications: { keyPath: "id", autoIncrement: true },
   meta: { keyPath: "key" }
 };
@@ -21,6 +21,10 @@ function openDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
+      // store dismessi dalle versioni precedenti (e i regali, che vengono ripopolati dal JSON)
+      for (const old of ["giftContributions", "giftTargets"]) {
+        if (db.objectStoreNames.contains(old)) db.deleteObjectStore(old);
+      }
       for (const [name, cfg] of Object.entries(STORES)) {
         if (!db.objectStoreNames.contains(name)) {
           db.createObjectStore(name, {

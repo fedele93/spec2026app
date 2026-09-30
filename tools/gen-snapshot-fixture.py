@@ -2,7 +2,7 @@
 """Rigenera app/src/test/resources/snapshot.json dal backend (repo neuroparty-backend).
 
 Il file è una risposta reale di GET /api/snapshot con i dati demo più qualche record inserito
-via API (prenotazione, augurio, foto caricata, quota, notifica), usata dai test Android per
+via API (prenotazione, augurio, foto caricata, notifica), usata dai test Android per
 verificare che i modelli Kotlin leggano davvero ciò che il server produce.
 
 Uso:  python3 tools/gen-snapshot-fixture.py [--backend ../neuroparty-backend]   # riscrive il fixture
@@ -49,7 +49,8 @@ def build_snapshot(backend_dir: str) -> dict:
         buf = io.BytesIO()
         img.save(buf, "JPEG")
         c.post("/api/photos", files={"file": ("festa.jpg", buf.getvalue(), "image/jpeg")}, data={"authorName": "Staff Organizzazione", "caption": "Sopralluogo al Giardino dei Tempi: la sala è pronta!"}, headers=dev)
-        c.post("/api/gifts/contributions", json={"donorName": "Amici di Donato", "targetGraduateId": "regina", "amount": 80, "paymentMethod": "Satispay", "note": "Per il nuovo ecografo!", "isAnonymous": False}, headers=dev)
+        # la quota unica non compare nello snapshot (è riservata al cassiere), ma verifica che l'API accetti la richiesta
+        c.post("/api/gifts/pool", json={"donorName": "Amici di Donato", "totalAmount": 80, "paymentMethod": "PayPal", "graduateIds": ["regina"], "note": "Per il nuovo ecografo!"}, headers=dev)
         c.post("/api/notifications", json={"title": "📍 Festa al Giardino dei Tempi", "message": "Confermata la sede della festa di venerdì 13 novembre: Il Giardino dei Tempi - Orto Botanico, Via Giovanni Amendola 247, Bari.", "category": "Festa"}, headers=admin)
         return c.get("/api/snapshot").json()
 

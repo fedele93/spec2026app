@@ -323,34 +323,7 @@ fun GiftTargetCard(
                     Icon(Icons.Default.Person, contentDescription = null, tint = NeuroPrimary, modifier = Modifier.size(24.dp))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(text = target.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(
-                        text = target.specialization,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    Text(
-                        text = "🎁 ${target.giftTitle}",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = target.giftDescription,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
+                Text(text = target.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(10.dp))

@@ -655,10 +655,7 @@ export async function gifts(el) {
     <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Copia l'IBAN o apri PayPal/Satispay: l'importo lo decidi tu e non serve registrarlo qui.</div>
     ${targets.map((t) => `<div class="card gift" data-target="${esc(t.id)}">
         <div class="gname">👤 ${esc(t.name)}</div>
-        <div class="grole">${esc(t.specialization)} · ${esc(t.roleTitle)}</div>
-        <div class="gtitle">🎁 ${esc(t.giftTitle)}</div>
-        <div class="muted" style="margin-top:4px;">${esc(t.giftDescription)}</div>
-        <div class="muted" style="margin-top:8px;"><b>Intestatario:</b> ${esc(t.ibanHolder)}</div>
+        <div class="muted" style="margin-top:6px;"><b>Intestatario:</b> ${esc(t.ibanHolder)}</div>
         <div class="mono iban">${esc(t.iban)}</div>
         <div class="pay">
           <button class="btn btn-primary" data-copy-iban="${esc(t.id)}">📋 Copia IBAN</button>

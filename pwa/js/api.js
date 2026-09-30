@@ -130,10 +130,40 @@ export const api = {
   deleteNotification: (id) => request(`/api/notifications/${id}`, { method: "DELETE" }),
   guestsSummary: () => request("/api/guests/summary"),
 
+  // assistente vocale con avatar (vedi assistant.js)
+  assistantStatus: () => request("/api/assistant/status", { timeoutMs: 8000 }),
+  assistantAvatars: () => request("/api/assistant/avatars"),
+  assistantTalk: ({ avatarId, text, audio, audioExt, history, wantAudio = true }) => {
+    const fd = new FormData();
+    fd.append("avatarId", avatarId);
+    if (text) fd.append("text", text);
+    if (audio) fd.append("audio", audio, `voce.${audioExt || "webm"}`);
+    fd.append("history", JSON.stringify(history || []));
+    fd.append("wantAudio", wantAudio ? "true" : "false");
+    return request("/api/assistant/talk", { method: "POST", form: fd, timeoutMs: 120000 });
+  },
+  assistantAdminAvatars: () => request("/api/assistant/admin/avatars"),
+  assistantAdminVoices: () => request("/api/assistant/admin/voices"),
+  assistantAdminUpdate: (id, patch) => request(`/api/assistant/admin/avatars/${id}`, { method: "PUT", json: patch }),
+  assistantAdminUploadSample: (id, blob, filename) => {
+    const fd = new FormData();
+    fd.append("file", blob, filename);
+    return request(`/api/assistant/admin/avatars/${id}/sample`, { method: "POST", form: fd, timeoutMs: 120000 });
+  },
+  assistantAdminDeleteSample: (id) => request(`/api/assistant/admin/avatars/${id}/sample`, { method: "DELETE" }),
+  assistantAdminPreview: (id, text = "") => request(`/api/assistant/admin/avatars/${id}/preview`, { method: "POST", json: { text }, timeoutMs: 60000 }),
+
   vapidPublicKey: () => request("/api/push/vapid-public-key"),
   pushSubscribe: (sub) => request("/api/push/subscribe", { method: "POST", json: sub }),
   pushUnsubscribe: (endpoint) => request("/api/push/unsubscribe", { method: "POST", json: { endpoint } })
 };
+
+// Scarica un file riservato (es. campione vocale di un avatar) come URL locale riproducibile.
+export async function fetchBlobUrl(path) {
+  const res = await fetch(`${getApiBase()}${path}`, { headers: headers() });
+  if (!res.ok) throw await parseError(res);
+  return URL.createObjectURL(await res.blob());
+}
 
 const CSV_NAMES = { guests: "invitati.csv", bus: "navetta.csv", "gift-pool": "quote-uniche.csv" };
 

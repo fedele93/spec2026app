@@ -19,10 +19,11 @@ function check(name, cond, extra = "") {
 
 const tinyPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAIklEQVR4nGM8ISfHQA3ARBVTRg0aNWjUoFGDRg0aNYgiAACdgwE0j1vkvQAAAABJRU5ErkJggg==", "base64");
 
-const browser = await chromium.launch({ args: ["--no-proxy-server", "--disable-dev-shm-usage"] });
+// microfono finto per provare la registrazione dell'assistente vocale senza hardware
+const browser = await chromium.launch({ args: ["--no-proxy-server", "--disable-dev-shm-usage", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
 const context = await browser.newContext({
   viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "it-IT",
-  permissions: ["notifications"]
+  permissions: ["notifications", "microphone"]
 });
 const page = await context.newPage();
 const consoleErrors = [];
@@ -241,6 +242,64 @@ const manifest = await (await fetch(BASE + "/manifest.webmanifest")).json();
 check("manifest installabile (standalone, icone 192/512)", manifest.display === "standalone" && manifest.icons.length >= 2);
 const vapid = await (await fetch(BASE + "/api/push/vapid-public-key")).json();
 check("chiave VAPID esposta", vapid.publicKey && vapid.publicKey.length > 80);
+
+console.log("11) Assistente vocale (backend con ASSISTANT_FAKE)");
+await page.waitForSelector("#assistant-fab", { timeout: 8000 });
+check("pulsante assistente presente", (await page.$("#assistant-fab")) !== null);
+await page.click("#assistant-fab");
+await page.waitForSelector("#as-chat");
+check("solo Fedele selezionabile all'inizio", (await Promise.all((await page.$$("[data-avatar]")).map((c) => c.textContent()))).join(",") === "Fedele Luisi");
+await page.fill("#as-text", "Quando è la festa?");
+await page.click("#as-send");
+await page.waitForSelector(".as-msg.assistant", { timeout: 15000 });
+check("risposta scritta dell'avatar", (await page.textContent(".as-msg.assistant .as-bubble")).includes("13 novembre"));
+check("audio della risposta caricato", await page.evaluate(() => { const a = document.getElementById("assistant-audio"); return !!a && a.src.startsWith("data:audio/"); }));
+await page.fill("#as-text", "Quanti posti ci sono sulla navetta?");
+await page.click("#as-send");
+await page.waitForFunction(() => document.querySelectorAll(".as-msg.assistant").length >= 2, null, { timeout: 15000 });
+check("azione eseguita mostrata (posti navetta)", (await page.textContent("#as-chat")).includes("posti liberi"));
+// registrazione con il microfono finto: tieni premuto ~1 s e rilascia
+const mic = await page.$("#as-mic");
+check("pulsante microfono disponibile", mic !== null);
+if (mic) {
+  const box = await mic.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(1200);
+  await page.mouse.up();
+  await page.waitForFunction(() => document.querySelectorAll(".as-msg.assistant").length >= 3, null, { timeout: 20000 });
+  check("registrazione trascritta dal server", (await page.textContent("#as-chat")).includes("Trascrizione simulata"));
+}
+await shot("07-assistente");
+await page.fill("#as-text", "Apri la sezione navetta");
+await page.click("#as-send");
+await page.waitForTimeout(1500);
+check("apertura sezione via assistente", (await page.$(".tab.active[data-tab=\"bus\"]")) !== null && (await page.$(".modal-bg")) === null);
+
+console.log("11b) Pannello organizzatori: campione vocale e abilitazione di un avatar");
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-assistant");
+await page.click("#s-assistant");
+await page.waitForSelector(".as-admin");
+check("9 avatar nel pannello", (await page.$$(".as-admin")).length === 9);
+await page.setInputFiles('.as-admin[data-id="carlone"] [data-file]', { name: "sebastiano.wav", mimeType: "audio/wav", buffer: Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4000)]) });
+await page.waitForFunction(() => (document.querySelector('.as-admin[data-id="carlone"] .as-admin-status')?.textContent || "").includes("clonata"), null, { timeout: 15000 });
+check("voce clonata dal campione", (await page.textContent('.as-admin[data-id="carlone"] .as-admin-status')).includes("clonata"));
+await page.check('.as-admin[data-id="carlone"] [data-enabled]');
+await page.fill('.as-admin[data-id="carlone"] [data-persona]', "Sei Sebastiano, pacato e preciso.");
+check("avatar salvato e pronto", (await clickExpectToast('.as-admin[data-id="carlone"] [data-save]')).includes("pronto"));
+await page.click(".modal .close");
+await page.click("#assistant-fab");
+await page.waitForSelector("#as-chat");
+check("Sebastiano ora selezionabile", (await Promise.all((await page.$$("[data-avatar]")).map((c) => c.textContent()))).join(",") === "Fedele Luisi,Sebastiano Carlone");
+await page.click('[data-avatar="carlone"]');
+await page.fill("#as-text", "Ciao!");
+await page.click("#as-send");
+await page.waitForSelector(".as-msg.assistant", { timeout: 15000 });
+check("risposta con il nuovo avatar", (await page.textContent(".as-msg.assistant .as-bubble")).includes("Hai detto"));
+await page.click(".modal .close");
+await shot("07b-assistente-admin");
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

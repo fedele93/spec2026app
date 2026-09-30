@@ -3,6 +3,7 @@ import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM
 import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
 import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getClientId, downloadCsv } from "./api.js";
+import { initAssistant, openAssistantAdmin } from "./assistant.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -268,6 +269,9 @@ function settingsDialog() {
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📄 Esporta per ristorante e autista</b>
       <div class="muted" style="margin-bottom:8px;">File CSV (si aprono con Excel) con tutti gli invitati e le prenotazioni della navetta.</div>
       <div class="btn-row"><button class="btn btn-ghost" id="s-exp-guests">Esporta invitati</button><button class="btn btn-ghost" id="s-exp-bus">Esporta navetta</button></div></div>` : ""}
+    ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">🎙️ Assistente vocale (avatar dei neo-specialisti)</b>
+      <div class="muted" style="margin-bottom:8px;">Persona, abilitazione, voce preimpostata e campione vocale da clonare per ogni avatar.</div>
+      <button class="btn btn-ghost" id="s-assistant">Configura gli avatar</button></div>` : ""}
     ${serverMode && isTreasurer() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📒 Esporta quote uniche per il cassiere</b>
       <div class="muted" style="margin-bottom:8px;">CSV con una riga per quota, una colonna per neo-specialista e i totali: si apre con Excel.</div>
       <button class="btn btn-ghost" id="s-exp-pool">Esporta quote uniche</button></div>` : ""}
@@ -277,6 +281,8 @@ function settingsDialog() {
       const expG = bg.querySelector("#s-exp-guests"), expB = bg.querySelector("#s-exp-bus");
       if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
       if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
+      const asst = bg.querySelector("#s-assistant");
+      if (asst) asst.onclick = () => { close(); openAssistantAdmin(); };
       const expP = bg.querySelector("#s-exp-pool");
       if (expP) expP.onclick = () => tryAction(() => downloadCsv("gift-pool"), "quote-uniche.csv scaricato");
       bg.querySelector("#s-test").onclick = async () => {
@@ -295,6 +301,7 @@ function settingsDialog() {
         if (changedApi || !serverMode) { await reconnect(); updateStatusBar(); }
         toast("Impostazioni salvate");
         render();
+        initAssistant();
       };
     });
 }

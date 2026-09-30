@@ -56,9 +56,26 @@ def main() -> int:
     ids = [t.get("id") for t in targets]
     if len(set(ids)) != len(ids):
         errors.append("id dei regali duplicati: %s" % sorted({i for i in ids if ids.count(i) > 1}))
-    personal = [t for t in targets if t.get("id") != "gruppo"]
-    if len(personal) != len(graduates):
-        warnings.append("%d regali personali per %d laureandi" % (len(personal), len(graduates)))
+    if len(targets) != len(graduates):
+        warnings.append("%d regali per %d laureandi" % (len(targets), len(graduates)))
+    for t in targets:
+        for legacy in ("targetAmount", "collectedAmount"):
+            if legacy in t:
+                errors.append("regalo '%s': il campo %s non esiste più (nessuna cifra viene mostrata)" % (t.get("id"), legacy))
+    if "giftContributions" in d:
+        errors.append("'giftContributions' non esiste più: le quote di esempio vanno in 'giftPoolContributions'")
+
+    collector = d.get("giftCollector") or {}
+    if not collector.get("name"):
+        errors.append("manca 'giftCollector' (cassiere delle quote uniche) o il suo nome")
+    bad_methods = [m for m in collector.get("paymentMethods", []) if m not in ("IBAN", "PayPal", "Contanti")]
+    if bad_methods:
+        errors.append("giftCollector.paymentMethods ammette solo IBAN, PayPal, Contanti: %s" % bad_methods)
+    ids_set = set(ids)
+    for c in d.get("giftPoolContributions", []):
+        for a in c.get("allocations", []):
+            if a.get("graduateId") not in ids_set:
+                errors.append("quota di '%s' ripartita su un regalo sconosciuto: %s" % (c.get("donorName"), a.get("graduateId")))
 
     for k in (d.get("schedule") or {}):
         if k not in SCHEDULE_KEYS:
@@ -79,6 +96,8 @@ def main() -> int:
             errors.append("punto mappa '%s' fuori dalla zona di Bari: %s, %s" % (p.get("id"), lat, lon))
 
     bad_ibans = [t.get("id") for t in targets if not iban_is_valid(t.get("iban", ""))]
+    if collector and not iban_is_valid(collector.get("iban", "")):
+        bad_ibans.append("giftCollector")
     if bad_ibans:
         msg = "IBAN non validi (segnaposto?) nei regali: %s" % ", ".join(bad_ibans)
         (errors if strict else warnings).append(msg)

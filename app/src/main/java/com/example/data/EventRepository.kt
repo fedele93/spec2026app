@@ -2,15 +2,18 @@ package com.example.data
 
 import androidx.room.withTransaction
 import com.example.data.remote.BookingRequest
-import com.example.data.remote.ContributionRequest
+import com.example.data.remote.GiftPoolContribution
 import com.example.data.remote.GuestRequest
 import com.example.data.remote.GuestStatusRequest
 import com.example.data.remote.NeuroPartyApi
 import com.example.data.remote.NotificationRequest
+import com.example.data.remote.PoolContributionRequest
 import com.example.data.remote.RemoteClient
+import com.example.data.remote.RemoteException
 import com.example.data.remote.SnapshotDto
 import com.example.data.remote.WishRequest
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -34,7 +37,12 @@ class EventRepository(private val db: AppDatabase) {
     val allWishes: Flow<List<WishEntity>> = db.wishDao().getAllWishes()
     val allPhotos: Flow<List<SharedPhotoEntity>> = db.photoDao().getAllPhotos()
     val giftTargets: Flow<List<GiftTargetEntity>> = db.giftDao().getAllTargets()
-    val giftContributions: Flow<List<GiftContributionEntity>> = db.giftDao().getAllContributions()
+    /** Cassiere delle quote uniche (dallo snapshot del server o da SeedData). */
+    val giftCollector: Flow<GiftCollectorEntity?> = db.giftDao().getCollector()
+
+    /** Quote uniche registrate in modalità locale/demo: solo in memoria, non sono dati condivisi. */
+    private val localPool = MutableStateFlow<List<GiftPoolContribution>>(emptyList())
+    private var localPoolSeq = 0L
     val allNotifications: Flow<List<EventNotificationEntity>> = db.notificationDao().getAllNotifications()
     val unreadNotificationsCount: Flow<Int> = db.notificationDao().getUnreadCount()
 
@@ -65,10 +73,10 @@ class EventRepository(private val db: AppDatabase) {
             db.photoDao().deleteAll()
             db.photoDao().insertPhotos(snapshot.photos)
 
-            db.giftDao().deleteAllContributions()
             db.giftDao().deleteAllTargets()
             db.giftDao().insertTargets(snapshot.giftTargets)
-            db.giftDao().insertContributions(snapshot.giftContributions)
+            val collector = snapshot.event?.giftCollector
+            if (collector != null) db.giftDao().upsertCollector(collector.toEntity())
 
             db.notificationDao().deleteAll()
             db.notificationDao().insertNotifications(
@@ -206,25 +214,41 @@ class EventRepository(private val db: AppDatabase) {
         else writeRemote(api) { it.likePhoto(photoId) }
     }
 
-    // ------------------------------------------------------------------ regali
+    // ------------------------------------------------------------------ regali: quota unica al cassiere
 
-    suspend fun addGiftContribution(contribution: GiftContributionEntity) {
+    /** Le quote uniche registrate da questo dispositivo (dal server, oppure quelle in memoria in modalità locale). */
+    suspend fun myPoolContributions(): List<GiftPoolContribution> {
+        val api = remote ?: return localPool.value
+        return runRemote { api.myPoolContributions() }
+    }
+
+    /** Registra una quota unica; il server (o [GiftSplit] in locale) calcola la ripartizione. */
+    suspend fun addPoolContribution(request: PoolContributionRequest): GiftPoolContribution {
         val api = remote
         if (api == null) {
-            db.giftDao().insertContribution(contribution)
-            db.giftDao().addAmountToTarget(contribution.targetGraduateId, contribution.amount)
+            val contribution = GiftSplit.build(request, db.giftDao().getAllTargetsOnce(), id = ++localPoolSeq)
+            localPool.value = listOf(contribution) + localPool.value
+            return contribution
+        }
+        return writeRemote(api) { it.addPoolContribution(request) }
+    }
+
+    /** Annulla una quota registrata da questo dispositivo (il server rifiuta se già ricevuta dal cassiere). */
+    suspend fun deletePoolContribution(id: Long) {
+        val api = remote
+        if (api == null) {
+            val existing = localPool.value.firstOrNull { it.id == id }
+            if (existing != null && existing.status == "RECEIVED") {
+                throw IllegalStateException("Quota già ricevuta dal cassiere: contattalo per modificarla")
+            }
+            localPool.value = localPool.value.filterNot { it.id == id }
         } else {
             writeRemote(api) {
-                it.addContribution(
-                    ContributionRequest(
-                        donorName = contribution.donorName,
-                        targetGraduateId = contribution.targetGraduateId,
-                        amount = contribution.amount,
-                        paymentMethod = contribution.paymentMethod,
-                        note = contribution.note,
-                        isAnonymous = contribution.isAnonymous
-                    )
-                )
+                val res = it.deletePoolContribution(id)
+                // Retrofit non lancia per Response<Unit>: il 403/409 del server (non tua, già ricevuta) va mostrato
+                if (!res.isSuccessful) {
+                    throw RemoteException(RemoteClient.messageFromErrorBody(res.errorBody()?.string(), res.code()), res.code())
+                }
             }
         }
     }
@@ -263,11 +287,9 @@ class EventRepository(private val db: AppDatabase) {
         if (db.photoDao().countPhotos() == 0) {
             db.photoDao().insertPhotos(SeedData.photos)
         }
-        if (db.giftDao().countContributions() == 0) {
+        if (db.giftDao().countTargets() == 0) {
             db.giftDao().insertTargets(SeedData.giftTargets)
-            for (c in SeedData.giftContributions) {
-                db.giftDao().insertContribution(c)
-            }
+            db.giftDao().upsertCollector(SeedData.giftCollector)
         }
         if (db.notificationDao().countNotifications() == 0) {
             db.notificationDao().insertNotifications(SeedData.notifications)

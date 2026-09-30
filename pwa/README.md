@@ -62,7 +62,7 @@ BASE_URL=http://127.0.0.1:8765 ADMIN_TOKEN=test node pwa/tests/e2e.mjs
 ```
 
 Il test copre: caricamento dati dal server, notifiche, invitati (ricerca, aggiunta, stato,
-permessi di cancellazione), navetta (overbooking rifiutato), auguri, upload foto, quote regalo,
+permessi di cancellazione), navetta (overbooking rifiutato), auguri, upload foto, quota unica al cassiere e cruscotto,
 invio notifica da organizzatore, persistenza dopo reload, polling, service worker e manifest.
 Gli screenshot finiscono in `pwa/tests/screenshots/`.
 

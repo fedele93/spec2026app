@@ -3,7 +3,7 @@
 App Android (installabile via `.apk`) per la festa di specializzazione e laurea in
 Neurologia. Gestisce invitati e RSVP, notifiche push in tempo reale, mappa dei
 ritrovi, prenotazione della navetta bus, bacheca degli auguri, galleria foto e
-quote regali differenziate.
+regali (quota unica al cassiere o regalo diretto ai neo-specialisti).
 
 L'app è nativa in Kotlin + Jetpack Compose, senza dipendenze non-libere
 (Firebase/Google Play Services sono state rimosse per compatibilità F-Droid):
@@ -20,8 +20,8 @@ di sistema, niente SDK Google.
 | **Backend** ([fedele93/neuroparty-backend](https://github.com/fedele93/neuroparty-backend)) | Docker su Ubuntu, sottodominio con HTTPS automatico | condivide i dati fra tutti e invia le notifiche push |
 
 Con il backend configurato (variabile `API_BASE_URL`, vedi sotto) l'app Android e la PWA
-leggono e scrivono gli stessi dati: RSVP, prenotazioni navetta, auguri, foto, quote regalo e
-notifiche. Senza backend entrambe funzionano in **modalità locale/demo** con i dati di esempio.
+leggono e scrivono gli stessi dati: RSVP, prenotazioni navetta, auguri, foto, quote uniche al
+cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/demo** con i dati di esempio.
 
 ## Funzionalità
 
@@ -31,7 +31,12 @@ notifiche. Senza backend entrambe funzionano in **modalità locale/demo** con i 
 - **Navetta bus**: prenotazione e gestione dei posti sulla navetta.
 - **Bacheca auguri**: ticker/banner con gli auguri degli ospiti.
 - **Galleria foto**: visualizzazione foto (caricamento tramite Coil).
-- **Regali**: gestione delle quote regali differenziate.
+- **Regali**: nessuna cifra raccolta visibile. Ogni neo-specialista ha la sua card con IBAN da
+  copiare e link PayPal/Satispay (regalo diretto, senza registrazione); chi preferisce un solo
+  versamento registra una **quota unica** al cassiere (Dott. Paolo Roberto) scegliendo se dividerla
+  in parti uguali o personalizzarla per neo-specialista; le proprie quote si vedono e si possono
+  annullare finché non sono state ricevute. Il cruscotto del cassiere (chi, quanto, per chi, stato,
+  CSV per Excel) è nella PWA con il token `TREASURER_TOKEN`.
 
 ## Stack tecnico
 

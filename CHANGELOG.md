@@ -5,6 +5,38 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-09-30
+
+Sezione Regali rifatta: niente cifre raccolte, quota unica al cassiere e cruscotto.
+
+### Modificato
+
+- Regali (Android e PWA): rimossi obiettivi, importi raccolti, barre di avanzamento e l'elenco
+  pubblico delle quote. La card di ogni neo-specialista mostra solo regalo, intestatario e IBAN con
+  i pulsanti **Copia IBAN**, **PayPal** e **Satispay**: la donazione diretta non viene registrata
+  (niente importo, niente nome, niente contanti).
+- Il "Regalo Comune Specializzandi" è sostituito dal **cassiere delle quote uniche**
+  (`giftCollector` in `event-data.json`: Dott. Paolo Roberto, IBAN, PayPal, causale suggerita):
+  chi vuole fare un solo versamento registra la quota indicando nome, importo, metodo
+  (IBAN, PayPal o contanti) e la ripartizione **in parti uguali** (con possibilità di escludere
+  qualcuno) o **personalizzata**; "Le tue quote registrate" con annullamento finché in attesa.
+- Room: database v2 (regali senza importi, tabella `gift_collector`, via le quote per singolo
+  regalo), ricreato in automatico; `SnapshotDto` legge `event.giftCollector`.
+- Backend (`neuroparty-backend`): `POST/GET /api/gifts/pool...`, token `TREASURER_TOKEN`,
+  `GET /api/export/gift-pool.csv`, webhook `gift.pooled`; i vecchi endpoint delle quote e gli
+  importi spariscono dallo snapshot. Gli APK precedenti devono essere aggiornati.
+
+### Aggiunto
+
+- PWA: **cruscotto del cassiere** nella tab Regali (token cassiere o organizzatore in
+  ⚙️ Impostazioni): quanto spetta a ciascun neo-specialista, elenco delle quote con stato
+  "ricevuta" e download di `quote-uniche.csv` (una colonna per neo-specialista, righe dei
+  totali, virgola decimale) pronto per Excel.
+- `GiftSplit`: stessa ripartizione ai centesimi del server, usata per l'anteprima nel dialogo e
+  in modalità locale; test Room e di parsing dello snapshot aggiornati; 13 nuovi controlli e2e.
+- `tools/check-event-data.py` verifica anche il cassiere (IBAN, metodi ammessi) e segnala i campi
+  degli importi non più supportati.
+
 ## [1.5.0] - 2026-09-25
 
 Strumenti per gli organizzatori: notifiche programmate, riepilogo catering, export CSV,

@@ -12,10 +12,13 @@ import androidx.room.RoomDatabase
         WishEntity::class,
         SharedPhotoEntity::class,
         GiftTargetEntity::class,
-        GiftContributionEntity::class,
+        GiftCollectorEntity::class,
         EventNotificationEntity::class
     ],
-    version = 1,
+    // v2: regali senza importi, cassiere delle quote uniche, niente quote per singolo regalo.
+    // Il DB è una cache dello snapshot del server (o dei dati demo): in caso di cambio schema
+    // viene ricreato da zero e ripopolato.
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,7 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "neuro_party_database"
-                ).build()
+                ).fallbackToDestructiveMigration(dropAllTables = true).build()
                 INSTANCE = instance
                 instance
             }

@@ -12,7 +12,8 @@ export const RsvpStatus = { CONFIRMED: "CONFIRMED", PENDING: "PENDING", DECLINED
 const EMPTY_EVENT = {
   meta: { maxBusSeats: 54 }, schedule: {}, graduates: [],
   program: { badge: "", title: "", subtitle: "", dateLabel: "", locationLabel: "", timeline: [] },
-  busSchedule: { subtitle: "", andata: {}, ritorno: {}, pickupStops: [] }, mapPoints: []
+  busSchedule: { subtitle: "", andata: {}, ritorno: {}, pickupStops: [] }, mapPoints: [],
+  giftCollector: { name: "", roleTitle: "", description: "", iban: "", ibanHolder: "", paypalMeUrl: "", paymentMethods: ["IBAN", "PayPal", "Contanti"], transferReason: "" }
 };
 
 // --- Costanti dell'evento (live bindings: vengono aggiornate da initData) -------------
@@ -23,6 +24,7 @@ export let PROGRAM = EMPTY_EVENT.program;
 export let BUS_SCHEDULE = EMPTY_EVENT.busSchedule;
 export let SCHEDULE = getSchedule(EMPTY_EVENT);
 export let EVENT = EMPTY_EVENT; // evento completo con i testi già risolti (per il calendario)
+export let GIFT_COLLECTOR = EMPTY_EVENT.giftCollector; // cassiere delle quote uniche
 
 function applyEvent(ev) {
   const e = { ...EMPTY_EVENT, ...(ev || {}) };
@@ -36,6 +38,31 @@ function applyEvent(ev) {
   MAP_POINTS = EVENT.mapPoints;
   PROGRAM = EVENT.program;
   BUS_SCHEDULE = EVENT.busSchedule;
+  GIFT_COLLECTOR = { ...EMPTY_EVENT.giftCollector, ...(e.giftCollector || {}) };
+}
+
+// Divide i centesimi in parti uguali: i centesimi di resto vanno ai primi della lista (come sul server).
+export function splitEqually(totalCents, count) {
+  const base = Math.floor(totalCents / count), rest = totalCents % count;
+  return Array.from({ length: count }, (_, i) => base + (i < rest ? 1 : 0));
+}
+const cents = (v) => Math.round(Number(v || 0) * 100);
+
+// Ripartizione di una quota unica calcolata in locale (modalità demo): stessa logica del server.
+export function buildAllocations(c, targets) {
+  const byId = new Map(targets.map((t) => [t.id, t]));
+  if (c.splitMode === "CUSTOM") {
+    const rows = (c.allocations || []).filter((a) => byId.has(a.graduateId) && cents(a.amount) > 0)
+      .map((a) => ({ graduateId: a.graduateId, graduateName: byId.get(a.graduateId).name, amount: cents(a.amount) / 100 }));
+    if (!rows.length) throw new ApiError(422, "Indica almeno un importo personalizzato");
+    return { allocations: rows, totalAmount: rows.reduce((s, a) => s + cents(a.amount), 0) / 100 };
+  }
+  const ids = (c.graduateIds?.length ? c.graduateIds : targets.map((t) => t.id)).filter((id) => byId.has(id));
+  const total = cents(c.totalAmount);
+  if (!ids.length) throw new ApiError(422, "Nessun neo-specialista da includere nella quota");
+  if (total < ids.length) throw new ApiError(422, "Importo troppo basso per essere diviso fra i neo-specialisti scelti");
+  const parts = splitEqually(total, ids.length);
+  return { allocations: ids.map((id, i) => ({ graduateId: id, graduateName: byId.get(id).name, amount: parts[i] / 100 })), totalAmount: total / 100 };
 }
 
 async function loadLocalEventFile() {
@@ -63,6 +90,7 @@ export const Status = {
   online: true,        // ultimo tentativo verso il server riuscito
   version: 0,          // versione dati del server (per il polling)
   adminEnabled: false, // il server ha un ADMIN_TOKEN configurato
+  treasurerEnabled: false, // il server ha un TREASURER_TOKEN (o ADMIN_TOKEN) per il cruscotto delle quote uniche
   pushSubscriptions: 0,
   lastError: ""
 };
@@ -112,6 +140,7 @@ const ServerRepo = {
       const s = await api.state();
       Status.online = true;
       Status.adminEnabled = !!s.adminEnabled;
+      Status.treasurerEnabled = !!s.treasurerEnabled;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
       if (s.version !== Status.version) {
         await refreshSnapshot();
@@ -149,8 +178,12 @@ const ServerRepo = {
   likePhoto: (id) => write(() => api.likePhoto(id)),
 
   allGiftTargets: async () => (snapshot ?? await refreshSnapshot()).giftTargets,
-  allGiftContributions: async () => (snapshot ?? await refreshSnapshot()).giftContributions,
-  addContribution: (c) => write(() => api.addContribution(c)),
+  // quota unica al cassiere: il server calcola la ripartizione e la conserva; le proprie quote si leggono a parte
+  addPoolContribution: (c) => write(() => api.addPoolContribution(c)),
+  myPoolContributions: async () => { try { return await api.myPoolContributions(); } catch { return []; } },
+  deletePoolContribution: (id) => write(() => api.deletePoolContribution(id)),
+  poolBoard: () => api.poolBoard(),
+  setPoolStatus: (id, status) => write(() => api.setPoolStatus(id, status)),
 
   allNotifications: async () => {
     const seen = getSeenAt();
@@ -187,7 +220,15 @@ const LocalRepo = {
     if ((await count("wishes")) === 0) await bulkAdd("wishes", (D.wishes ?? []).map((w) => ({ ...w, createdAt: ts(w.ageHours) })));
     if ((await count("photos")) === 0) await bulkAdd("photos", (D.photos ?? []).map((p) => ({ ...p, imageUri: p.imageUri ?? "", createdAt: ts(p.ageHours) })));
     if ((await count("giftTargets")) === 0) await bulkAdd("giftTargets", D.giftTargets ?? []);
-    if ((await count("giftContributions")) === 0) await bulkAdd("giftContributions", (D.giftContributions ?? []).map((c) => ({ ...c, contributedAt: ts(c.ageHours) })));
+    if ((await count("giftPool")) === 0) {
+      const names = new Map((D.giftTargets ?? []).map((t) => [t.id, t.name]));
+      await bulkAdd("giftPool", (D.giftPoolContributions ?? []).map((c) => {
+        const allocations = (c.allocations ?? []).map((a) => ({ ...a, graduateName: names.get(a.graduateId) ?? "" }));
+        const received = c.status === "RECEIVED";
+        return { ...c, allocations, totalAmount: allocations.reduce((s, a) => s + (a.amount || 0), 0), status: received ? "RECEIVED" : "PENDING",
+          clientId: "demo", createdAt: ts(c.ageHours), receivedAt: received ? ts(c.ageHours) : null };
+      }));
+    }
     if ((await count("notifications")) === 0) await bulkAdd("notifications", (D.notifications ?? []).map((n) => ({ ...n, timestamp: ts(n.ageHours) })));
     await setMeta("seeded", true);
   },
@@ -224,15 +265,37 @@ const LocalRepo = {
   likePhoto: (id) => updateRecord("photos", id, (p) => { p.likesCount = (p.likesCount || 0) + 1; }).then(notify),
 
   allGiftTargets: () => getAll("giftTargets"),
-  allGiftContributions: () => getAll("giftContributions"),
-  addContribution: async (c) => {
-    const target = (await getAll("giftTargets")).find((t) => t.id === c.targetGraduateId);
-    const donorName = c.isAnonymous ? "Un invitato generoso" : (c.donorName || "Invitato");
-    const id = await add("giftContributions", { ...c, donorName, targetGraduateName: target?.name ?? "", contributedAt: Date.now() });
-    if (target) { target.collectedAmount = (target.collectedAmount || 0) + (c.amount || 0); await put("giftTargets", target); }
+  addPoolContribution: async (c) => {
+    const { allocations, totalAmount } = buildAllocations(c, await getAll("giftTargets"));
+    const rec = { donorName: (c.donorName || "").trim(), contact: c.contact || "", paymentMethod: c.paymentMethod || "IBAN", splitMode: c.splitMode || "EQUAL",
+      totalAmount, note: c.note || "", status: "PENDING", clientId: "local", createdAt: Date.now(), receivedAt: null, allocations };
+    if (!rec.donorName) throw new ApiError(422, "Il nome è obbligatorio: serve al cassiere per riconoscere il versamento");
+    rec.id = await add("giftPool", rec);
     notify();
-    return id;
+    return rec;
   },
+  myPoolContributions: async () => (await getAll("giftPool")).filter((c) => c.clientId === "local").sort((a, b) => b.createdAt - a.createdAt),
+  deletePoolContribution: async (id) => {
+    const rec = (await getAll("giftPool")).find((c) => c.id === id);
+    if (rec && rec.status === "RECEIVED") throw new ApiError(409, "Quota già ricevuta dal cassiere: contattalo per modificarla");
+    return del("giftPool", id).then(notify);
+  },
+  poolBoard: async () => {
+    const rows = (await getAll("giftPool")).sort((a, b) => b.createdAt - a.createdAt);
+    const targets = await getAll("giftTargets");
+    const byGraduate = targets.map((t) => ({ graduateId: t.id, graduateName: t.name, amount: 0, receivedAmount: 0, contributions: 0 }));
+    const idx = new Map(byGraduate.map((g) => [g.graduateId, g]));
+    let totalAmount = 0, receivedAmount = 0;
+    for (const c of rows) {
+      totalAmount += c.totalAmount; if (c.status === "RECEIVED") receivedAmount += c.totalAmount;
+      for (const a of c.allocations) { const g = idx.get(a.graduateId); if (!g) continue; g.amount += a.amount; g.contributions++; if (c.status === "RECEIVED") g.receivedAmount += a.amount; }
+    }
+    const r2 = (v) => Math.round(v * 100) / 100;
+    byGraduate.forEach((g) => { g.amount = r2(g.amount); g.receivedAmount = r2(g.receivedAmount); });
+    return { contributions: rows, summary: { contributions: rows.length, received: rows.filter((c) => c.status === "RECEIVED").length,
+      pending: rows.filter((c) => c.status !== "RECEIVED").length, totalAmount: r2(totalAmount), receivedAmount: r2(receivedAmount), pendingAmount: r2(totalAmount - receivedAmount), byGraduate, byMethod: [] } };
+  },
+  setPoolStatus: (id, status) => updateRecord("giftPool", id, (c) => { c.status = status; c.receivedAt = status === "RECEIVED" ? Date.now() : null; }).then(notify),
 
   allNotifications: () => getAll("notifications"),
   addNotification: ({ sendAt, ...n }) => add("notifications", { ...n, timestamp: Date.now(), isRead: false }).then(notify), // niente programmazione in demo
@@ -265,6 +328,7 @@ export async function initData() {
       Status.mode = "server";
       Status.online = true;
       Status.adminEnabled = !!s.adminEnabled;
+      Status.treasurerEnabled = !!s.treasurerEnabled;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
       impl = ServerRepo;
       await ServerRepo.prepopulateIfNeeded();

@@ -182,7 +182,7 @@ for p in d.get("photos", []):
 out.append("    )")
 out.append("")
 
-# Gift targets
+# Gift targets (nessun importo: obiettivi e cifre raccolte non esistono più)
 out.append("    val giftTargets: List<GiftTargetEntity> = listOf(")
 for t in d.get("giftTargets", []):
     out.append("        GiftTargetEntity(")
@@ -192,8 +192,6 @@ for t in d.get("giftTargets", []):
     out.append("            roleTitle = %s," % kt_str(t.get("roleTitle")))
     out.append("            giftTitle = %s," % kt_str(t.get("giftTitle")))
     out.append("            giftDescription = %s," % kt_str(t.get("giftDescription")))
-    out.append("            targetAmount = %s," % format(float(t.get("targetAmount", 0)), ".1f"))
-    out.append("            collectedAmount = %s," % format(float(t.get("collectedAmount", 0)), ".1f"))
     out.append("            iban = %s," % kt_str(t.get("iban")))
     out.append("            ibanHolder = %s," % kt_str(t.get("ibanHolder")))
     out.append("            satispayUrl = %s," % kt_str(t.get("satispayUrl")))
@@ -202,19 +200,17 @@ for t in d.get("giftTargets", []):
 out.append("    )")
 out.append("")
 
-# Gift contributions
-out.append("    val giftContributions: List<GiftContributionEntity> = listOf(")
-for c in d.get("giftContributions", []):
-    out.append("        GiftContributionEntity(")
-    out.append("            donorName = %s," % kt_str(c.get("donorName")))
-    out.append("            targetGraduateId = %s," % kt_str(c.get("targetGraduateId")))
-    out.append("            targetGraduateName = %s," % kt_str(c.get("targetGraduateName")))
-    out.append("            amount = %s," % format(float(c.get("amount", 0)), ".1f"))
-    out.append("            paymentMethod = %s," % kt_str(c.get("paymentMethod")))
-    out.append("            note = %s," % kt_str(c.get("note")))
-    out.append("            isAnonymous = %s," % kt_bool(c.get("isAnonymous", False)))
-    out.append("            contributedAt = %s" % age_ms(c.get("ageHours")))
-    out.append("        ),")
+# Gift collector (cassiere delle quote uniche)
+c = d.get("giftCollector") or {}
+out.append("    val giftCollector: GiftCollectorEntity = GiftCollectorEntity(")
+out.append("        name = %s," % kt_str(c.get("name")))
+out.append("        roleTitle = %s," % kt_str(c.get("roleTitle")))
+out.append("        description = %s," % kt_str(c.get("description")))
+out.append("        iban = %s," % kt_str(c.get("iban")))
+out.append("        ibanHolder = %s," % kt_str(c.get("ibanHolder")))
+out.append("        paypalMeUrl = %s," % kt_str(c.get("paypalMeUrl")))
+out.append("        paymentMethodsCsv = %s," % kt_str(",".join(c.get("paymentMethods", ["IBAN", "PayPal", "Contanti"])), raw=True))
+out.append("        transferReason = %s" % kt_str(c.get("transferReason")))
 out.append("    )")
 out.append("")
 

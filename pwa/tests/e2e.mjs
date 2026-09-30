@@ -139,15 +139,27 @@ await shot("04-auguri-foto");
 
 console.log("6) Regali");
 await tab("gifts");
-await page.waitForSelector("[data-cont]");
-check("10 destinatari regalo", (await page.$$("[data-cont]")).length === 10);
-await page.click('[data-cont="luisi"]');
-await page.click('#c-presets .chip[data-amt="100"]');
-await page.fill("#c-donor", "Zio Playwright");
-await page.fill("#c-note", "Bravo!");
-check("contributo registrato", (await clickExpectToast("#c-save")).includes("100€"));
+await page.waitForSelector("[data-target]");
+check("9 neo-specialisti con regalo diretto", (await page.$$("[data-target]")).length === 9);
+check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.textContent("#screen")));
+check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
+check("pulsanti copia IBAN e PayPal/Satispay", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 9);
+check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
+await page.click("#pool-open");
+await page.waitForSelector("#q-save");
+check("metodi cassa: IBAN, PayPal, Contanti (no Satispay)", (await Promise.all((await page.$$("#q-methods .chip")).map((c) => c.textContent()))).join(",") === "IBAN,PayPal,Contanti");
+await page.fill("#q-donor", "Zio Playwright");
+await page.click('#q-presets .chip[data-amt="150"]');
+await page.click('[data-who="luisi"]'); // escludo un neo-specialista: 150 € su 8
+check("anteprima parti uguali (18,75 € ciascuno)", (await page.textContent('[data-each="carlone"]')).includes("18,75"));
+check("causale suggerita con il nome", (await page.textContent("#q-reason")).includes("Zio Playwright"));
+const poolToast = await clickExpectToast("#q-save");
+check("quota unica registrata", poolToast.includes("150,00"), poolToast);
 await page.waitForTimeout(600);
-check("dedica visibile nelle ultime quote", (await page.textContent("#screen")).includes("Zio Playwright"));
+check("la mia quota compare nella card del cassiere", (await page.textContent(".collector .mine")).includes("150,00 €"));
+const myPool = await fetch(BASE + "/api/gifts/pool/mine", { headers: { "X-Client-Id": await page.evaluate(() => localStorage.getItem("np.clientId")) } }).then((r) => r.json());
+check("ripartizione salvata sul server (8 parti)", myPool.length === 1 && myPool[0].allocations.length === 8 && !myPool[0].allocations.some((a) => a.graduateId === "luisi"));
+check("le quote non sono pubbliche", (await fetch(BASE + "/api/gifts/pool")).status === 403);
 await shot("05-regali");
 
 console.log("7) Invio notifica push (solo organizzatore)");
@@ -190,8 +202,22 @@ const csv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/e
 check("export CSV invitati", csv.ok && csv.body.replace(/^\ufeff/, "").startsWith("Nome;Categoria;Stato RSVP"));
 check("export CSV negato senza token", (await fetch(BASE + "/api/export/bus.csv")).status === 403);
 await page.click("#settings");
-check("pulsanti export in Impostazioni", (await page.$("#s-exp-guests")) !== null && (await page.$("#s-exp-bus")) !== null);
+check("pulsanti export in Impostazioni", (await page.$("#s-exp-guests")) !== null && (await page.$("#s-exp-bus")) !== null && (await page.$("#s-exp-pool")) !== null);
 await page.click(".modal .close");
+
+console.log("7c) Cruscotto cassiere (il token organizzatore vale anche come cassiere)");
+await tab("gifts");
+await page.waitForSelector(".board");
+const boardText = await page.textContent(".board");
+check("totali per neo-specialista", boardText.includes("Carlone") && boardText.includes("18,75"));
+check("quota di Zio Playwright elencata in attesa", boardText.includes("Zio Playwright") && boardText.includes("In attesa"));
+const statusToast = await clickExpectToast('[data-pool-status][data-next="RECEIVED"]');
+check("segnata come ricevuta", statusToast.includes("ricevuta"));
+await page.waitForTimeout(600);
+const poolCsv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/export/gift-pool.csv", { headers: { "X-Admin-Token": localStorage.getItem("np.adminToken") } }); return { ok: r.ok, body: await r.text() }; }, BASE);
+check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Donatore;Contatto;Metodo") && poolCsv.body.includes("TOTALE;"));
+check("la quota ricevuta non si può più annullare dal donatore", (await page.$("[data-pool-del]")) === null);
+await shot("06b-cassa");
 
 console.log("8) Persistenza: ricarico la pagina e i dati restano (server)");
 await page.reload({ waitUntil: "networkidle" });

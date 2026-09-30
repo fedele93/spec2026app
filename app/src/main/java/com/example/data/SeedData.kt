@@ -323,28 +323,12 @@ object SeedData {
 
     val giftTargets: List<GiftTargetEntity> = listOf(
         GiftTargetEntity(
-            id = "gruppo",
-            name = "Regalo Comune Specializzandi",
-            specialization = "Specializzazione in Neurologia 2026",
-            roleTitle = "Fedele, Sebastiano, Roberto, Dalila, Giorgia, Lorenzo, Francesco, Chiara, Donato",
-            giftTitle = "Viaggio Congresso Europeo di Neurologia & Brindisi di Classe",
-            giftDescription = "Quota comune per sostenere la partecipazione al congresso EAN (European Academy of Neurology) e la festa di venerdì 13 novembre!",
-            targetAmount = 4800.0,
-            collectedAmount = 2100.0,
-            iban = "IT78 K030 6909 6061 0000 1234 567",
-            ibanHolder = "Comitato Festa Neurologia Bari",
-            satispayUrl = "https://tag.satispay.com/festaneurologiabari",
-            paypalMeUrl = "https://paypal.me/festaneurologiabari2026"
-        ),
-        GiftTargetEntity(
             id = "luisi",
             name = "Dott. Fedele Luisi",
             specialization = "Epilessia & Neurofisiologia Clinica",
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Stetoscopio Digitale Littmann & Fellowship Clinica",
             giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Fedele.",
-            targetAmount = 900.0,
-            collectedAmount = 520.0,
             iban = "IT44 X030 6909 6061 0000 9876 543",
             ibanHolder = "Fedele Luisi",
             satispayUrl = "https://tag.satispay.com/fedeleluisineuro",
@@ -357,8 +341,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Oftalmoscopio Professionale & Borsa Medico in Cuoio",
             giftDescription = "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Sebastiano.",
-            targetAmount = 950.0,
-            collectedAmount = 680.0,
             iban = "IT12 Y030 6909 6061 0000 4567 890",
             ibanHolder = "Sebastiano Carlone",
             satispayUrl = "https://tag.satispay.com/sebastianocarlone",
@@ -371,8 +353,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Corso Neurosonologia Doppler & Attrezzatura Studio",
             giftDescription = "Regalo dedicato per la certificazione in ecocolordoppler transcranico e dotazione clinica di Roberto.",
-            targetAmount = 850.0,
-            collectedAmount = 430.0,
             iban = "IT99 Z030 6909 6061 0000 3210 987",
             ibanHolder = "Roberto Spiridione Prezioso",
             satispayUrl = "https://tag.satispay.com/robertoprezioso",
@@ -385,8 +365,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Martello Riflessi Digitale & Corso RM Funzionale",
             giftDescription = "Contributo per la dotazione ambulatoriale e l'aggiornamento in neuroimaging funzionale di Dalila.",
-            targetAmount = 800.0,
-            collectedAmount = 350.0,
             iban = "IT55 A030 6909 6061 0000 1112 223",
             ibanHolder = "Dalila Totaro",
             satispayUrl = "https://tag.satispay.com/dalilatotaro",
@@ -399,8 +377,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Elettromiografo Portatile & Stage Neurofisiologia",
             giftDescription = "Regalo per l'avvio dell'attività in elettrofisiologia clinica e lo studio delle neuropatie di Giorgia.",
-            targetAmount = 880.0,
-            collectedAmount = 410.0,
             iban = "IT66 B030 6909 6061 0000 3334 445",
             ibanHolder = "Giorgia Ruta",
             satispayUrl = "https://tag.satispay.com/gorgiaruta",
@@ -413,8 +389,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Corso Tourette & Dispositivo Wearable Monitoring",
             giftDescription = "Regalo per la formazione sui disturbi del movimento e l'attività di ricerca clinica di Lorenzo.",
-            targetAmount = 820.0,
-            collectedAmount = 380.0,
             iban = "IT77 C030 6909 6061 0000 5556 667",
             ibanHolder = "Lorenzo Parrulli",
             satispayUrl = "https://tag.satispay.com/lorenzoparrulli",
@@ -427,8 +401,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Tappeto Rotante & Kit Valutazione Neurologica",
             giftDescription = "Contributo per la dotazione di neuroriabilitazione e l'attività ambulatoriale di Francesco.",
-            targetAmount = 760.0,
-            collectedAmount = 290.0,
             iban = "IT88 D030 6909 6061 0000 7778 889",
             ibanHolder = "Francesco Cusmai",
             satispayUrl = "https://tag.satispay.com/francescocusmai",
@@ -441,8 +413,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Tablet Clinico & Corso Neuropsicologia",
             giftDescription = "Regalo per la valutazione neuropsicologica dei pazienti e l'aggiornamento sulle demenze di Chiara.",
-            targetAmount = 790.0,
-            collectedAmount = 360.0,
             iban = "IT33 E030 6909 6061 0000 9990 011",
             ibanHolder = "Chiara Esposto",
             satispayUrl = "https://tag.satispay.com/chiaraesposto",
@@ -455,8 +425,6 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Ecografo Palmare & Corso Neuro-Oncologia",
             giftDescription = "Contributo per la dotazione diagnostica al letto del paziente e l'aggiornamento in neuro-oncologia di Donato.",
-            targetAmount = 800.0,
-            collectedAmount = 250.0,
             iban = "IT22 F030 6909 6061 0000 2223 334",
             ibanHolder = "Donato Regina",
             satispayUrl = "https://tag.satispay.com/donatoregina",
@@ -464,47 +432,15 @@ object SeedData {
         ),
     )
 
-    val giftContributions: List<GiftContributionEntity> = listOf(
-        GiftContributionEntity(
-            donorName = "Zia Laura & Famiglia",
-            targetGraduateId = "carlone",
-            targetGraduateName = "Dott. Sebastiano Carlone",
-            amount = 150.0,
-            paymentMethod = "IBAN",
-            note = "Per il nostro neurologo preferito! Con affetto infinito.",
-            isAnonymous = false,
-            contributedAt = (System.currentTimeMillis() - 18000000L)
-        ),
-        GiftContributionEntity(
-            donorName = "Colleghi Reparto Stroke",
-            targetGraduateId = "prezioso",
-            targetGraduateName = "Dott. Roberto Spiridione Prezioso",
-            amount = 100.0,
-            paymentMethod = "Satispay",
-            note = "Per il futuro re delle trombolisi! Forza Roberto!",
-            isAnonymous = false,
-            contributedAt = (System.currentTimeMillis() - 14400000L)
-        ),
-        GiftContributionEntity(
-            donorName = "Famiglia Luisi",
-            targetGraduateId = "luisi",
-            targetGraduateName = "Dott. Fedele Luisi",
-            amount = 200.0,
-            paymentMethod = "IBAN",
-            note = "Orgogliosi del tuo percorso impeccabile.",
-            isAnonymous = false,
-            contributedAt = (System.currentTimeMillis() - 10800000L)
-        ),
-        GiftContributionEntity(
-            donorName = "Amici del Liceo",
-            targetGraduateId = "gruppo",
-            targetGraduateName = "Regalo Comune Specializzandi",
-            amount = 120.0,
-            paymentMethod = "PayPal",
-            note = "Brindiamo a tutti voi venerdì 13!",
-            isAnonymous = false,
-            contributedAt = (System.currentTimeMillis() - 7200000L)
-        ),
+    val giftCollector: GiftCollectorEntity = GiftCollectorEntity(
+        name = "Dott. Paolo Roberto",
+        roleTitle = "Cassiere delle quote uniche",
+        description = "Se preferisci fare un solo versamento per tutti i neo-specialisti, Paolo raccoglie la tua quota e la gira a ciascuno di loro: scegli tu se dividerla in parti uguali o personalizzarla.",
+        iban = "IT00 A000 0000 0000 0000 0000 000",
+        ibanHolder = "Paolo Roberto",
+        paypalMeUrl = "https://paypal.me/paoloroberto",
+        paymentMethodsCsv = "IBAN,PayPal,Contanti",
+        transferReason = "Regalo specializzazione Neurologia 2026"
     )
 
     val notifications: List<EventNotificationEntity> = listOf(

@@ -85,6 +85,7 @@ jobs:
   pwa:
     name: Test PWA (sintassi + end-to-end con backend)
     runs-on: ubuntu-latest
+    timeout-minutes: 20  # l'installazione di Playwright (download di Chromium) a volte resta appesa: meglio fallire e rilanciare
 
     steps:
       - name: Checkout app
@@ -130,6 +131,7 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/api/health && break; sleep 1; done
 
       - name: Installa Playwright
+        timeout-minutes: 8
         run: |
           npm init -y >/dev/null
           npm i playwright@1

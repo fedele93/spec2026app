@@ -36,6 +36,14 @@ Sezione Regali rifatta: niente cifre raccolte, quota unica al cassiere e cruscot
   in modalità locale; test Room e di parsing dello snapshot aggiornati; 13 nuovi controlli e2e.
 - `tools/check-event-data.py` verifica anche il cassiere (IBAN, metodi ammessi) e segnala i campi
   degli importi non più supportati.
+- **Assistente vocale con avatar** (PWA): pulsante "Chiedi" su tutte le schermate; pannello con
+  scelta del neo-specialista, "tieni premuto e parla" (MediaRecorder) o testo, risposta scritta
+  e letta ad alta voce, azioni eseguite dal server mostrate come etichette (posti navetta,
+  RSVP, prenotazione, augurio, apertura sezione). Pannello organizzatori per persona,
+  abilitazione, voce preimpostata, campione vocale da clonare (file o registrazione), riascolto
+  e prova della voce. Backend `neuroparty-backend` con API Mistral (Voxtral, chat con function
+  calling, `voxtral-mini-tts-2603`); `assistant.avatars` in `event-data.json` (solo Fedele
+  attivo all'inizio). La CI avvia il backend con `ASSISTANT_FAKE=true`; 13 nuovi controlli e2e.
 
 ## [1.5.0] - 2026-09-25
 

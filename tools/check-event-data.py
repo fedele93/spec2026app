@@ -72,6 +72,12 @@ def main() -> int:
     if bad_methods:
         errors.append("giftCollector.paymentMethods ammette solo IBAN, PayPal, Contanti: %s" % bad_methods)
     ids_set = set(ids)
+    avatars = (d.get("assistant") or {}).get("avatars", [])
+    for a in avatars:
+        if a.get("id") not in ids_set:
+            errors.append("avatar dell'assistente con id sconosciuto (deve essere uno dei regali): %s" % a.get("id"))
+    if avatars and not any(a.get("enabled") for a in avatars):
+        warnings.append("nessun avatar dell'assistente abilitato in assistant.avatars")
     for c in d.get("giftPoolContributions", []):
         for a in c.get("allocations", []):
             if a.get("graduateId") not in ids_set:

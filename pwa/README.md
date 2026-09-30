@@ -24,6 +24,21 @@ permessi), mostrano il messaggio restituito dal server.
 - Gli organizzatori inseriscono il token in ⚙️ Impostazioni: compare il pulsante **"Invia
   notifica"** che pubblica l'avviso a tutti (app Android inclusa).
 
+## Assistente vocale con avatar
+
+Pulsante rotondo **"Chiedi"** in basso a sinistra (solo in modalità server, se il backend ha
+`MISTRAL_API_KEY` e almeno un avatar pronto): si sceglie un neo-specialista, si tiene premuto
+per parlare (o si scrive) e l'avatar risponde in italiano, per iscritto e a voce. Può leggere i
+posti liberi sulla navetta, cercare un invitato, confermare un RSVP, prenotare la navetta,
+pubblicare un augurio e aprire una sezione (chiede conferma prima di scrivere dati). La
+conversazione resta nel browser (`sessionStorage`) e viene inviata al server a ogni turno.
+
+Gli organizzatori (token in ⚙️ Impostazioni → *Configura gli avatar*) impostano per ogni
+neo-specialista persona, abilitazione, voce preimpostata e campione vocale da clonare (file o
+registrazione di 10 secondi), con riascolto e prova della voce. Il microfono richiede HTTPS (o
+`localhost`) e, su iPhone, Safari 14.3 o successivo. Vedi il README del backend, sezione
+*Assistente vocale con avatar*.
+
 ## Struttura
 
 ```
@@ -34,6 +49,7 @@ js/api.js        client HTTP (X-Client-Id, X-Admin-Token)
 js/data.js       Repo: modalità server (snapshot + cache) o locale (IndexedDB)
 js/db.js         wrapper IndexedDB (modalità locale)
 js/notify.js     permesso notifiche, Web Push subscribe
+js/assistant.js  assistente vocale: pulsante, pannello (microfono/testo, audio), pannello admin degli avatar
 js/schedule.js   orari (blocco "schedule"), segnaposto nei testi, calendario .ics locale
 js/screens.js    le 5 schermate
 shared/event-data.json   dati evento (fallback offline; sorgente per SeedData.kt Android)
@@ -48,7 +64,8 @@ tests/e2e.mjs    test end-to-end Playwright
 git clone https://github.com/fedele93/neuroparty-backend ../neuroparty-backend
 cd ../neuroparty-backend && python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-ADMIN_TOKEN=test SEED_DEMO_DATA=true PWA_DIR=../spec2026app/pwa uvicorn app.main:app --port 8765
+ADMIN_TOKEN=test SEED_DEMO_DATA=true ASSISTANT_FAKE=true PWA_DIR=../spec2026app/pwa uvicorn app.main:app --port 8765
+# (ASSISTANT_FAKE=true: assistente vocale simulato senza chiave Mistral; togli la variabile e metti MISTRAL_API_KEY per quello vero)
 # 2) apri http://127.0.0.1:8765
 ```
 
@@ -63,7 +80,8 @@ BASE_URL=http://127.0.0.1:8765 ADMIN_TOKEN=test node pwa/tests/e2e.mjs
 
 Il test copre: caricamento dati dal server, notifiche, invitati (ricerca, aggiunta, stato,
 permessi di cancellazione), navetta (overbooking rifiutato), auguri, upload foto, quota unica al cassiere e cruscotto,
-invio notifica da organizzatore, persistenza dopo reload, polling, service worker e manifest.
+invio notifica da organizzatore, persistenza dopo reload, polling, service worker e manifest,
+assistente vocale (con microfono finto di Chromium e backend in `ASSISTANT_FAKE`).
 Gli screenshot finiscono in `pwa/tests/screenshots/`.
 
 ## Aggiornare i dati dell'evento

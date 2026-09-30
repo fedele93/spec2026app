@@ -1,6 +1,7 @@
 // App shell: routing tab, init, service worker, polling aggiornamenti dal server
 import { Repo, Status, initData, onDataChange } from "./data.js";
 import { resyncPushSubscription } from "./notify.js";
+import { initAssistant } from "./assistant.js";
 import * as Screens from "./screens.js";
 
 let currentTab = "program";
@@ -102,6 +103,7 @@ async function init() {
   window.addEventListener("offline", updateStatusBar);
   setTimeout(pollLoop, POLL_MS);
   resyncPushSubscription();
+  initAssistant(); // pulsante dell'assistente vocale (se il server ha Mistral configurato)
 }
 
 init().catch((e) => {

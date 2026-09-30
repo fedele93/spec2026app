@@ -37,6 +37,10 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
   in parti uguali o personalizzarla per neo-specialista; le proprie quote si vedono e si possono
   annullare finché non sono state ricevute. Il cruscotto del cassiere (chi, quanto, per chi, stato,
   CSV per Excel) è nella PWA con il token `TREASURER_TOKEN`.
+- **Assistente vocale con avatar** (solo PWA, per ora): pulsante "Chiedi" che apre una
+  conversazione a voce o per iscritto con uno dei neo-specialisti (voce clonata dal suo campione,
+  oppure preimpostata); risponde in italiano sulla festa e può agire sull'app (RSVP, navetta,
+  auguri, apertura sezioni). Backend con API Mistral, chiave solo sul server.
 
 ## Stack tecnico
 

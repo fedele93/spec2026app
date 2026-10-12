@@ -33,10 +33,11 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
 - **Galleria foto**: visualizzazione foto (caricamento tramite Coil).
 - **Regali**: nessuna cifra raccolta visibile. Ogni neo-specialista ha la sua card con IBAN da
   copiare e link PayPal/Satispay (regalo diretto, senza registrazione); chi preferisce un solo
-  versamento registra una **quota unica** al cassiere (Dott. Paolo Roberto) scegliendo se dividerla
+  versamento registra una **quota unica** a uno dei cassieri (Dott. Paolo Roberto o Dott. Aki) scegliendo se dividerla
   in parti uguali o personalizzarla per neo-specialista; le proprie quote si vedono e si possono
   annullare finché non sono state ricevute. Il cruscotto del cassiere (chi, quanto, per chi, stato,
-  CSV per Excel) è nella PWA con il token `TREASURER_TOKEN`.
+  CSV per Excel, una sezione per cassiere) è nella PWA con il token `TREASURER_TOKEN` (o
+  `TREASURER_TOKEN_<ID>` per un solo cassiere). L'app Android mostra per ora solo il primo cassiere.
 - **Assistente vocale con avatar** (solo PWA, per ora): pulsante "Chiedi" che apre una
   conversazione a voce o per iscritto con uno dei neo-specialisti (voce clonata dal suo campione,
   oppure preimpostata); risponde in italiano sulla festa e può agire sull'app (RSVP, navetta,

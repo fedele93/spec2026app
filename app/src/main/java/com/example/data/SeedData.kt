@@ -433,14 +433,14 @@ object SeedData {
     )
 
     val giftCollector: GiftCollectorEntity = GiftCollectorEntity(
-        name = "Dott. Paolo Roberto",
-        roleTitle = "Cassiere delle quote uniche",
-        description = "Se preferisci fare un solo versamento per tutti i neo-specialisti, Paolo raccoglie la tua quota e la gira a ciascuno di loro: scegli tu se dividerla in parti uguali o personalizzarla.",
-        iban = "IT00 A000 0000 0000 0000 0000 000",
-        ibanHolder = "Paolo Roberto",
-        paypalMeUrl = "https://paypal.me/paoloroberto",
+        name = "",
+        roleTitle = "",
+        description = "",
+        iban = "",
+        ibanHolder = "",
+        paypalMeUrl = "",
         paymentMethodsCsv = "IBAN,PayPal,Contanti",
-        transferReason = "Regalo specializzazione Neurologia 2026"
+        transferReason = ""
     )
 
     val notifications: List<EventNotificationEntity> = listOf(

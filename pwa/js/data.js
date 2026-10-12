@@ -13,8 +13,9 @@ const EMPTY_EVENT = {
   meta: { maxBusSeats: 54 }, schedule: {}, graduates: [],
   program: { badge: "", title: "", subtitle: "", dateLabel: "", locationLabel: "", timeline: [] },
   busSchedule: { subtitle: "", andata: {}, ritorno: {}, pickupStops: [] }, mapPoints: [],
-  giftCollector: { name: "", roleTitle: "", description: "", iban: "", ibanHolder: "", paypalMeUrl: "", paymentMethods: ["IBAN", "PayPal", "Contanti"], transferReason: "" }
+  giftCollectors: []
 };
+const COLLECTOR_DEFAULTS = { id: "", name: "", roleTitle: "", description: "", iban: "", ibanHolder: "", paypalMeUrl: "", paymentMethods: ["IBAN", "PayPal", "Contanti"], transferReason: "" };
 
 // --- Costanti dell'evento (live bindings: vengono aggiornate da initData) -------------
 export let MAX_BUS_SEATS = 54;
@@ -24,7 +25,7 @@ export let PROGRAM = EMPTY_EVENT.program;
 export let BUS_SCHEDULE = EMPTY_EVENT.busSchedule;
 export let SCHEDULE = getSchedule(EMPTY_EVENT);
 export let EVENT = EMPTY_EVENT; // evento completo con i testi già risolti (per il calendario)
-export let GIFT_COLLECTOR = EMPTY_EVENT.giftCollector; // cassiere delle quote uniche
+export let GIFT_COLLECTORS = []; // cassieri delle quote uniche (giftCollectors nel JSON; accetta anche il vecchio giftCollector singolo)
 
 function applyEvent(ev) {
   const e = { ...EMPTY_EVENT, ...(ev || {}) };
@@ -38,8 +39,10 @@ function applyEvent(ev) {
   MAP_POINTS = EVENT.mapPoints;
   PROGRAM = EVENT.program;
   BUS_SCHEDULE = EVENT.busSchedule;
-  GIFT_COLLECTOR = { ...EMPTY_EVENT.giftCollector, ...(e.giftCollector || {}) };
+  const raw = Array.isArray(e.giftCollectors) ? e.giftCollectors : (e.giftCollector ? [e.giftCollector] : []);
+  GIFT_COLLECTORS = raw.map((c, i) => ({ ...COLLECTOR_DEFAULTS, ...(c || {}), id: String((c && c.id) || `cassiere${i + 1}`).toLowerCase() }));
 }
+export const collectorById = (id) => GIFT_COLLECTORS.find((c) => c.id === id) || GIFT_COLLECTORS[0] || COLLECTOR_DEFAULTS;
 
 // Divide i centesimi in parti uguali: i centesimi di resto vanno ai primi della lista (come sul server).
 export function splitEqually(totalCents, count) {
@@ -225,8 +228,9 @@ const LocalRepo = {
       await bulkAdd("giftPool", (D.giftPoolContributions ?? []).map((c) => {
         const allocations = (c.allocations ?? []).map((a) => ({ ...a, graduateName: names.get(a.graduateId) ?? "" }));
         const received = c.status === "RECEIVED";
-        return { ...c, allocations, totalAmount: allocations.reduce((s, a) => s + (a.amount || 0), 0), status: received ? "RECEIVED" : "PENDING",
-          clientId: "demo", createdAt: ts(c.ageHours), receivedAt: received ? ts(c.ageHours) : null };
+        const collector = collectorById(c.collectorId);
+        return { ...c, collectorId: collector.id, collectorName: collector.name, allocations, totalAmount: allocations.reduce((s, a) => s + (a.amount || 0), 0),
+          status: received ? "RECEIVED" : "PENDING", clientId: "demo", createdAt: ts(c.ageHours), receivedAt: received ? ts(c.ageHours) : null };
       }));
     }
     if ((await count("notifications")) === 0) await bulkAdd("notifications", (D.notifications ?? []).map((n) => ({ ...n, timestamp: ts(n.ageHours) })));
@@ -267,7 +271,9 @@ const LocalRepo = {
   allGiftTargets: () => getAll("giftTargets"),
   addPoolContribution: async (c) => {
     const { allocations, totalAmount } = buildAllocations(c, await getAll("giftTargets"));
-    const rec = { donorName: (c.donorName || "").trim(), contact: c.contact || "", paymentMethod: c.paymentMethod || "IBAN", splitMode: c.splitMode || "EQUAL",
+    const collector = collectorById(c.collectorId);
+    if (!(collector.paymentMethods || []).includes(c.paymentMethod || "IBAN")) throw new ApiError(422, `${collector.name} non accetta ${c.paymentMethod}`);
+    const rec = { collectorId: collector.id, collectorName: collector.name, donorName: (c.donorName || "").trim(), contact: c.contact || "", paymentMethod: c.paymentMethod || "IBAN", splitMode: c.splitMode || "EQUAL",
       totalAmount, note: c.note || "", status: "PENDING", clientId: "local", createdAt: Date.now(), receivedAt: null, allocations };
     if (!rec.donorName) throw new ApiError(422, "Il nome è obbligatorio: serve al cassiere per riconoscere il versamento");
     rec.id = await add("giftPool", rec);
@@ -283,17 +289,22 @@ const LocalRepo = {
   poolBoard: async () => {
     const rows = (await getAll("giftPool")).sort((a, b) => b.createdAt - a.createdAt);
     const targets = await getAll("giftTargets");
-    const byGraduate = targets.map((t) => ({ graduateId: t.id, graduateName: t.name, amount: 0, receivedAmount: 0, contributions: 0 }));
-    const idx = new Map(byGraduate.map((g) => [g.graduateId, g]));
-    let totalAmount = 0, receivedAmount = 0;
-    for (const c of rows) {
-      totalAmount += c.totalAmount; if (c.status === "RECEIVED") receivedAmount += c.totalAmount;
-      for (const a of c.allocations) { const g = idx.get(a.graduateId); if (!g) continue; g.amount += a.amount; g.contributions++; if (c.status === "RECEIVED") g.receivedAmount += a.amount; }
-    }
     const r2 = (v) => Math.round(v * 100) / 100;
-    byGraduate.forEach((g) => { g.amount = r2(g.amount); g.receivedAmount = r2(g.receivedAmount); });
-    return { contributions: rows, summary: { contributions: rows.length, received: rows.filter((c) => c.status === "RECEIVED").length,
-      pending: rows.filter((c) => c.status !== "RECEIVED").length, totalAmount: r2(totalAmount), receivedAmount: r2(receivedAmount), pendingAmount: r2(totalAmount - receivedAmount), byGraduate, byMethod: [] } };
+    const summarize = (list) => {
+      const byGraduate = targets.map((t) => ({ graduateId: t.id, graduateName: t.name, amount: 0, receivedAmount: 0, contributions: 0 }));
+      const idx = new Map(byGraduate.map((g) => [g.graduateId, g]));
+      let totalAmount = 0, receivedAmount = 0;
+      for (const c of list) {
+        totalAmount += c.totalAmount; if (c.status === "RECEIVED") receivedAmount += c.totalAmount;
+        for (const a of c.allocations) { const g = idx.get(a.graduateId); if (!g) continue; g.amount += a.amount; g.contributions++; if (c.status === "RECEIVED") g.receivedAmount += a.amount; }
+      }
+      byGraduate.forEach((g) => { g.amount = r2(g.amount); g.receivedAmount = r2(g.receivedAmount); });
+      return { contributions: list.length, received: list.filter((c) => c.status === "RECEIVED").length, pending: list.filter((c) => c.status !== "RECEIVED").length,
+        totalAmount: r2(totalAmount), receivedAmount: r2(receivedAmount), pendingAmount: r2(totalAmount - receivedAmount), byGraduate, byMethod: [] };
+    };
+    const summary = summarize(rows);
+    summary.byCollector = GIFT_COLLECTORS.map((c) => ({ collectorId: c.id, collectorName: c.name, ...summarize(rows.filter((r) => (r.collectorId || GIFT_COLLECTORS[0]?.id) === c.id)) }));
+    return { collectors: GIFT_COLLECTORS.map((c) => ({ id: c.id, name: c.name })), contributions: rows, summary };
   },
   setPoolStatus: (id, status) => updateRecord("giftPool", id, (c) => { c.status = status; c.receivedAt = status === "RECEIVED" ? Date.now() : null; }).then(notify),
 

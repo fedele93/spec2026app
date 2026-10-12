@@ -1,5 +1,5 @@
 // Schermate PWA - mirror delle 5 schermate Compose dell'app Android
-import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, GIFT_COLLECTOR, splitEqually, reconnect } from "./data.js";
+import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, GIFT_COLLECTORS, collectorById, splitEqually, reconnect } from "./data.js";
 import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
 import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getClientId, downloadCsv } from "./api.js";
@@ -636,25 +636,25 @@ async function copyText(text, okMsg) {
 
 export async function gifts(el) {
   const targets = await Repo.allGiftTargets();
-  const collector = GIFT_COLLECTOR;
+  const collectors = GIFT_COLLECTORS;
   const serverMode = Repo.mode === "server";
   const mine = await Repo.myPoolContributions();
   const showBoard = isTreasurer() && (!serverMode || Status.treasurerEnabled);
   el.innerHTML = `
     <h2 class="section">Regali di Specializzazione</h2>
-    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Scegli come partecipare: una quota unica tramite il cassiere, oppure un regalo diretto a ciascun neo-specialista. Nessuna cifra raccolta viene mostrata.</div>
+    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Scegli come partecipare: una quota unica tramite ${collectors.length > 1 ? "uno dei cassieri" : "il cassiere"}, oppure un regalo diretto a ciascun neo-specialista. Nessuna cifra raccolta viene mostrata.</div>
 
-    <div class="card collector">
+    ${collectors.map((collector, i) => `<div class="card collector" data-collector="${esc(collector.id)}">
       <div class="gname">👛 Quota unica tramite ${esc(collector.name || "il cassiere")}</div>
       <div class="grole">${esc(collector.roleTitle)}</div>
       <div class="muted" style="margin-top:6px;">${esc(collector.description)}</div>
       <div class="muted" style="margin-top:6px;">Metodi: ${(collector.paymentMethods || []).map((m) => `<b>${esc(m)}</b>`).join(" · ")}</div>
-      <button class="btn btn-gold" id="pool-open" style="margin-top:12px;">🤝 Partecipa con una quota unica</button>
-      ${mine.length ? `<div class="mine"><b>Le tue quote registrate</b>${mine.map((c) => `
+      <button class="btn btn-gold" data-pool-open="${esc(collector.id)}" ${i === 0 ? 'id="pool-open"' : ""} style="margin-top:12px;">🤝 Partecipa con una quota unica${collectors.length > 1 ? ` (${esc(shortName(collector.name))})` : ""}</button>
+    </div>`).join("")}
+    ${mine.length ? `<div class="card collector mine-card"><div class="mine"><b>Le tue quote registrate</b>${mine.map((c) => `
         <div class="row"><div class="grow"><div class="name">${eur2(c.totalAmount)} · ${esc(c.paymentMethod)} · <span class="pill ${c.status === "RECEIVED" ? "pill-conf" : "pill-pend"}">${POOL_STATUS[c.status] || c.status}</span></div>
-          <div class="cat">${esc(c.donorName)} · ${c.allocations.length === targets.length ? "tutti i neo-specialisti" : c.allocations.map((a) => esc(shortName(a.graduateName))).join(", ")} · ${fmtTime(c.createdAt)}</div></div>
-          ${c.status !== "RECEIVED" ? `<button class="icon-btn" data-pool-del="${c.id}" aria-label="Annulla quota">🗑️</button>` : ""}</div>`).join("")}</div>` : ""}
-    </div>
+          <div class="cat">a ${esc(shortName(c.collectorName || collectorById(c.collectorId).name))} · ${esc(c.donorName)} · ${c.allocations.length === targets.length ? "tutti i neo-specialisti" : c.allocations.map((a) => esc(shortName(a.graduateName))).join(", ")} · ${fmtTime(c.createdAt)}</div></div>
+          ${c.status !== "RECEIVED" ? `<button class="icon-btn" data-pool-del="${c.id}" aria-label="Annulla quota">🗑️</button>` : ""}</div>`).join("")}</div></div>` : ""}
 
     <div id="pool-board"></div>
 
@@ -671,7 +671,7 @@ export async function gifts(el) {
         </div>
       </div>`).join("")}
   `;
-  el.querySelector("#pool-open").onclick = () => poolDialog(targets, collector, () => gifts(el));
+  el.querySelectorAll("[data-pool-open]").forEach((b) => b.onclick = () => poolDialog(targets, collectorById(b.dataset.poolOpen), () => gifts(el)));
   el.querySelectorAll("[data-copy-iban]").forEach((b) => {
     const t = targets.find((x) => x.id === b.dataset.copyIban);
     b.onclick = () => copyText(t.iban, `IBAN di ${shortName(t.name)} copiato!`);
@@ -753,7 +753,7 @@ function poolDialog(targets, collector, onDone) {
       $("#q-save").onclick = async () => {
         const donorName = $("#q-donor").value.trim();
         if (!donorName) { toast("Inserisci nome e cognome: servono al cassiere"); return; }
-        const body = { donorName, contact: $("#q-contact").value.trim(), paymentMethod: method, splitMode: mode, note: $("#q-note").value.trim() };
+        const body = { collectorId: collector.id, donorName, contact: $("#q-contact").value.trim(), paymentMethod: method, splitMode: mode, note: $("#q-note").value.trim() };
         if (mode === "EQUAL") {
           if (!amount || amount <= 0) { toast("Inserisci un importo valido"); return; }
           if (!selectedIds().length) { toast("Scegli almeno un neo-specialista"); return; }
@@ -774,18 +774,25 @@ async function poolBoard(box, targets) {
   try { board = await Repo.poolBoard(); }
   catch (e) { box.innerHTML = `<div class="card"><div class="muted">Cruscotto cassiere non disponibile: ${esc(e.message)}</div></div>`; return; }
   const s = board.summary, serverMode = Repo.mode === "server";
-  box.innerHTML = `<details class="card board" open>
-    <summary><b>📒 Cassa quote uniche</b> <span class="muted">${s.contributions} quote · ${eur2(s.totalAmount)} (ricevute ${eur2(s.receivedAmount)}, in attesa ${eur2(s.pendingAmount)})</span></summary>
-    <div class="muted" style="margin:8px 0 4px;"><b>Quanto spetta a ciascuno</b> (tra parentesi la parte già ricevuta)</div>
-    <table class="tbl"><tbody>${s.byGraduate.map((g) => `<tr><td>${esc(shortName(g.graduateName))}</td><td class="num"><b>${eur2(g.amount)}</b> <span class="muted">(${eur2(g.receivedAmount)})</span></td></tr>`).join("")}</tbody></table>
-    ${serverMode ? `<button class="btn btn-primary" id="pool-csv" style="margin-top:10px;">📄 Scarica per Excel (CSV)</button>` : ""}
-    <div class="muted" style="margin:12px 0 4px;"><b>Quote registrate</b> · tocca lo stato per segnarla ricevuta</div>
-    ${board.contributions.length ? board.contributions.map((c) => `<div class="row">
+  const sections = (s.byCollector && s.byCollector.length) ? s.byCollector : [{ collectorId: "", collectorName: "", ...s }];
+  const multi = sections.length > 1;
+  const rowsOf = (cid) => board.contributions.filter((c) => !multi || (c.collectorId || sections[0].collectorId) === cid);
+  const contributionRow = (c) => `<div class="row">
       <div class="grow"><div class="name">${esc(c.donorName)} · ${eur2(c.totalAmount)} · ${esc(c.paymentMethod)}</div>
         <div class="cat">${c.allocations.length === targets.length && c.splitMode === "EQUAL" ? `parti uguali (${eur2(c.allocations[0]?.amount)} ciascuno)` : c.allocations.map((a) => `${esc(shortName(a.graduateName))} ${eur2(a.amount)}`).join(", ")}</div>
         <div class="cat">${fmtTime(c.createdAt)}${c.contact ? ` · ${esc(c.contact)}` : ""}${c.note ? ` · “${esc(c.note)}”` : ""}</div></div>
       <button class="pill ${c.status === "RECEIVED" ? "pill-conf" : "pill-pend"}" data-pool-status="${c.id}" data-next="${c.status === "RECEIVED" ? "PENDING" : "RECEIVED"}">${POOL_STATUS[c.status] || c.status}</button>
-    </div>`).join("") : `<div class="muted">Nessuna quota registrata finora.</div>`}
+    </div>`;
+  box.innerHTML = `<details class="card board" open>
+    <summary><b>📒 Cassa quote uniche</b> <span class="muted">${s.contributions} quote · ${eur2(s.totalAmount)} (ricevute ${eur2(s.receivedAmount)}, in attesa ${eur2(s.pendingAmount)})</span></summary>
+    ${serverMode ? `<button class="btn btn-primary" id="pool-csv" style="margin-top:10px;">📄 Scarica per Excel (CSV)</button>` : ""}
+    ${sections.map((sec) => `<div class="board-section" data-board-collector="${esc(sec.collectorId)}">
+      ${multi ? `<h4 class="board-title">👛 ${esc(sec.collectorName)} <span class="muted">· ${sec.contributions} quote · ${eur2(sec.totalAmount)} (ricevute ${eur2(sec.receivedAmount)})</span></h4>` : ""}
+      <div class="muted" style="margin:8px 0 4px;"><b>Quanto spetta a ciascuno</b> (tra parentesi la parte già ricevuta)</div>
+      <table class="tbl"><tbody>${sec.byGraduate.map((g) => `<tr><td>${esc(shortName(g.graduateName))}</td><td class="num"><b>${eur2(g.amount)}</b> <span class="muted">(${eur2(g.receivedAmount)})</span></td></tr>`).join("")}</tbody></table>
+      <div class="muted" style="margin:12px 0 4px;"><b>Quote registrate</b> · tocca lo stato per segnarla ricevuta</div>
+      ${rowsOf(sec.collectorId).length ? rowsOf(sec.collectorId).map(contributionRow).join("") : `<div class="muted">Nessuna quota registrata finora.</div>`}
+    </div>`).join("")}
   </details>`;
   const csv = box.querySelector("#pool-csv");
   if (csv) csv.onclick = () => tryAction(() => downloadCsv("gift-pool"), "quote-uniche.csv scaricato");

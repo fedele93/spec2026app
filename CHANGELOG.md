@@ -5,6 +5,17 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-10-12
+
+### Aggiunto
+
+- Secondo cassiere per le quote uniche, **Dott. Aki**: `giftCollectors` (lista con id) in
+  `event-data.json`; nella PWA una card per cassiere, il dialogo della quota è intestato al
+  cassiere scelto, "Le tue quote registrate" indica a chi è stata versata, il cruscotto ha una
+  sezione per cassiere e il CSV la colonna "Cassiere" con i totali per cassiere. Backend:
+  `collectorId` nelle quote, `TREASURER_TOKEN_<ID>` per far vedere a ogni cassiere solo le sue
+  quote. L'app Android 1.6 continua a usare il primo cassiere (`giftCollector` nello snapshot).
+
 ## [1.6.0] - 2026-09-30
 
 Sezione Regali rifatta: niente cifre raccolte, quota unica al cassiere e cruscotto.

@@ -115,7 +115,7 @@ export const api = {
   likePhoto: (id) => request(`/api/photos/${id}/like`, { method: "POST" }),
 
   giftTargets: () => request("/api/gifts/targets"),
-  giftCollector: () => request("/api/gifts/collector"),
+  giftCollectors: () => request("/api/gifts/collectors"),
   // quota unica al cassiere: registrazione, le proprie quote, cancellazione (finché in attesa)
   addPoolContribution: (c) => request("/api/gifts/pool", { method: "POST", json: c }),
   myPoolContributions: () => request("/api/gifts/pool/mine"),

@@ -178,6 +178,9 @@ details.catering[open] summary::before { content: "▾"; }
 .split-row input[type="checkbox"] { width: auto; }
 .split-row input[type="number"] { padding: 6px 8px; font-size: 13px; }
 .split-row .grow { flex: 1; min-width: 0; }
+.board-section { margin-top: 10px; padding-top: 6px; border-top: 1px dashed var(--outline); }
+.board-title { font-size: 14px; margin: 6px 0 2px; }
+.mine-card { background: #fff; }
 .board summary { cursor: pointer; list-style: none; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
 .board summary::-webkit-details-marker { display: none; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }

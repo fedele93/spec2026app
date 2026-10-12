@@ -44,18 +44,30 @@ menu e navetta e a cui inviare le email di conferma.
 - Un record = un invitato; gli accompagnatori stanno dentro il record. Le vecchie scritture
   basate su `X-Client-Id` restano valide per compatibilità con l'APK 1.6.
 
-### 3.2 Email transazionali
+### 3.2 Email tramite n8n (già configurato)
 
-- Nuovo modulo backend `app/mailer.py` con SMTP (variabili `SMTP_HOST`, `SMTP_PORT`,
-  `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`). Provider consigliati con piano gratuito e buona
-  consegna: Brevo o Resend. In alternativa l'invio passa dal webhook n8n già esistente
-  (`N8N_WEBHOOK_URL`) con un nodo Send Email: nessuna dipendenza nuova, ma dipende da n8n.
-- Modelli (testo + HTML, in italiano, con il tono dell'app): link di accesso, conferma RSVP e
-  menu, conferma navetta (fermata, orario, posti, link per modificare o cancellare, file
-  `.ics`), promemoria navetta 24 ore prima (usa lo scheduler delle notifiche già presente),
-  conferma quota unica al cassiere con causale e IBAN, avviso al cassiere di nuova quota.
-- Coda semplice in tabella `outbox` con tentativi e stato, così un SMTP giù non blocca la
-  richiesta e il report per gli organizzatori mostra le email non consegnate.
+L'invio delle email resta **in n8n**, che è già collegato al backend: nessun SMTP nel backend,
+nessuna dipendenza nuova. Il backend prepara il messaggio completo e lo passa a n8n con un
+evento dedicato; n8n lo spedisce con il nodo Send Email già configurato.
+
+- Nuovo evento webhook `mail.send` (stesso `N8N_WEBHOOK_URL` e stesso segreto degli altri
+  eventi) con il messaggio pronto: `to`, `subject`, `text`, `html`, `replyTo`, `kind`
+  (`access_link`, `rsvp_confirmation`, `bus_confirmation`, `bus_reminder`, `pool_confirmation`,
+  `pool_reminder`) e `attachments` (es. il file `.ics` della navetta, in base64). Così i
+  modelli delle email vivono nel backend (testabili, in italiano, con i dati della festa) e
+  n8n fa solo da postino.
+- In n8n: nel workflow `avvisi-in-tempo-reale` un ramo `case 'mail.send'` (o un nodo IF
+  sull'evento) che passa `to`, `subject`, `text`, `html` e gli allegati al nodo Send Email;
+  il mittente e le credenziali restano quelli già impostati. Il repo del backend fornisce il
+  workflow aggiornato da importare.
+- Tracciamento: tabella `mail_outbox` nel backend (destinatario, tipo, stato, tentativi,
+  esito della consegna a n8n, data) alimentata dal risultato del webhook; gli organizzatori
+  vedono nel report e nella PWA le email non consegnate e possono rimandarle.
+- Promemoria programmati (navetta 24 ore prima, menu mancante, quote in attesa): generati dal
+  backend con lo scheduler già esistente, sempre come eventi `mail.send`; in alternativa un
+  workflow n8n a orario che legge `GET /api/automation/report` e decide a chi scrivere.
+- Email "di sistema" per gli organizzatori (nuovo RSVP, prenotazione, quota): restano gli
+  eventi di oggi, nessuna modifica.
 
 ### 3.3 Navetta
 
@@ -109,7 +121,7 @@ menu e navetta e a cui inviare le email di conferma.
 
 | Fase | Contenuto | Stima | Dipendenze |
 |---|---|---|---|
-| 1. Email e profilo | `mailer.py`, `outbox`, campi profilo, magic link, pagina "Il mio profilo" nella PWA, email di accesso e conferma RSVP | 3-4 giorni | provider SMTP scelto |
+| 1. Email via n8n e profilo | evento `mail.send` + `mail_outbox`, modelli delle email, workflow n8n aggiornato, campi profilo, magic link, pagina "Il mio profilo" nella PWA, email di accesso e conferma RSVP | 3-4 giorni | n8n già attivo con Send Email |
 | 2. Menu | menu strutturato per persona, riepilogo catering, data limite, email di conferma | 1-2 giorni | fase 1 |
 | 3. Navetta | prenotazione dal profilo, lista d'attesa, conferma con `.ics`, promemoria, check-in | 2-3 giorni | fase 1 |
 | 4. Festeggiati e cassieri | token per festeggiato, area festeggiato, promemoria ai donatori, azioni rapide nel cruscotto, scelta cassiere su Android | 2-3 giorni | fase 1 |
@@ -120,8 +132,9 @@ viene aggiornata alla fine delle fasi 1 e 3 (profilo e navetta) e 4 (cassiere).
 
 ## 5. Rischi e scelte da confermare
 
-- **Consegna delle email**: serve un dominio mittente verificato (SPF/DKIM) sul provider,
-  altrimenti finiscono nello spam. Da decidere il provider e chi gestisce l'account.
+- **Consegna delle email**: il mittente configurato in n8n deve avere SPF/DKIM validi sul
+  dominio, altrimenti le email agli invitati finiscono nello spam; conviene un test con
+  Gmail e Outlook prima dell'invio in blocco.
 - **Privacy**: raccogliere email, telefono e allergie richiede un'informativa breve e un
   consenso esplicito nel profilo; i dati vanno cancellati dopo la festa (comando di pulizia).
 - **Link personale** = accesso senza password: chi inoltra il link può modificare il profilo.

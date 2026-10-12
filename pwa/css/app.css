@@ -217,6 +217,14 @@ button.pill { border: none; cursor: pointer; font: inherit; font-size: 11px; fon
 .as-check { display: flex; gap: 8px; align-items: center; font-size: 13px; margin-bottom: 8px; }
 .as-check input { width: auto; }
 
+/* profilo invitato */
+.profile-card { border-color: rgba(0,95,176,.3); background: #EEF5FF; }
+.pf-comp { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-bottom: 6px; align-items: center; }
+.pf-comp select, .pf-comp input { font-size: 13px; padding: 8px 10px; }
+.pf-comp [data-cname] { grid-column: 1 / 3; }
+.pf-comp [data-cnotes] { grid-column: 1; }
+.pf-comp .icon-btn { grid-column: 2; }
+
 /* modal */
 .modal-bg { position: fixed; inset: 0; background: rgba(10,25,47,.5); display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
 .modal { background: #fff; width: 100%; max-width: 560px; border-radius: 20px 20px 0 0; padding: 20px 18px calc(env(safe-area-inset-bottom, 0) + 24px); max-height: 90vh; overflow-y: auto; }

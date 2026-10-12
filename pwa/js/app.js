@@ -2,6 +2,7 @@
 import { Repo, Status, initData, onDataChange } from "./data.js";
 import { resyncPushSubscription } from "./notify.js";
 import { initAssistant } from "./assistant.js";
+import { initProfileFromHash, openProfile } from "./profile.js";
 import * as Screens from "./screens.js";
 
 let currentTab = "program";
@@ -93,8 +94,12 @@ async function init() {
     catch (e) { console.warn("SW registration failed", e); }
   }
 
+  const fromLink = await initProfileFromHash(); // link personale dall'email (#profilo=<token>)
   await initData();
   await render();
+  if (fromLink) { goto("rsvp"); openProfile(); }
+  // link personale incollato con l'app già aperta (cambia solo il frammento: nessun ricaricamento)
+  window.addEventListener("hashchange", async () => { if (await initProfileFromHash()) { goto("rsvp"); openProfile(); } });
 
   // ridisegna quando i dati cambiano in seguito a una scrittura (se nessun modale è aperto)
   onDataChange(() => { if (!isModalOpen()) render(); });

@@ -38,6 +38,9 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
   annullare finché non sono state ricevute. Il cruscotto del cassiere (chi, quanto, per chi, stato,
   CSV per Excel, una sezione per cassiere) è nella PWA con il token `TREASURER_TOKEN` (o
   `TREASURER_TOKEN_<ID>` per un solo cassiere). L'app Android mostra per ora solo il primo cassiere.
+- **Profilo personale dell'invitato** (solo PWA, per ora): link via email senza password, con
+  partecipazione, accompagnatori e menu di ciascuno, consenso privacy ed email di conferma
+  spedite da n8n; gli organizzatori generano e inviano i link dalla lista invitati.
 - **Assistente vocale con avatar** (solo PWA, per ora): pulsante "Chiedi" che apre una
   conversazione a voce o per iscritto con uno dei neo-specialisti (voce clonata dal suo campione,
   oppure preimpostata); risponde in italiano sulla festa e può agire sull'app (RSVP, navetta,

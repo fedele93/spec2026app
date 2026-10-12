@@ -4,6 +4,7 @@ import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
 import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getClientId, downloadCsv } from "./api.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
+import { openProfile, openMailAdmin, hasProfile, MENU_LABELS } from "./profile.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -35,6 +36,7 @@ export async function program(el) {
       <div class="top">
         <div class="badge">🎓 ${esc(P.badge)}</div>
         <div style="display:flex;gap:6px;">
+          ${serverMode ? `<button class="icon-round" id="my-profile" aria-label="Il mio profilo" title="Il mio profilo">👤</button>` : ""}
           <button class="icon-round" id="ntf-show" aria-label="Notifiche">🔔${unread > 0 ? `<span class="dot">${unread}</span>` : ""}</button>
           <button class="icon-round" id="settings" aria-label="Impostazioni">⚙️</button>
         </div>
@@ -86,6 +88,8 @@ export async function program(el) {
     showNotifications(await Repo.allNotifications());
   };
   el.querySelector("#settings").onclick = () => settingsDialog();
+  const mp = el.querySelector("#my-profile");
+  if (mp) mp.onclick = () => openProfile();
   const calBtn = el.querySelector("#cal-add");
   if (calBtn && !serverMode) calBtn.onclick = (e) => { e.preventDefault(); downloadIcs(EVENT); toast("File calendario scaricato: aprilo per aggiungere seduta e festa 📅"); };
   const sendBtn = el.querySelector("#ntf-send");
@@ -269,6 +273,9 @@ function settingsDialog() {
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📄 Esporta per ristorante e autista</b>
       <div class="muted" style="margin-bottom:8px;">File CSV (si aprono con Excel) con tutti gli invitati e le prenotazioni della navetta.</div>
       <div class="btn-row"><button class="btn btn-ghost" id="s-exp-guests">Esporta invitati</button><button class="btn btn-ghost" id="s-exp-bus">Esporta navetta</button></div></div>` : ""}
+    ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">✉️ Email agli invitati (tramite n8n)</b>
+      <div class="muted" style="margin-bottom:8px;">Stato del collegamento, email inviate e non consegnate, reinvio, email di prova.</div>
+      <button class="btn btn-ghost" id="s-mail">Apri le email</button></div>` : ""}
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">🎙️ Assistente vocale (avatar dei neo-specialisti)</b>
       <div class="muted" style="margin-bottom:8px;">Persona, abilitazione, voce preimpostata e campione vocale da clonare per ogni avatar.</div>
       <button class="btn btn-ghost" id="s-assistant">Configura gli avatar</button></div>` : ""}
@@ -281,6 +288,8 @@ function settingsDialog() {
       const expG = bg.querySelector("#s-exp-guests"), expB = bg.querySelector("#s-exp-bus");
       if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
       if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
+      const mailBtn = bg.querySelector("#s-mail");
+      if (mailBtn) mailBtn.onclick = () => { close(); openMailAdmin(); };
       const asst = bg.querySelector("#s-assistant");
       if (asst) asst.onclick = () => { close(); openAssistantAdmin(); };
       const expP = bg.querySelector("#s-exp-pool");
@@ -332,6 +341,11 @@ export async function rsvp(el) {
         ${statCard("In Attesa", pending.length, "da confermare", "#D97706")}
         ${statCard("Menu Speciali", special, "intolleranze/diete", "#0284C7")}
       </div>
+      ${Repo.mode === "server" ? `<div class="card profile-card" id="profile-card">
+        <b style="font-size:14px;">👤 ${hasProfile() ? "Il mio profilo" : "Sei un invitato? Crea il tuo profilo"}</b>
+        <div class="muted" style="margin:4px 0 8px;">${hasProfile() ? "Partecipazione, chi viene con te e menu: modifica quando vuoi, ricevi la conferma via email." : "Con un link personale via email confermi la partecipazione, indichi chi viene con te e il menu di ciascuno. Niente password."}</div>
+        <button class="btn ${hasProfile() ? "btn-primary" : "btn-gold"}" id="open-profile">${hasProfile() ? "Apri il mio profilo" : "Accedi con la tua email"}</button>
+      </div>` : ""}
       ${cateringSummary(confirmed, pending)}
       <div class="card">
         <input id="g-search" placeholder="🔍 Cerca invitato o categoria..." value="${esc(query)}">
@@ -348,8 +362,9 @@ export async function rsvp(el) {
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="grow">
                 <div class="name">${esc(g.fullName)}</div>
-                <div class="cat">${esc(g.category)}${g.guestsCount > 1 ? ` · ${g.guestsCount} persone` : ""}${g.dietaryNotes ? " · 🍽️ " + esc(g.dietaryNotes) : ""}${g.contactInfo ? " · ☎ " + esc(g.contactInfo) : ""}</div>
+                <div class="cat">${esc(g.category)}${g.guestsCount > 1 ? ` · ${g.guestsCount} persone` : ""}${g.menu ? " · 🍽️ " + esc(MENU_LABELS[g.menu] || g.menu) : ""}${(g.companions || []).length ? " · con " + g.companions.map((c) => esc(c.name)).join(", ") : ""}${g.dietaryNotes ? " · ⚠️ " + esc(g.dietaryNotes) : ""}${g.contactInfo ? " · ☎ " + esc(g.contactInfo) : ""}${g.hasProfile ? ' · <span class="pill pill-conf" title="Ha un profilo personale">profilo</span>' : ""}</div>
               </div>
+              ${isAdmin() && Repo.mode === "server" ? `<button class="icon-btn" data-link="${g.id}" title="Link personale / invito via email">🔗</button>` : ""}
               <button class="icon-btn" data-del="${g.id}" title="Rimuovi invitato">🗑️</button>
             </div>
             <div class="status-row">
@@ -375,8 +390,29 @@ export async function rsvp(el) {
       if (await tryAction(() => Repo.deleteGuest(Number(b.dataset.del)), "Invitato rimosso")) { guests = await Repo.allGuests(); paint(); }
     });
     el.querySelector("#add-guest").onclick = () => guestDialog(async () => { guests = await Repo.allGuests(); paint(); });
+    const op = el.querySelector("#open-profile");
+    if (op) op.onclick = () => openProfile();
+    el.querySelectorAll("[data-link]").forEach((b) => b.onclick = () => guestLinkDialog(Number(b.dataset.link)));
   }
   paint();
+}
+
+// Organizzatori: link personale dell'invitato da copiare, oppure invio dell'email con il link.
+async function guestLinkDialog(id) {
+  let info;
+  try { info = await api.guestLink(id); } catch (e) { toast(e.message); return; }
+  openModal(`<h3>🔗 Link personale · ${esc(info.guest.fullName)}</h3>
+    <div class="muted" style="margin-bottom:8px;">Chi apre questo link può vedere e modificare il profilo dell'invitato: mandalo solo a lui (email, WhatsApp o QR sull'invito).</div>
+    <div class="mono iban" style="word-break:break-all;" id="gl-link">${esc(info.link)}</div>
+    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" id="gl-copy">📋 Copia link</button><button class="btn btn-gold" id="gl-send" ${info.email ? "" : "disabled"}>✉️ Invia via email</button></div>
+    <div class="muted" style="margin-top:8px;">${info.email ? `Email nel profilo: <b>${esc(info.email)}</b>` : "Nessuna email nel profilo: l'invitato la inserirà aprendo il link."}</div>`,
+    (bg, close) => {
+      bg.querySelector("#gl-copy").onclick = async () => { try { await navigator.clipboard.writeText(info.link); toast("Link copiato"); } catch { toast("Copia non disponibile: seleziona il testo"); } };
+      bg.querySelector("#gl-send").onclick = async () => {
+        try { const r = await api.guestInvite(id); toast(r.mail && (r.mail.status === "DELIVERED" || r.mail.status === "QUEUED") ? "Email con il link inviata ✓" : `Email non inviata: ${r.mail?.error || "n8n non configurato"}`); close(); }
+        catch (e) { toast(e.message); }
+      };
+    });
 }
 
 // Riepilogo per il ristorante: coperti per categoria ed esigenze alimentari con i nomi.

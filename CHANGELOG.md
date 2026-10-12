@@ -5,6 +5,25 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-10-12
+
+Fase 1 del piano (`docs/piano-miglioramenti.md`): profilo dell'invitato ed email tramite n8n.
+
+### Aggiunto
+
+- **Profilo personale** (PWA): card "Il mio profilo" nella tab Invitati e icona 👤 nell'intestazione.
+  L'invitato inserisce la propria email (e il nome se non è in lista) e riceve un link personale
+  `#profilo=<token>` che apre il profilo: partecipazione, categoria, email e telefono, menu
+  (completo, vegetariano, vegano, senza glutine, altro) con note allergie, accompagnatori con
+  nome e menu, consenso al trattamento dei dati; salvando arriva l'email di conferma. "Esci"
+  invalida il link. Il link funziona anche incollato con l'app già aperta.
+- Lista invitati con menu, accompagnatori ed etichetta "profilo"; per gli organizzatori il
+  pulsante 🔗 con il link da copiare o l'invio dell'email con il link.
+- Pannello organizzatori **Email (tramite n8n)** in ⚙️ Impostazioni: stato del collegamento,
+  ultime email con esito, reinvio, email di prova.
+- Backend: `/api/profile`, `/api/mail`, evento webhook `mail.send`, outbox, riepilogo catering
+  per menu, workflow n8n aggiornato. Service worker v2.6.0; 13 nuovi controlli e2e (98).
+
 ## [1.6.1] - 2026-10-12
 
 ### Aggiunto

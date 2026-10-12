@@ -7,6 +7,7 @@ const LS_API = "np.apiBase";
 const LS_TOKEN = "np.adminToken";
 const LS_CLIENT = "np.clientId";
 const LS_TREASURER = "np.treasurerToken";
+const LS_GUEST = "np.guestToken";
 
 function ls(key, fallback = "") {
   try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
@@ -36,6 +37,8 @@ export function setApiBase(url) { lsSet(LS_API, (url || "").trim().replace(/\/+$
 export function getAdminToken() { return ls(LS_TOKEN); }
 export function setAdminToken(token) { lsSet(LS_TOKEN, (token || "").trim()); }
 export function isAdmin() { return !!getAdminToken(); }
+export function getGuestToken() { return ls(LS_GUEST); }
+export function setGuestToken(token) { lsSet(LS_GUEST, (token || "").trim()); }
 export function getTreasurerToken() { return ls(LS_TREASURER); }
 export function setTreasurerToken(token) { lsSet(LS_TREASURER, (token || "").trim()); }
 // Il cruscotto delle quote uniche è visibile al cassiere e agli organizzatori (il server accetta entrambi i token).
@@ -51,6 +54,8 @@ function headers(extra = {}) {
   if (t) h["X-Admin-Token"] = t;
   const tt = getTreasurerToken();
   if (tt) h["X-Treasurer-Token"] = tt;
+  const gt = getGuestToken();
+  if (gt) h["X-Guest-Token"] = gt;
   return h;
 }
 
@@ -129,6 +134,18 @@ export const api = {
   scheduledNotifications: () => request("/api/notifications/scheduled"),
   deleteNotification: (id) => request(`/api/notifications/${id}`, { method: "DELETE" }),
   guestsSummary: () => request("/api/guests/summary"),
+
+  // profilo personale dell'invitato (vedi profile.js) ed email tramite n8n
+  profileRequestLink: (body) => request("/api/profile/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
+  profileGet: () => request("/api/profile"),
+  profilePut: (body) => request("/api/profile", { method: "PUT", json: body, timeoutMs: 30000 }),
+  profileLogout: () => request("/api/profile/logout", { method: "POST" }),
+  guestLink: (id) => request(`/api/guests/${id}/link`),
+  guestInvite: (id) => request(`/api/guests/${id}/invite`, { method: "POST", timeoutMs: 30000 }),
+  mailStatus: () => request("/api/mail/status"),
+  mailOutbox: (limit = 50) => request(`/api/mail/outbox?limit=${limit}`),
+  mailResend: (id) => request(`/api/mail/outbox/${id}/resend`, { method: "POST", timeoutMs: 30000 }),
+  mailTest: (to) => request("/api/mail/test", { method: "POST", json: { to }, timeoutMs: 30000 }),
 
   // assistente vocale con avatar (vedi assistant.js)
   assistantStatus: () => request("/api/assistant/status", { timeoutMs: 8000 }),

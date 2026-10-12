@@ -200,8 +200,11 @@ for t in d.get("giftTargets", []):
 out.append("    )")
 out.append("")
 
-# Gift collector (cassiere delle quote uniche)
-c = d.get("giftCollector") or {}
+# Gift collector: l'app Android 1.6 conosce un solo cassiere -> il primo di giftCollectors
+_collectors = d.get("giftCollectors")
+if _collectors is None:
+    _collectors = [d["giftCollector"]] if d.get("giftCollector") else []
+c = _collectors[0] if _collectors else {}
 out.append("    val giftCollector: GiftCollectorEntity = GiftCollectorEntity(")
 out.append("        name = %s," % kt_str(c.get("name")))
 out.append("        roleTitle = %s," % kt_str(c.get("roleTitle")))

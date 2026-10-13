@@ -226,7 +226,11 @@ fun MainEventApp(viewModel: EventViewModel) {
             )
             1 -> GuestsRsvpScreen(
                 viewModel = viewModel,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                onNavigate = { section ->
+                    // sezioni con i nomi della PWA (dal cruscotto): program, rsvp, bus, wishes, gifts
+                    viewModel.setSelectedTab(listOf("program", "rsvp", "bus", "wishes", "gifts").indexOf(section).coerceAtLeast(0))
+                }
             )
             2 -> BusTransferScreen(
                 viewModel = viewModel,

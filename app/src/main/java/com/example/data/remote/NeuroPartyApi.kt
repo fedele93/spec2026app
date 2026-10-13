@@ -162,6 +162,123 @@ data class PoolStatusRequest(val status: String)
 /** sendAt (ms): se nel futuro il server programma la notifica invece di inviarla subito. */
 data class NotificationRequest(val title: String, val message: String, val category: String, val sendAt: Long? = null)
 
+// ---- Organizzatori: cruscotto e import invitati (header X-Admin-Token) ----------------
+
+@JsonClass(generateAdapter = true)
+data class DashboardGuestsDto(
+    val confirmed: Int = 0, val covers: Int = 0, val pending: Int = 0, val pendingCovers: Int = 0, val declined: Int = 0,
+    val total: Int = 0, val withProfile: Int = 0, val withEmail: Int = 0, val consented: Int = 0, val missingMenu: Int = 0,
+    val allergies: Int = 0, val updatedLastWeek: Int = 0, val byMenu: List<DashboardMenuDto> = emptyList()
+)
+
+@JsonClass(generateAdapter = true)
+data class DashboardMenuDto(val menu: String = "", val covers: Int = 0)
+
+@JsonClass(generateAdapter = true)
+data class DashboardBusDto(
+    val maxSeats: Int = 0, val bookedSeats: Int = 0, val availableSeats: Int = 0, val waitlistSeats: Int = 0,
+    val waitlistBookings: Int = 0, val checkedInSeats: Int = 0, val bookings: Int = 0, val busLocked: Boolean = false
+)
+
+@JsonClass(generateAdapter = true)
+data class DashboardMailDto(val enabled: Boolean = false, val counts: Map<String, Int> = emptyMap())
+
+@JsonClass(generateAdapter = true)
+data class DashboardPoolDto(
+    val contributions: Int = 0, val pending: Int = 0, val received: Int = 0, val totalAmount: Double = 0.0, val receivedAmount: Double = 0.0
+)
+
+@JsonClass(generateAdapter = true)
+data class DashboardAssistantDto(val configured: Boolean = false, val avatars: Int = 0, val ready: Int = 0)
+
+@JsonClass(generateAdapter = true)
+data class DashboardDeadlinesDto(
+    val menuDeadline: String? = null, val menuLocked: Boolean = false, val busDeadline: String? = null, val busLocked: Boolean = false
+)
+
+/** Una cosa da fare: section = tab dell'app da aprire, action = pannello (mail, import, assistant, remind_menu). */
+@JsonClass(generateAdapter = true)
+data class DashboardTodoDto(val key: String = "", val text: String = "", val section: String? = null, val action: String? = null)
+
+@JsonClass(generateAdapter = true)
+data class DashboardDto(
+    val generatedAt: Long = 0,
+    val guests: DashboardGuestsDto = DashboardGuestsDto(),
+    val bus: DashboardBusDto = DashboardBusDto(),
+    val mail: DashboardMailDto = DashboardMailDto(),
+    val pool: DashboardPoolDto = DashboardPoolDto(),
+    val wishes: Int = 0,
+    val photos: Int = 0,
+    val pushSubscriptions: Int = 0,
+    val assistant: DashboardAssistantDto = DashboardAssistantDto(),
+    val deadlines: DashboardDeadlinesDto = DashboardDeadlinesDto(),
+    val todo: List<DashboardTodoDto> = emptyList()
+)
+
+/** Una riga della lista invitati da importare (campi vuoti = non toccare). */
+@JsonClass(generateAdapter = true)
+data class ImportRowRequest(
+    val fullName: String = "",
+    val category: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val guestsCount: Int? = null,
+    val rsvpStatus: RsvpStatus? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class ImportRequest(val rows: List<ImportRowRequest>, val sendLinks: Boolean = false, val dryRun: Boolean = false)
+
+@JsonClass(generateAdapter = true)
+data class ImportRowResultDto(
+    val fullName: String = "", val email: String? = null, val action: String = "", val reason: String? = null,
+    val changes: List<String> = emptyList(), val willInvite: Boolean = false
+)
+
+@JsonClass(generateAdapter = true)
+data class ImportResultDto(
+    val dryRun: Boolean = false, val created: Int = 0, val updated: Int = 0, val unchanged: Int = 0, val skipped: Int = 0,
+    val invited: Int = 0, val inviteFailed: Int = 0, val rows: List<ImportRowResultDto> = emptyList()
+)
+
+// ---- Area festeggiato (header X-Graduate-Token) -----------------------------------------
+
+@JsonClass(generateAdapter = true)
+data class GraduateInfoDto(
+    val id: String = "", val name: String = "", val shortName: String = "", val specialization: String = "",
+    val iban: String = "", val ibanHolder: String = "", val satispayUrl: String = "", val paypalMeUrl: String = "", val email: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class GraduateGuestDto(val fullName: String = "", val category: String = "", val guestsCount: Int = 1, val companions: List<String> = emptyList())
+
+@JsonClass(generateAdapter = true)
+data class GraduateGuestsDto(
+    val confirmedGuests: Int = 0, val covers: Int = 0, val pendingGuests: Int = 0, val pendingCovers: Int = 0,
+    val confirmed: List<GraduateGuestDto> = emptyList(), val pending: List<String> = emptyList()
+)
+
+@JsonClass(generateAdapter = true)
+data class GraduateBusDto(val maxSeats: Int = 0, val bookedSeats: Int = 0, val availableSeats: Int = 0, val waitlistSeats: Int = 0, val passengers: Int = 0)
+
+@JsonClass(generateAdapter = true)
+data class GraduateAvatarDto(
+    val id: String = "", val name: String = "", val shortName: String = "", val persona: String = "",
+    val voiceKind: String = "", val enabled: Boolean = false, val ready: Boolean = false, val sampleFilename: String = ""
+)
+
+/** GET /api/graduate/me: chi viene, auguri, coordinate di pagamento, navetta e avatar del festeggiato. */
+@JsonClass(generateAdapter = true)
+data class GraduateMeDto(
+    val graduate: GraduateInfoDto = GraduateInfoDto(),
+    val guests: GraduateGuestsDto = GraduateGuestsDto(),
+    val wishes: List<WishEntity> = emptyList(),
+    val wishesForMe: Int = 0,
+    val bus: GraduateBusDto = GraduateBusDto(),
+    val avatar: GraduateAvatarDto? = null,
+    val assistantConfigured: Boolean = false
+)
+
 // ---- Interfaccia Retrofit -----------------------------------------------------------
 
 interface NeuroPartyApi {
@@ -225,6 +342,18 @@ interface NeuroPartyApi {
     /** Solo cassiere/organizzatori (il cruscotto completo è nella PWA). */
     @PATCH("api/gifts/pool/{id}/status")
     suspend fun setPoolStatus(@Path("id") id: Long, @Body body: PoolStatusRequest): GiftPoolContribution
+
+    /** Area festeggiato (solo con X-Graduate-Token, oppure organizzatori con ?graduate_id=). */
+    @GET("api/graduate/me")
+    suspend fun graduateMe(): GraduateMeDto
+
+    /** Cruscotto organizzatori (solo con X-Admin-Token). */
+    @GET("api/admin/dashboard")
+    suspend fun dashboard(): DashboardDto
+
+    /** Import della lista invitati (solo organizzatori): dryRun = anteprima senza scritture. */
+    @POST("api/guests/import")
+    suspend fun importGuests(@Body body: ImportRequest): ImportResultDto
 
     @GET("api/notifications")
     suspend fun notifications(@Query("since") since: Long = 0): List<EventNotificationEntity>

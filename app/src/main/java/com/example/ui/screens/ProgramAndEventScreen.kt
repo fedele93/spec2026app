@@ -56,6 +56,7 @@ fun ProgramAndEventScreen(
     var showSendPushDialog by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
     var showServerSettings by remember { mutableStateOf(false) }
+    var showGraduateArea by remember { mutableStateOf(false) }
     val serverStatus by viewModel.serverStatus.collectAsState()
 
     LazyColumn(
@@ -343,6 +344,13 @@ fun ProgramAndEventScreen(
             }
         }
 
+        // Area festeggiato (token personale GRADUATE_TOKEN_<ID> + server)
+        if (serverStatus.configured && viewModel.isGraduate) {
+            item {
+                GraduateAreaCard(onClick = { showGraduateArea = true })
+            }
+        }
+
         // Program Timeline Section
         item {
             Text(
@@ -439,12 +447,17 @@ fun ProgramAndEventScreen(
             status = serverStatus,
             currentUrl = viewModel.serverUrl,
             currentToken = viewModel.adminToken,
-            onSave = { url, token ->
-                viewModel.updateServerSettings(url, token)
+            currentGraduateToken = viewModel.graduateToken,
+            onSave = { url, token, graduateToken ->
+                viewModel.updateServerSettings(url, token, graduateToken)
                 showServerSettings = false
             },
             onDismiss = { showServerSettings = false }
         )
+    }
+
+    if (showGraduateArea) {
+        GraduateAreaDialog(viewModel = viewModel, onDismiss = { showGraduateArea = false })
     }
 }
 

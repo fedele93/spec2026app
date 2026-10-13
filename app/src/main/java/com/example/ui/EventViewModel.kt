@@ -7,7 +7,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.data.*
+import com.example.data.remote.DashboardDto
 import com.example.data.remote.GiftPoolContribution
+import com.example.data.remote.GraduateMeDto
+import com.example.data.remote.ImportResultDto
+import com.example.data.remote.ImportRowRequest
 import com.example.data.remote.PoolContributionRequest
 import com.example.data.remote.RemoteClient
 import com.example.data.remote.RemoteException
@@ -73,6 +77,8 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     val serverUrl: String get() = prefs.apiBaseUrl
     val adminToken: String get() = prefs.adminToken
     val isAdmin: Boolean get() = prefs.adminToken.isNotBlank()
+    val graduateToken: String get() = prefs.graduateToken
+    val isGraduate: Boolean get() = prefs.graduateToken.isNotBlank()
 
     val mapPoints: List<MapPoint> = SeedData.mapPoints
 
@@ -202,15 +208,17 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     private fun configureRemote() {
         val url = prefs.apiBaseUrl
         repository.remote = if (url.isBlank()) null
-        else RemoteClient.create(url, prefs.clientId, prefs.adminToken, debugLogging = BuildConfig.DEBUG)
+        else RemoteClient.create(url, prefs.clientId, prefs.adminToken, debugLogging = BuildConfig.DEBUG, graduateToken = prefs.graduateToken)
         _serverStatus.value = ServerStatus(configured = url.isNotBlank(), version = prefs.dataVersion)
     }
 
     /** Salva URL e token, riconnette e scarica subito i dati. */
-    fun updateServerSettings(url: String, token: String) {
+    fun updateServerSettings(url: String, token: String, graduateToken: String = prefs.graduateToken) {
         val changedUrl = url.trim().trimEnd('/') != prefs.apiBaseUrl
         prefs.apiBaseUrl = url
         prefs.adminToken = token
+        prefs.graduateToken = graduateToken
+        _graduateArea.value = null
         if (changedUrl) prefs.resetSyncState()
         configureRemote()
         viewModelScope.launch {
@@ -405,6 +413,69 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Quota unica al cassiere
+    // ------------------------------------------------------------------ festeggiato
+
+    private val _graduateArea = MutableStateFlow<GraduateMeDto?>(null)
+    val graduateArea: StateFlow<GraduateMeDto?> = _graduateArea.asStateFlow()
+
+    /** Carica l'area del festeggiato; con token sbagliato (403) lo rimuove e avvisa. */
+    fun loadGraduateArea() {
+        viewModelScope.launch {
+            try {
+                _graduateArea.value = repository.graduateMe()
+            } catch (e: RemoteException) {
+                _graduateArea.value = null
+                if (e.statusCode == 403) {
+                    prefs.graduateToken = ""
+                    configureRemote()
+                    _uiMessage.emit("Token festeggiato non valido: rimosso")
+                } else {
+                    _uiMessage.emit(e.message ?: "Area festeggiato non disponibile")
+                }
+            } catch (e: Exception) {
+                _graduateArea.value = null
+                _uiMessage.emit(e.message ?: "Area festeggiato non disponibile")
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ organizzatori
+
+    private val _dashboard = MutableStateFlow<DashboardDto?>(null)
+    val dashboard: StateFlow<DashboardDto?> = _dashboard.asStateFlow()
+
+    /** Carica (o ricarica) il cruscotto; gli errori arrivano come messaggio e il cruscotto resta vuoto. */
+    fun loadDashboard() {
+        viewModelScope.launch {
+            try {
+                _dashboard.value = repository.dashboard()
+            } catch (e: Exception) {
+                _dashboard.value = null
+                _uiMessage.emit(e.message ?: "Cruscotto non disponibile")
+            }
+        }
+    }
+
+    /** Import invitati: anteprima (dryRun) o import vero; il risultato va al dialogo con onResult. */
+    fun importGuests(rows: List<ImportRowRequest>, sendLinks: Boolean, dryRun: Boolean, onResult: (ImportResultDto?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = repository.importGuests(rows, sendLinks, dryRun)
+                if (!dryRun) {
+                    _uiMessage.emit(
+                        "Import: ${result.created} creati, ${result.updated} aggiornati" +
+                            (if (result.invited > 0) ", ${result.invited} link inviati" else "") +
+                            (if (result.inviteFailed > 0) ", ${result.inviteFailed} email non inviate" else "")
+                    )
+                }
+                onResult(result)
+            } catch (e: Exception) {
+                _uiMessage.emit(e.message ?: "Import non riuscito")
+                onResult(null)
+            }
+        }
+    }
+
     fun refreshMyPoolContributions() {
         viewModelScope.launch {
             try {

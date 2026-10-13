@@ -29,6 +29,11 @@ class AppPrefs(context: Context) {
         get() = prefs.getString(KEY_ADMIN_TOKEN, null) ?: BuildConfig.ADMIN_TOKEN
         set(value) = prefs.edit().putString(KEY_ADMIN_TOKEN, value.trim()).apply()
 
+    /** Token personale del festeggiato (header X-Graduate-Token, GRADUATE_TOKEN_<ID> sul server). */
+    var graduateToken: String
+        get() = prefs.getString(KEY_GRADUATE_TOKEN, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_GRADUATE_TOKEN, value.trim()).apply()
+
     /** Ultima versione dei dati scaricata dal server (per il polling). */
     var dataVersion: Long
         get() = prefs.getLong(KEY_DATA_VERSION, -1L)
@@ -50,6 +55,7 @@ class AppPrefs(context: Context) {
         private const val KEY_CLIENT_ID = "client_id"
         private const val KEY_API_URL = "api_base_url"
         private const val KEY_ADMIN_TOKEN = "admin_token"
+        private const val KEY_GRADUATE_TOKEN = "graduate_token"
         private const val KEY_DATA_VERSION = "data_version"
         private const val KEY_LAST_SEEN_NOTIFICATION = "last_seen_notification_ts"
     }

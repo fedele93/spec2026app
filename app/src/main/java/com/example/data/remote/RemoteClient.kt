@@ -21,8 +21,9 @@ object RemoteClient {
      * @param baseUrl es. https://festa.tuodominio.it
      * @param clientId identificativo del dispositivo (X-Client-Id)
      * @param adminToken token organizzatore, opzionale (X-Admin-Token)
+     * @param graduateToken token del festeggiato, opzionale (X-Graduate-Token)
      */
-    fun create(baseUrl: String, clientId: String, adminToken: String, debugLogging: Boolean = false): NeuroPartyApi {
+    fun create(baseUrl: String, clientId: String, adminToken: String, debugLogging: Boolean = false, graduateToken: String = ""): NeuroPartyApi {
         val builder = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -31,6 +32,7 @@ object RemoteClient {
                 val request = chain.request().newBuilder()
                     .header("X-Client-Id", clientId)
                     .apply { if (adminToken.isNotBlank()) header("X-Admin-Token", adminToken) }
+                    .apply { if (graduateToken.isNotBlank()) header("X-Graduate-Token", graduateToken) }
                     .build()
                 chain.proceed(request)
             }

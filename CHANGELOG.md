@@ -5,6 +5,26 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-10-13
+
+App Android 1.8.0: cruscotto organizzatori e import invitati (le stesse funzioni della PWA 1.10).
+
+### Aggiunto
+
+- **Android, card Organizzatori** nella tab Invitati (con il token organizzatore e il server
+  configurati): **Cruscotto** con confermati e coperti, in attesa, senza menu, navetta, profili
+  ed email, quote uniche, bacheca, menu scelti e le cose da fare (toccandole si apre la tab
+  giusta o l'import); **Importa invitati** incollando le righe da Excel o da un CSV
+  (intestazione riconosciuta), con anteprima dal server e invio dei link personali.
+- **Android, Area festeggiato**: in ⚙️ Server & Organizzatori il campo "Token festeggiato"
+  (`GRADUATE_TOKEN_<ID>`) fa comparire nella tab Programma la card 🎓 con confermati e in
+  attesa, posti navetta, auguri dedicati e per tutti, chi viene (con accompagnatori), le
+  proprie coordinate di pagamento (copia IBAN, PayPal, Satispay) e lo stato dell'avatar
+  (persona e campione vocale si configurano dalla PWA). Token sbagliato: avviso e rimozione.
+- `GuestImport` (parser condiviso con la logica della PWA) con test unitari; nuovi DTO e
+  chiamate `GET /api/admin/dashboard`, `POST /api/guests/import`, `GET /api/graduate/me`
+  (test di parsing Moshi). Email, promemoria e configurazione degli avatar restano nella PWA.
+
 ## [1.10.0] - 2026-10-13
 
 Fase 5 del piano: assistente sul profilo, cruscotto organizzatori, import invitati.

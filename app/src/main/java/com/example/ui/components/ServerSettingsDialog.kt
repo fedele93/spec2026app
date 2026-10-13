@@ -28,11 +28,13 @@ fun ServerSettingsDialog(
     status: ServerStatus,
     currentUrl: String,
     currentToken: String,
-    onSave: (url: String, token: String) -> Unit,
-    onDismiss: () -> Unit
+    onSave: (url: String, token: String, graduateToken: String) -> Unit,
+    onDismiss: () -> Unit,
+    currentGraduateToken: String = ""
 ) {
     var url by remember { mutableStateOf(currentUrl) }
     var token by remember { mutableStateOf(currentToken) }
+    var graduateToken by remember { mutableStateOf(currentGraduateToken) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -85,11 +87,26 @@ fun ServerSettingsDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                OutlinedTextField(
+                    value = graduateToken,
+                    onValueChange = { graduateToken = it },
+                    label = { Text("Token festeggiato (solo neo-specialisti)") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("graduate_token_input")
+                )
+                Text(
+                    text = "Con il tuo token personale compare la card 🎓 Area festeggiato: chi viene, gli auguri per te, le tue coordinate di pagamento.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onSave(url.trim(), token.trim()) },
+                onClick = { onSave(url.trim(), token.trim(), graduateToken.trim()) },
                 modifier = Modifier.testTag("save_server_settings_button")
             ) {
                 Text("Salva e connetti")

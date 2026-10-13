@@ -7,6 +7,11 @@ import com.example.data.remote.GuestRequest
 import com.example.data.remote.GuestStatusRequest
 import com.example.data.remote.NeuroPartyApi
 import com.example.data.remote.NotificationRequest
+import com.example.data.remote.DashboardDto
+import com.example.data.remote.GraduateMeDto
+import com.example.data.remote.ImportRequest
+import com.example.data.remote.ImportResultDto
+import com.example.data.remote.ImportRowRequest
 import com.example.data.remote.PoolContributionRequest
 import com.example.data.remote.RemoteClient
 import com.example.data.remote.RemoteException
@@ -105,6 +110,28 @@ class EventRepository(private val db: AppDatabase) {
         val result = runRemote { block(api) }
         applySnapshot(runRemote { api.snapshot() })
         return result
+    }
+
+    // ------------------------------------------------------------------ festeggiato (solo server)
+
+    suspend fun graduateMe(): GraduateMeDto {
+        val api = remote ?: throw RemoteException("L'area festeggiato funziona solo con il server della festa (⚙️ Impostazioni)")
+        return runRemote { api.graduateMe() }
+    }
+
+    // ------------------------------------------------------------------ organizzatori (solo server)
+
+    /** Cruscotto organizzatori: numeri e cose da fare. Serve il server e il token organizzatore. */
+    suspend fun dashboard(): DashboardDto {
+        val api = remote ?: throw RemoteException("Il cruscotto funziona solo con il server della festa (⚙️ Impostazioni)")
+        return runRemote { api.dashboard() }
+    }
+
+    /** Import della lista invitati; con dryRun solo l'anteprima, altrimenti scrive e riallinea il DB locale. */
+    suspend fun importGuests(rows: List<ImportRowRequest>, sendLinks: Boolean, dryRun: Boolean): ImportResultDto {
+        val api = remote ?: throw RemoteException("L'import funziona solo con il server della festa (⚙️ Impostazioni)")
+        val body = ImportRequest(rows = rows, sendLinks = sendLinks, dryRun = dryRun)
+        return if (dryRun) runRemote { api.importGuests(body) } else writeRemote(api) { it.importGuests(body) }
     }
 
     // ------------------------------------------------------------------ invitati

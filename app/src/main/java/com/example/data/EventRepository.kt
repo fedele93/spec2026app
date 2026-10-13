@@ -218,6 +218,13 @@ class EventRepository(private val db: AppDatabase) {
         else writeRemote(api) { it.heartWish(wishId) }
     }
 
+    /** Solo organizzatori (sul server serve il token). */
+    suspend fun deleteWish(wishId: Long) {
+        val api = remote
+        if (api == null) db.wishDao().deleteById(wishId)
+        else writeRemote(api) { it.deleteWish(wishId) }
+    }
+
     // ------------------------------------------------------------------ foto
 
     /**
@@ -244,6 +251,20 @@ class EventRepository(private val db: AppDatabase) {
         val api = remote
         if (api == null) db.photoDao().incrementLikes(photoId)
         else writeRemote(api) { it.likePhoto(photoId) }
+    }
+
+    /** Solo organizzatori (sul server serve il token). */
+    suspend fun deletePhoto(photoId: Long) {
+        val api = remote
+        if (api == null) db.photoDao().deleteById(photoId)
+        else writeRemote(api) { it.deletePhoto(photoId) }
+    }
+
+    /** Svuota la cronologia delle notifiche (solo organizzatori; le programmate restano sul server). */
+    suspend fun clearNotifications() {
+        val api = remote
+        if (api == null) db.notificationDao().deleteAll()
+        else writeRemote(api) { it.clearNotifications() }
     }
 
     // ------------------------------------------------------------------ regali: quota unica al cassiere

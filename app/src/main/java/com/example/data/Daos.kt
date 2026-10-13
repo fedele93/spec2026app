@@ -65,6 +65,9 @@ interface WishDao {
     @Query("UPDATE wishes SET heartCount = heartCount + 1 WHERE id = :wishId")
     suspend fun incrementHearts(wishId: Long)
 
+    @Query("DELETE FROM wishes WHERE id = :wishId")
+    suspend fun deleteById(wishId: Long)
+
     @Query("SELECT COUNT(*) FROM wishes")
     suspend fun countWishes(): Int
 
@@ -85,6 +88,9 @@ interface PhotoDao {
 
     @Query("UPDATE shared_photos SET likesCount = likesCount + 1 WHERE id = :photoId")
     suspend fun incrementLikes(photoId: Long)
+
+    @Query("DELETE FROM shared_photos WHERE id = :photoId")
+    suspend fun deleteById(photoId: Long)
 
     @Query("SELECT COUNT(*) FROM shared_photos")
     suspend fun countPhotos(): Int

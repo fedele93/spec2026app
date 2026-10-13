@@ -185,7 +185,15 @@ function showNotifications(notifications) {
       <div style="display:flex;justify-content:space-between;gap:8px;"><b style="font-size:13px;">${esc(n.title)}</b><span class="pill ${pill(n.category)}">${esc(n.category)}</span></div>
       <div class="muted" style="margin-top:6px;">${esc(n.message)}</div>
       <div class="muted" style="margin-top:6px;font-size:11px;">${fmtTime(n.timestamp)}</div>
-    </div>`).join("")}`);
+    </div>`).join("")}
+    ${isAdmin() && sorted.length ? `<button class="btn btn-ghost" id="ntf-clear" style="color:var(--error, #B91C1C);">🧹 Svuota la cronologia (organizzatore)</button>` : ""}`,
+    (bg, close) => {
+      const clear = bg.querySelector("#ntf-clear");
+      if (clear) clear.onclick = async () => {
+        if (!confirm("Svuotare la cronologia delle notifiche per tutti? Le notifiche programmate restano.")) return;
+        if (await tryAction(() => Repo.clearNotifications(), "Cronologia svuotata")) { close(); render(); }
+      };
+    });
   render();
 }
 
@@ -277,7 +285,7 @@ function settingsDialog() {
     <div class="field"><label>Token organizzatore (X-Admin-Token)</label><input id="s-token" type="password" value="${esc(getAdminToken())}" placeholder="Solo per gli organizzatori"></div>
     <div class="muted" style="margin-bottom:10px;">Con il token puoi inviare notifiche push a tutti e cancellare qualsiasi invitato o prenotazione.</div>
     <div class="field"><label>Token cassiere quote uniche (X-Treasurer-Token)</label><input id="s-treasurer" type="password" value="${esc(getTreasurerToken())}" placeholder="Solo per chi raccoglie le quote uniche"></div>
-    <div class="muted" style="margin-bottom:10px;">Con il token cassiere la tab Regali mostra il cruscotto delle quote uniche (chi, quanto, per chi) e il CSV per Excel.</div>
+    <div class="muted" style="margin-bottom:10px;">Solo con il token cassiere la tab Regali mostra il cruscotto delle quote uniche (chi, quanto, per chi) e il CSV per Excel: ogni cassiere vede le proprie quote, il token organizzatore non basta.</div>
     <div class="field"><label>Token festeggiato (X-Graduate-Token)</label><input id="s-graduate" type="password" value="${esc(getGraduateToken())}" placeholder="Solo per i neo-specialisti"></div>
     <div class="muted" style="margin-bottom:10px;">Con il tuo token personale compare il pulsante 🎓 in alto: chi viene, gli auguri per te, le tue coordinate di pagamento e il tuo avatar dell'assistente.</div>
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📊 Cruscotto organizzatori</b>
@@ -321,13 +329,13 @@ function settingsDialog() {
         finally { setApiBase(localStorage.getItem("np.apiBase") === prev ? prev : bg.querySelector("#s-api").value); }
       };
       bg.querySelector("#s-save").onclick = async () => {
-        const changedApi = (bg.querySelector("#s-api").value.trim().replace(/\/+$/, "")) !== (localStorage.getItem("np.apiBase") || "");
         setAdminToken(bg.querySelector("#s-token").value);
         setTreasurerToken(bg.querySelector("#s-treasurer").value);
         setGraduateToken(bg.querySelector("#s-graduate").value);
         setApiBase(bg.querySelector("#s-api").value);
         close();
-        if (changedApi || !serverMode) { await reconnect(); updateStatusBar(); }
+        // i token decidono cosa manda il server (elenchi riservati): si ricarica sempre tutto
+        await reconnect(); updateStatusBar();
         toast("Impostazioni salvate");
         render();
         initAssistant();
@@ -340,6 +348,8 @@ export async function rsvp(el) {
   let guests = await Repo.allGuests();
   let filter = null;
   let query = "";
+  // senza un token (organizzatore, festeggiato, cassiere) il server manda solo i record di questo dispositivo/profilo
+  const limited = Repo.mode === "server" && !Status.canSeeLists;
 
   async function paint() {
     let list = guests;
@@ -354,20 +364,20 @@ export async function rsvp(el) {
     const covers = confirmed.reduce((s, g) => s + (g.guestsCount || 0), 0);
     const special = confirmed.filter((g) => g.dietaryNotes && !/nessuna/i.test(g.dietaryNotes)).length;
     el.innerHTML = `
-      <h2 class="section">Gestione Invitati & RSVP</h2>
-      <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Monitoraggio in tempo reale delle presenze e coperti per la festa</div>
-      <div class="btn-row" style="margin-bottom:12px;">
+      <h2 class="section">${limited ? "Invitati & RSVP" : "Gestione Invitati & RSVP"}</h2>
+      <div class="muted" style="margin-top:-4px;margin-bottom:12px;">${limited ? "La tua partecipazione e le persone che hai inserito da questo telefono" : "Monitoraggio in tempo reale delle presenze e coperti per la festa"}</div>
+      ${limited ? `<div class="card limited-note" id="limited-note"><b style="font-size:13px;">🔒 Elenco riservato</b><div class="muted" style="margin-top:4px;">L'elenco completo degli invitati lo vedono solo organizzatori, festeggiati e cassieri (token in ⚙️ Impostazioni). Qui trovi il tuo profilo e i record inseriti da questo telefono.</div></div>` : `<div class="btn-row" style="margin-bottom:12px;">
         ${statCard("Coperti Totali", covers, `${confirmed.length} invitati`, "#10B981")}
         ${statCard("In Attesa", pending.length, "da confermare", "#D97706")}
         ${statCard("Menu Speciali", special, "intolleranze/diete", "#0284C7")}
-      </div>
+      </div>`}
       ${Repo.mode === "server" ? `<div class="card profile-card" id="profile-card">
         <b style="font-size:14px;">👤 ${hasProfile() ? "Il mio profilo" : "Sei un invitato? Crea il tuo profilo"}</b>
         <div class="muted" style="margin:4px 0 8px;">${hasProfile() ? "Partecipazione, chi viene con te e menu: modifica quando vuoi, ricevi la conferma via email." : "Con un link personale via email confermi la partecipazione, indichi chi viene con te e il menu di ciascuno. Niente password."}</div>
         <button class="btn ${hasProfile() ? "btn-primary" : "btn-gold"}" id="open-profile">${hasProfile() ? "Apri il mio profilo" : "Accedi con la tua email"}</button>
       </div>` : ""}
-      ${cateringSummary(confirmed, pending)}
-      <div class="card">
+      ${limited ? "" : cateringSummary(confirmed, pending)}
+      ${limited ? "" : `<div class="card">
         <input id="g-search" placeholder="🔍 Cerca invitato o categoria..." value="${esc(query)}">
         <div class="chips" style="margin-top:10px;">
           <button class="chip ${!filter ? "active" : ""}" data-f="">Tutti (${guests.length})</button>
@@ -375,9 +385,9 @@ export async function rsvp(el) {
           <button class="chip ${filter === RsvpStatus.PENDING ? "active" : ""}" data-f="${RsvpStatus.PENDING}">In attesa (${pending.length})</button>
           <button class="chip ${filter === RsvpStatus.DECLINED ? "active" : ""}" data-f="${RsvpStatus.DECLINED}">Declinati (${declined.length})</button>
         </div>
-      </div>
+      </div>`}
       <div class="card">
-        ${list.length === 0 ? '<div class="empty">Nessun invitato corrisponde ai filtri.</div>' : list.map((g) => `
+        ${list.length === 0 ? `<div class="empty">${limited ? "Nessun record tuo: crea il profilo o aggiungi la tua partecipazione con il pulsante in basso." : "Nessun invitato corrisponde ai filtri."}</div>` : list.map((g) => `
           <div class="row" style="flex-direction:column;align-items:stretch;" data-guest="${g.id}">
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="grow">
@@ -397,7 +407,7 @@ export async function rsvp(el) {
       <button class="fab" id="add-guest">＋ Aggiungi Invitato</button>
     `;
     const search = el.querySelector("#g-search");
-    search.oninput = (e) => { query = e.target.value; const pos = e.target.selectionStart; paint(); const s2 = el.querySelector("#g-search"); s2.focus(); s2.setSelectionRange(pos, pos); };
+    if (search) search.oninput = (e) => { query = e.target.value; const pos = e.target.selectionStart; paint(); const s2 = el.querySelector("#g-search"); s2.focus(); s2.setSelectionRange(pos, pos); };
     el.querySelectorAll("[data-f]").forEach((c) => c.onclick = () => { filter = c.dataset.f || null; paint(); });
     el.querySelectorAll("[data-guest]").forEach((row) => {
       const id = Number(row.dataset.guest);
@@ -522,10 +532,14 @@ function guestDialog(onDone) {
 export async function bus(el) {
   const bookings = await Repo.allBookings();
   const serverMode = Repo.mode === "server";
+  const limited = serverMode && !Status.canSeeLists; // senza token: solo le proprie prenotazioni
   const confirmedB = bookings.filter((b) => b.status !== "WAITLIST");
-  const booked = confirmedB.reduce((s, b) => s + (b.seatsCount || 0), 0);
-  const waiting = bookings.filter((b) => b.status === "WAITLIST").reduce((s, b) => s + (b.seatsCount || 0), 0);
-  const checkedIn = bookings.filter((b) => b.checkedInAt).reduce((s, b) => s + (b.seatsCount || 0), 0);
+  let booked = confirmedB.reduce((s, b) => s + (b.seatsCount || 0), 0);
+  let waiting = bookings.filter((b) => b.status === "WAITLIST").reduce((s, b) => s + (b.seatsCount || 0), 0);
+  let checkedIn = bookings.filter((b) => b.checkedInAt).reduce((s, b) => s + (b.seatsCount || 0), 0);
+  if (serverMode) { // i posti occupati sono pubblici anche quando l'elenco non lo è
+    try { const sm = await api.busSummary(); booked = sm.bookedSeats; waiting = sm.waitlistSeats ?? waiting; checkedIn = sm.checkedInSeats ?? checkedIn; } catch { /* offline: conteggi locali */ }
+  }
   const available = Math.max(0, MAX_BUS_SEATS - booked);
   const pct = Math.min(100, (booked / MAX_BUS_SEATS) * 100);
   const admin = isAdmin() && serverMode;
@@ -548,9 +562,10 @@ export async function bus(el) {
       ${busTripRow("ANDATA", BUS_SCHEDULE.andata)}
       ${busTripRow("RITORNO", BUS_SCHEDULE.ritorno)}
     </div>
-    <h2 class="section">Elenco Passeggeri Prenotati (${bookings.length})</h2>
+    <h2 class="section">${limited ? `Le tue prenotazioni (${bookings.length})` : `Elenco Passeggeri Prenotati (${bookings.length})`}</h2>
+    ${limited ? `<div class="muted" style="margin-top:-4px;margin-bottom:8px;">🔒 L'elenco completo dei passeggeri lo vedono solo organizzatori, festeggiati e cassieri.</div>` : ""}
     <div class="card">
-      ${bookings.length === 0 ? '<div class="empty">Nessun passeggero ha ancora prenotato la navetta.</div>' : bookings.map((b) => `
+      ${bookings.length === 0 ? `<div class="empty">${limited ? "Nessuna prenotazione da questo telefono o dal tuo profilo." : "Nessun passeggero ha ancora prenotato la navetta."}</div>` : bookings.map((b) => `
         <div class="row">
           <div style="width:36px;height:36px;border-radius:50%;background:#E0F2FE;color:#0284C7;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${b.seatsCount}</div>
           <div class="grow">
@@ -632,7 +647,7 @@ export async function wishes(el) {
         <div class="head"><span class="author">${esc(w.emojiBadge || "🎓")} ${esc(w.authorName)}</span><span class="target">Per: ${esc(w.targetGraduate)}</span></div>
         <div class="msg">${esc(w.message)}</div>
         <div class="foot"><span class="muted" style="font-size:11px;">${fmtTime(w.createdAt)}</span>
-          <button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-heart="${w.id}">❤️ ${w.heartCount}</button></div>
+          <span>${isAdmin() ? `<button class="icon-btn" data-wish-del="${w.id}" title="Elimina augurio (organizzatore)">🗑️</button> ` : ""}<button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-heart="${w.id}">❤️ ${w.heartCount}</button></span></div>
       </div>`).join("")}
 
     <h2 class="section">Galleria Foto (${photos.length})</h2>
@@ -641,7 +656,7 @@ export async function wishes(el) {
         ${p.imageUri ? `<img class="thumb" src="${esc(p.imageUri)}" alt="${esc(p.caption)}" loading="lazy">` : `<div class="placeholder">🎓 Neurologia 2026</div>`}
         <div class="name" style="font-weight:700;font-size:13px;">${esc(p.caption)}</div>
         <div class="cat">di ${esc(p.authorName)} · ${fmtTime(p.createdAt)}</div>
-        <div style="margin-top:6px;"><button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-like="${p.id}">❤️ ${p.likesCount}</button></div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;"><button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-like="${p.id}">❤️ ${p.likesCount}</button>${isAdmin() ? `<button class="icon-btn" data-photo-del="${p.id}" title="Elimina foto (organizzatore)">🗑️</button>` : ""}</div>
       </div>`).join("")}
   `;
   el.querySelector("#add-wish").onclick = () => wishDialog(() => wishes(el));
@@ -651,6 +666,14 @@ export async function wishes(el) {
   });
   el.querySelectorAll("[data-like]").forEach((b) => b.onclick = async () => {
     if (await tryAction(() => Repo.likePhoto(Number(b.dataset.like)))) wishes(el);
+  });
+  el.querySelectorAll("[data-wish-del]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Eliminare questo augurio per tutti?")) return;
+    if (await tryAction(() => Repo.deleteWish(Number(b.dataset.wishDel)), "Augurio eliminato")) wishes(el);
+  });
+  el.querySelectorAll("[data-photo-del]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Eliminare questa foto per tutti?")) return;
+    if (await tryAction(() => Repo.deletePhoto(Number(b.dataset.photoDel)), "Foto eliminata")) wishes(el);
   });
 }
 

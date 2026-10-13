@@ -43,7 +43,8 @@ export function setGuestToken(token) { lsSet(LS_GUEST, (token || "").trim()); }
 export function getTreasurerToken() { return ls(LS_TREASURER); }
 export function setTreasurerToken(token) { lsSet(LS_TREASURER, (token || "").trim()); }
 // Il cruscotto delle quote uniche è visibile al cassiere e agli organizzatori (il server accetta entrambi i token).
-export function isTreasurer() { return !!getTreasurerToken() || isAdmin(); }
+// Solo il token cassiere apre le quote uniche: il token organizzatore non basta (le cifre restano ai cassieri)
+export function isTreasurer() { return !!getTreasurerToken(); }
 // Festeggiato: GRADUATE_TOKEN_<ID> sul server apre l'area 🎓 (chi viene, auguri, coordinate, il proprio avatar)
 export function getGraduateToken() { return ls(LS_GRADUATE); }
 export function setGraduateToken(token) { lsSet(LS_GRADUATE, (token || "").trim()); }
@@ -146,6 +147,9 @@ export const api = {
   sendNotification: (n) => request("/api/notifications", { method: "POST", json: n }),
   scheduledNotifications: () => request("/api/notifications/scheduled"),
   deleteNotification: (id) => request(`/api/notifications/${id}`, { method: "DELETE" }),
+  clearNotifications: () => request("/api/notifications", { method: "DELETE" }),
+  deleteWish: (id) => request(`/api/wishes/${id}`, { method: "DELETE" }),
+  deletePhoto: (id) => request(`/api/photos/${id}`, { method: "DELETE" }),
   guestsSummary: () => request("/api/guests/summary"),
 
   // profilo personale dell'invitato (vedi profile.js) ed email tramite n8n

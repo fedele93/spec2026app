@@ -31,8 +31,12 @@ data class StateDto(
     val serverTime: Long,
     val adminEnabled: Boolean = false,
     val treasurerEnabled: Boolean = false,
+    val canSeeLists: Boolean = true, // con i token di questo dispositivo il server manda gli elenchi completi
     val pushSubscriptions: Int = 0
 )
+
+@JsonClass(generateAdapter = true)
+data class ClearedDto(val deleted: Int = 0)
 
 /** Tutte le collezioni pubbliche in una sola risposta (GET /api/snapshot).
  *  Del campo "event" si legge solo il cassiere delle quote uniche (il resto è nel JSON locale). */
@@ -311,6 +315,18 @@ interface NeuroPartyApi {
 
     @POST("api/wishes/{id}/heart")
     suspend fun heartWish(@Path("id") id: Long): WishEntity
+
+    /** Solo organizzatori. */
+    @DELETE("api/wishes/{id}")
+    suspend fun deleteWish(@Path("id") id: Long): Response<Unit>
+
+    /** Solo organizzatori. */
+    @DELETE("api/photos/{id}")
+    suspend fun deletePhoto(@Path("id") id: Long): Response<Unit>
+
+    /** Solo organizzatori: svuota la cronologia delle notifiche pubblicate. */
+    @DELETE("api/notifications")
+    suspend fun clearNotifications(): ClearedDto
 
     @Multipart
     @POST("api/photos")

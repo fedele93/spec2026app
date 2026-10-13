@@ -50,6 +50,11 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
   codice e file calendario, lista d'attesa automatica); gli organizzatori generano e inviano i
   link dalla lista invitati, fanno il check-in alla partenza e lanciano i promemoria.
 - **Guida alla prima apertura** (PWA): spiega le schede e come usarle; riapribile dal pulsante ?.
+- **Chi vede cosa**: la lista degli invitati e quella dei passeggeri della navetta sono complete
+  solo con un token (organizzatore, festeggiato o cassiere); gli altri vedono i propri record e
+  i conteggi. Le cifre delle quote uniche le vede solo il cassiere con il proprio token (il token
+  organizzatore non basta). Gli organizzatori possono eliminare auguri e foto e svuotare la
+  cronologia delle notifiche.
 - **Organizzatori** (token `ADMIN_TOKEN`): cruscotto con i numeri e le cose da fare e import
   della lista invitati da Excel/CSV con invio dei link personali, sia nella PWA sia nell'app
   Android (card nella tab Invitati); nella PWA anche pannello email, export CSV, check-in

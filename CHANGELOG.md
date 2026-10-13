@@ -5,6 +5,29 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-10-13
+
+Privacy degli elenchi e pulizia da organizzatore (PWA e Android 1.8.1).
+
+### Cambiato
+
+- **Elenchi riservati**: la lista degli invitati (con riepilogo catering) e quella dei passeggeri
+  della navetta sono complete solo con un token di organizzatore, festeggiato o cassiere; senza
+  token ogni dispositivo vede soltanto i record creati da sé e il proprio profilo, con una nota
+  che lo spiega (PWA e Android, anche nello snapshot). I conteggi dei posti navetta restano
+  pubblici per poter prenotare.
+- **Cifre delle quote uniche solo ai cassieri**: il cruscotto delle quote e il CSV si aprono solo
+  con il token cassiere (ognuno vede le proprie); il token organizzatore non basta più. Il
+  cruscotto organizzatori e il report n8n mostrano solo i conteggi (quante quote, quante
+  ricevute), mai gli importi.
+
+### Aggiunto
+
+- **Pulizia da organizzatore**: cestino su ogni augurio e ogni foto (PWA e Android, con
+  conferma) e pulsante "Svuota la cronologia" nelle notifiche (le programmate restano).
+  Backend: `DELETE /api/notifications`.
+- Service worker v2.10.0; 12 nuovi controlli e2e (157).
+
 ## [1.11.0] - 2026-10-13
 
 App Android 1.8.0: cruscotto organizzatori e import invitati (le stesse funzioni della PWA 1.10).

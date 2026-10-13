@@ -93,7 +93,8 @@ export const Status = {
   online: true,        // ultimo tentativo verso il server riuscito
   version: 0,          // versione dati del server (per il polling)
   adminEnabled: false, // il server ha un ADMIN_TOKEN configurato
-  treasurerEnabled: false, // il server ha un TREASURER_TOKEN (o ADMIN_TOKEN) per il cruscotto delle quote uniche
+  treasurerEnabled: false, // il server ha un TREASURER_TOKEN[_<ID>] per il cruscotto delle quote uniche
+  canSeeLists: true,       // con i token di questo dispositivo il server mostra gli elenchi completi di invitati e navetta
   pushSubscriptions: 0,
   lastError: ""
 };
@@ -144,6 +145,7 @@ const ServerRepo = {
       Status.online = true;
       Status.adminEnabled = !!s.adminEnabled;
       Status.treasurerEnabled = !!s.treasurerEnabled;
+      Status.canSeeLists = s.canSeeLists !== false;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
       if (s.version !== Status.version) {
         await refreshSnapshot();
@@ -175,6 +177,9 @@ const ServerRepo = {
   allWishes: async () => (snapshot ?? await refreshSnapshot()).wishes,
   addWish: (w) => write(() => api.addWish(w)),
   heartWish: (id) => write(() => api.heartWish(id)),
+  deleteWish: (id) => write(() => api.deleteWish(id)),
+  deletePhoto: (id) => write(() => api.deletePhoto(id)),
+  clearNotifications: () => write(() => api.clearNotifications()),
 
   allPhotos: async () => (snapshot ?? await refreshSnapshot()).photos,
   addPhoto: ({ file, authorName, caption }) => write(() => api.uploadPhoto(file, authorName, caption)),
@@ -258,6 +263,9 @@ const LocalRepo = {
   allWishes: () => getAll("wishes"),
   addWish: (w) => add("wishes", { ...w, heartCount: 1, createdAt: Date.now() }).then(notify),
   heartWish: (id) => updateRecord("wishes", id, (w) => { w.heartCount = (w.heartCount || 0) + 1; }).then(notify),
+  deleteWish: (id) => del("wishes", id).then(notify),
+  deletePhoto: (id) => del("photos", id).then(notify),
+  clearNotifications: async () => { for (const n of await getAll("notifications")) await del("notifications", n.id); notify(); return { deleted: 0 }; },
 
   allPhotos: () => getAll("photos"),
   addPhoto: async ({ file, authorName, caption }) => {
@@ -344,6 +352,7 @@ export async function initData() {
       Status.online = true;
       Status.adminEnabled = !!s.adminEnabled;
       Status.treasurerEnabled = !!s.treasurerEnabled;
+      Status.canSeeLists = s.canSeeLists !== false;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
       impl = ServerRepo;
       await ServerRepo.prepopulateIfNeeded();

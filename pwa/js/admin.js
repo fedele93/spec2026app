@@ -6,7 +6,6 @@ import { openMailAdmin, MENU_LABELS } from "./profile.js";
 import { openAssistantAdmin } from "./assistant.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const eur = (v) => `${Number(v || 0).toFixed(2).replace(".", ",")} €`;
 const stat = (title, value, sub, color) => `<div class="card" style="flex:1;min-width:92px;padding:12px;margin:0;"><div class="muted" style="font-size:11px;">${title}</div><div style="font-size:22px;font-weight:800;color:${color};">${value}</div><div class="muted" style="font-size:11px;">${sub}</div></div>`;
 const fmtDeadline = (iso) => { try { return new Date(iso + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" }); } catch { return iso; } };
 
@@ -27,7 +26,7 @@ export async function openDashboard() {
       ${stat("Navetta", b.bookedSeats, `di ${b.maxSeats} · ${b.waitlistSeats} in attesa · ${b.checkedInSeats} saliti`, "var(--primary)")}
       ${stat("Profili", g.withProfile, `${g.withEmail} con email · ${g.consented} consensi`, "var(--primary)")}
       ${stat("Email", mailTotal, m.enabled ? `${m.counts.DELIVERED || 0} consegnate · ${m.counts.FAILED || 0} fallite` : "n8n non attivo", m.enabled ? "#166534" : "#991B1B")}
-      ${stat("Quote uniche", p.contributions, `${p.pending} in attesa · ${eur(p.receivedAmount)} ricevuti`, "var(--gold-dark)")}
+      ${stat("Quote uniche", p.contributions, `${p.pending} in attesa · ${p.received} ricevute (cifre solo ai cassieri)`, "var(--gold-dark)")}
       ${stat("Bacheca", d.wishes, `auguri · ${d.photos} foto · ${d.pushSubscriptions} push`, "var(--primary)")}
     </div>
     <details class="card" id="dash-todo" open><summary><b>✅ Cose da fare</b> <span class="muted">· ${d.todo.length}</span></summary>

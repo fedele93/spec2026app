@@ -119,6 +119,10 @@ evento dedicato; n8n lo spedisce con il nodo Send Email già configurato.
 
 ## 4. Fasi e ordine di lavoro
 
+Stato al 13 ottobre 2026: fasi 1, 2 e 3 realizzate (PWA e backend); in più la guida alla prima
+apertura. Restano la fase 4 (area festeggiati, promemoria ai donatori, scelta del cassiere su
+Android) e la fase 5 (assistente sul profilo, import invitati, cruscotto organizzatori).
+
 | Fase | Contenuto | Stima | Dipendenze |
 |---|---|---|---|
 | 1. Email via n8n e profilo | evento `mail.send` + `mail_outbox`, modelli delle email, workflow n8n aggiornato, campi profilo, magic link, pagina "Il mio profilo" nella PWA, email di accesso e conferma RSVP | 3-4 giorni | n8n già attivo con Send Email |

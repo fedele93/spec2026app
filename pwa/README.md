@@ -49,6 +49,7 @@ js/api.js        client HTTP (X-Client-Id, X-Admin-Token)
 js/data.js       Repo: modalità server (snapshot + cache) o locale (IndexedDB)
 js/db.js         wrapper IndexedDB (modalità locale)
 js/notify.js     permesso notifiche, Web Push subscribe
+js/guide.js      guida a passi alla prima apertura (riapribile dal pulsante ? e dalle impostazioni)
 js/profile.js    profilo dell'invitato (link personale, RSVP, accompagnatori, menu) e pannello email per gli organizzatori
 js/assistant.js  assistente vocale: pulsante, pannello (microfono/testo, audio), pannello admin degli avatar
 js/schedule.js   orari (blocco "schedule"), segnaposto nei testi, calendario .ics locale

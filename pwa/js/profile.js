@@ -3,7 +3,7 @@
 // - senza token: modulo "inserisci la tua email" (e il nome se non sei in lista);
 // - con token: RSVP, contatti, accompagnatori con menu, consenso; salvando arriva l'email di conferma.
 import { api, getGuestToken, setGuestToken } from "./api.js";
-import { Repo } from "./data.js";
+import { Repo, BUS_SCHEDULE } from "./data.js";
 import { toast, openModal, render } from "./app.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -31,8 +31,10 @@ export async function openProfile() {
     if (e.status === 401) { setGuestToken(""); toast(e.message); requestLinkDialog(); return; }
     toast(e.message); return;
   }
-  profileDialog(data.guest);
+  profileDialog(data.guest, data);
 }
+
+const fmtDeadline = (iso) => { try { return new Date(iso + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }); } catch { return iso; } };
 
 function requestLinkDialog() {
   openModal(`<h3>👤 Il mio profilo</h3>
@@ -66,8 +68,25 @@ function companionRow(c = {}, i = 0) {
   </div>`;
 }
 
-function profileDialog(g) {
+function busSection(data) {
+  const b = data.busBooking, bus = data.bus || {}, dl = data.deadlines || {};
+  const stops = BUS_SCHEDULE.pickupStops && BUS_SCHEDULE.pickupStops.length ? BUS_SCHEDULE.pickupStops : ["Policlinico di Bari"];
+  const status = b ? (b.status === "WAITLIST" ? `<span class="pill pill-pend">in lista d'attesa</span>` : `<span class="pill pill-conf">confermata</span>`) : "";
+  return `<div class="pf-bus" id="pf-bus">
+    <b>🚌 Navetta</b> ${status}
+    ${b ? `<div class="muted">${b.seatsCount} ${b.seatsCount === 1 ? "posto" : "posti"} · codice <b>${esc(b.code)}</b>${b.pickupStop ? ` · da ${esc(b.pickupStop)}` : ""}${b.checkedInAt ? " · ✓ salito" : ""}</div>` : `<div class="muted">Posti liberi: ${bus.availableSeats ?? "-"} su ${bus.maxSeats ?? "-"}${bus.waitlistSeats ? ` · ${bus.waitlistSeats} in lista d'attesa` : ""}</div>`}
+    ${dl.busLocked ? `<div class="muted">Il termine per prenotare o modificare la navetta è passato: per cambiamenti contatta gli organizzatori.</div>` : `
+    <div class="as-row" style="margin-top:6px;"><div class="field" style="flex:0 0 90px;"><label>Posti</label><input id="pb-seats" type="number" min="1" max="54" inputmode="numeric" value="${b ? b.seatsCount : ""}" placeholder="auto"></div>
+      <div class="field" style="flex:1;"><label>Fermata di salita</label><select id="pb-stop">${stops.map((st) => `<option ${b && b.pickupStop === st ? "selected" : ""}>${esc(st)}</option>`).join("")}</select></div></div>
+    <label class="as-check"><input type="checkbox" id="pb-return" ${!b || b.returnTripWanted ? "checked" : ""}> Mi serve anche il ritorno notturno</label>
+    <div class="btn-row"><button class="btn btn-primary" id="pb-save">${b ? "Aggiorna navetta" : "Prenota la navetta"}</button>${b ? `<button class="btn btn-ghost" id="pb-cancel">Annulla prenotazione</button>` : ""}</div>
+    ${dl.busDeadline ? `<div class="muted as-hint">Modificabile fino a ${fmtDeadline(dl.busDeadline)}. Posti vuoti = le persone del profilo. Ricevi la conferma via email con il codice e l'evento per il calendario.</div>` : ""}`}
+  </div>`;
+}
+
+function profileDialog(g, data = {}) {
   const firstTime = !g.consentAt;
+  const dl = data.deadlines || {};
   openModal(`<h3>👤 Il mio profilo</h3>
     <div class="muted" style="margin-bottom:10px;">Ciao ${esc(g.fullName)}! Qui trovi la tua partecipazione, chi viene con te e il menu. Salvando ricevi un'email di conferma.</div>
     <div class="field"><label>Partecipazione</label>
@@ -75,6 +94,7 @@ function profileDialog(g) {
     <div class="field"><label>Nome e cognome *</label><input id="pf-name" value="${esc(g.fullName)}"></div>
     <div class="field"><label>Chi sei per i festeggiati</label><select id="pf-cat">${CATEGORIES.map((c) => `<option ${g.category === c ? "selected" : ""}>${c}</option>`).join("")}${CATEGORIES.includes(g.category) ? "" : `<option selected>${esc(g.category)}</option>`}</select></div>
     <div class="as-row"><div class="field" style="flex:1;"><label>Email</label><input id="pf-email" type="email" value="${esc(g.email || "")}"></div><div class="field" style="flex:1;"><label>Telefono</label><input id="pf-phone" type="tel" value="${esc(g.phone || "")}"></div></div>
+    ${dl.menuLocked ? `<div class="muted" style="margin-bottom:8px;">⏰ Il termine per cambiare partecipazione, menu e accompagnatori è passato (${fmtDeadline(dl.menuDeadline)}): per modifiche contatta gli organizzatori. Puoi ancora aggiornare email e telefono.</div>` : dl.menuDeadline ? `<div class="muted as-hint" style="margin-bottom:8px;">Menu e accompagnatori modificabili fino a ${fmtDeadline(dl.menuDeadline)}.</div>` : ""}
     <div id="pf-food">
       <div class="field"><label>Il tuo menu</label><select id="pf-menu">${Object.entries(MENU_LABELS).map(([k, v]) => `<option value="${k}" ${k === (g.menu || "") ? "selected" : ""}>${v}</option>`).join("")}</select></div>
       <div class="field"><label>Allergie o note per la cucina</label><input id="pf-diet" value="${esc(g.dietaryNotes || "")}" placeholder="es. allergia alle noci"></div>
@@ -82,6 +102,7 @@ function profileDialog(g) {
         <button class="btn btn-ghost" id="pf-add" style="margin-top:6px;">＋ Aggiungi una persona</button></div>
       <div class="muted" id="pf-count" style="margin-bottom:8px;"></div>
     </div>
+    ${g.consentAt && g.rsvpStatus !== "DECLINED" && Repo.mode === "server" ? busSection(data) : ""}
     <label class="as-check" style="align-items:flex-start;"><input type="checkbox" id="pf-consent" ${g.consentAt ? "checked disabled" : ""}> <span>${firstTime ? "Acconsento al trattamento dei dati. " : "Consenso dato. "}<span class="muted">${PRIVACY}</span></span></label>
     <div class="btn-row"><button class="btn btn-primary" id="pf-save">Salva e ricevi conferma</button><button class="btn btn-ghost" id="pf-logout" title="Il link ricevuto smette di valere">Esci</button></div>`,
     (bg, close) => {
@@ -116,6 +137,23 @@ function profileDialog(g) {
         } catch (e) { toast(e.message); }
         finally { const b = $("#pf-save"); if (b) b.disabled = false; }
       };
+      const pbSave = $("#pb-save");
+      if (pbSave) pbSave.onclick = async () => {
+        const seats = Number($("#pb-seats").value) || null;
+        pbSave.disabled = true;
+        try {
+          const r = await api.profileBusPut({ seatsCount: seats, pickupStop: $("#pb-stop").value, returnTripWanted: $("#pb-return").checked, contactPhone: $("#pf-phone").value.trim() });
+          const b = r.busBooking;
+          toast(b && b.status === "WAITLIST" ? "Posti esauriti: sei in lista d'attesa, ti avvisiamo via email" : "Navetta prenotata ✓ (conferma via email)");
+          close(); await Repo.pollState(); render(); profileDialog(r.guest, r);
+        } catch (e) { toast(e.message); pbSave.disabled = false; }
+      };
+      const pbCancel = $("#pb-cancel");
+      if (pbCancel) pbCancel.onclick = async () => {
+        if (!confirm("Annullare la prenotazione della navetta?")) return;
+        try { const r = await api.profileBusDelete(); toast("Prenotazione annullata"); close(); await Repo.pollState(); render(); profileDialog(r.guest, r); }
+        catch (e) { toast(e.message); }
+      };
       $("#pf-logout").onclick = async () => {
         if (!confirm("Uscire dal profilo su questo dispositivo? Il link ricevuto non varrà più: potrai chiederne uno nuovo con la tua email.")) return;
         try { await api.profileLogout(); } catch { /* token già non valido */ }
@@ -133,13 +171,23 @@ export async function openMailAdmin() {
     <div class="card" style="margin-bottom:10px;"><b style="font-size:13px;">Stato</b>
       <div class="muted">${st.enabled ? `Collegato: le email passano dal webhook n8n (${esc(st.webhook.url || "")}).` : "Non attivo: imposta N8N_WEBHOOK_URL nel .env del server e importa il workflow aggiornato. Nel frattempo i link personali si copiano dalla lista invitati."}</div>
       <div class="muted">${Object.entries(st.counts || {}).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(" · ") || "nessuna email ancora"}</div>
-      <div class="as-row" style="margin-top:8px;"><input id="ml-to" type="email" placeholder="Email di prova a…"><button class="btn btn-ghost" id="ml-test">Invia prova</button></div></div>
+      <div class="as-row" style="margin-top:8px;"><input id="ml-to" type="email" placeholder="Email di prova a…"><button class="btn btn-ghost" id="ml-test">Invia prova</button></div>
+      <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" id="ml-remind-menu">🍽️ Promemoria menu mancante</button><button class="btn btn-ghost" id="ml-remind-bus">🚌 Promemoria navetta (domani)</button></div>
+      <div class="muted as-hint">I promemoria si possono anche programmare da n8n (POST /api/mail/reminders/menu e /bus con il token automazioni).</div></div>
     <b style="font-size:13px;">Ultime email</b>
     ${box.length ? box.map((m) => `<div class="row"><div class="grow"><div class="name" style="font-size:13px;">${esc(m.to)} ${pill(m.status)}</div><div class="cat">${esc(st.kinds[m.kind] || m.kind)} · ${esc(m.subject)} · ${new Date(m.createdAt).toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}${m.error ? ` · <span style="color:var(--error)">${esc(m.error)}</span>` : ""}</div></div>${m.status !== "DELIVERED" ? `<button class="btn btn-ghost" style="width:auto;padding:6px 10px;font-size:12px;" data-resend="${m.id}">↻</button>` : ""}</div>`).join("") : `<div class="muted">Nessuna email.</div>`}`,
     (bg, close) => {
       bg.querySelector("#ml-test").onclick = async () => {
         const to = bg.querySelector("#ml-to").value.trim(); if (!to.includes("@")) { toast("Inserisci un'email"); return; }
         try { const r = await api.mailTest(to); toast(r.status === "DELIVERED" || r.status === "QUEUED" ? "Email di prova inviata a n8n" : `Non inviata: ${r.error}`); close(); openMailAdmin(); } catch (e) { toast(e.message); }
+      };
+      bg.querySelector("#ml-remind-menu").onclick = async () => {
+        if (!confirm("Mandare il promemoria a chi non ha ancora scelto il menu?")) return;
+        try { const r = await api.mailRemindMenu(); toast(r.skipped ? `Nessun invio: ${r.skipped}` : `Promemoria menu: ${r.sent} email`); close(); openMailAdmin(); } catch (e) { toast(e.message); }
+      };
+      bg.querySelector("#ml-remind-bus").onclick = async () => {
+        if (!confirm("Mandare il promemoria della navetta a tutte le prenotazioni confermate con email?")) return;
+        try { const r = await api.mailRemindBus(); toast(`Promemoria navetta: ${r.sent} email`); close(); openMailAdmin(); } catch (e) { toast(e.message); }
       };
       bg.querySelectorAll("[data-resend]").forEach((b) => b.onclick = async () => {
         try { const r = await api.mailResend(Number(b.dataset.resend)); toast(r.status === "DELIVERED" ? "Consegnata ✓" : `Stato: ${r.status}`); close(); openMailAdmin(); } catch (e) { toast(e.message); }

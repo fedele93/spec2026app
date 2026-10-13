@@ -5,6 +5,30 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-10-13
+
+Fasi 2 e 3 del piano: menu con data limite, navetta dal profilo, guida alla prima apertura.
+
+### Aggiunto
+
+- **Guida alla prima apertura** (PWA): popup a passi con cosa fa ogni scheda e come usarla
+  (programma, profilo, navetta, auguri e foto, regali, assistente se attivo); si riapre dal
+  pulsante ? nell'intestazione e da ⚙️ Impostazioni. Non compare quando si arriva da un link
+  personale.
+- **Navetta dal profilo**: sezione Navetta nel profilo (posti = persone, fermata, ritorno),
+  conferma via email con codice e `navetta.ics`, lista d'attesa a posti esauriti con promozione
+  automatica (email "posto confermato"), annullamento; card "Prenota dal tuo profilo" nella
+  scheda Navetta; per gli organizzatori check-in ✅ di chi sale e contatori (confermati, in
+  attesa, saliti); etichette lista d'attesa/salito e codice nelle righe.
+- **Menu con data limite**: `meta.menuDeadline` e `meta.busDeadline` in `event-data.json`;
+  il profilo avvisa della scadenza e dopo blocca menu, accompagnatori, partecipazione e navetta;
+  riepilogo catering con menu scelti, persone senza menu e allergie degli accompagnatori;
+  `invitati.csv` con menu, accompagnatori, email e telefono; `navetta.csv` con stato, codice,
+  email e check-in.
+- Pannello Email: pulsanti "Promemoria menu mancante" e "Promemoria navetta" (anche da n8n a
+  orario con il token automazioni). Workflow n8n con allegati. Service worker v2.7.0; 16 nuovi
+  controlli e2e (114).
+
 ## [1.7.0] - 2026-10-12
 
 Fase 1 del piano (`docs/piano-miglioramenti.md`): profilo dell'invitato ed email tramite n8n.

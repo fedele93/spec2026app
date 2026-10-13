@@ -5,6 +5,7 @@ import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.
 import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getClientId, downloadCsv } from "./api.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
 import { openProfile, openMailAdmin, hasProfile, MENU_LABELS } from "./profile.js";
+import { openGuide } from "./guide.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -36,6 +37,7 @@ export async function program(el) {
       <div class="top">
         <div class="badge">🎓 ${esc(P.badge)}</div>
         <div style="display:flex;gap:6px;">
+          <button class="icon-round" id="open-guide" aria-label="Guida" title="Come funziona l'app">?</button>
           ${serverMode ? `<button class="icon-round" id="my-profile" aria-label="Il mio profilo" title="Il mio profilo">👤</button>` : ""}
           <button class="icon-round" id="ntf-show" aria-label="Notifiche">🔔${unread > 0 ? `<span class="dot">${unread}</span>` : ""}</button>
           <button class="icon-round" id="settings" aria-label="Impostazioni">⚙️</button>
@@ -90,6 +92,7 @@ export async function program(el) {
   el.querySelector("#settings").onclick = () => settingsDialog();
   const mp = el.querySelector("#my-profile");
   if (mp) mp.onclick = () => openProfile();
+  el.querySelector("#open-guide").onclick = () => openGuide();
   const calBtn = el.querySelector("#cal-add");
   if (calBtn && !serverMode) calBtn.onclick = (e) => { e.preventDefault(); downloadIcs(EVENT); toast("File calendario scaricato: aprilo per aggiungere seduta e festa 📅"); };
   const sendBtn = el.querySelector("#ntf-send");
@@ -282,12 +285,14 @@ function settingsDialog() {
     ${serverMode && isTreasurer() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📒 Esporta quote uniche per il cassiere</b>
       <div class="muted" style="margin-bottom:8px;">CSV con una riga per quota, una colonna per neo-specialista e i totali: si apre con Excel.</div>
       <button class="btn btn-ghost" id="s-exp-pool">Esporta quote uniche</button></div>` : ""}
+    <div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">❓ Guida all'app</b><div class="muted" style="margin-bottom:8px;">I passi mostrati alla prima apertura: cosa fa ogni scheda e come usarla.</div><button class="btn btn-ghost" id="s-guide">Riapri la guida</button></div>
     <div class="field"><label>URL del server (avanzato)</label><input id="s-api" value="${esc(localStorage.getItem("np.apiBase") || "")}" placeholder="vuoto = stesso dominio della PWA"></div>
     <div class="btn-row"><button class="btn btn-primary" id="s-save">Salva</button><button class="btn btn-ghost" id="s-test">Prova connessione</button></div>`,
     (bg, close) => {
       const expG = bg.querySelector("#s-exp-guests"), expB = bg.querySelector("#s-exp-bus");
       if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
       if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
+      bg.querySelector("#s-guide").onclick = () => { close(); openGuide(); };
       const mailBtn = bg.querySelector("#s-mail");
       if (mailBtn) mailBtn.onclick = () => { close(); openMailAdmin(); };
       const asst = bg.querySelector("#s-assistant");
@@ -434,10 +439,29 @@ function cateringSummary(confirmed, pending) {
   const cats = [...byCat.values()].sort((a, b) => b.covers - a.covers);
   const dts = [...diets.values()].sort((a, b) => b.covers - a.covers);
   const pendingCovers = pending.reduce((s, g) => s + (g.guestsCount || 0), 0);
+  // menu scelti dal profilo (invitato + accompagnatori), allergie per persona, chi non ha scelto
+  const byMenu = new Map();
+  const allergies = [];
+  const missing = [];
+  for (const g of confirmed) {
+    const people = [g.menu || ""].concat((g.companions || []).map((c) => c.menu || ""));
+    while (people.length < (g.guestsCount || 1)) people.push("");
+    people.slice(0, Math.max(g.guestsCount || 1, 1)).forEach((m) => byMenu.set(m, (byMenu.get(m) || 0) + 1));
+    if (!g.menu) missing.push(g.fullName);
+    for (const c of g.companions || []) {
+      if (c.notes) allergies.push(`${c.name}: ${c.notes}`);
+      if (!c.menu) missing.push(`${c.name} (con ${g.fullName})`);
+    }
+  }
+  const menus = [...byMenu.entries()].sort((a, b) => b[1] - a[1]);
   return `<details class="card catering" id="catering">
     <summary><b>🍽️ Riepilogo per il catering</b> <span class="muted">· ${confirmed.reduce((s, g) => s + (g.guestsCount || 0), 0)} coperti confermati${pendingCovers ? ` (+${pendingCovers} in attesa)` : ""}</span></summary>
     <div class="muted" style="margin:8px 0 4px;font-size:12px;"><b>Per categoria</b></div>
     ${cats.length ? cats.map((c) => `<div class="row" style="padding:4px 0;"><div class="grow">${esc(c.category)}</div><div>${c.covers} coperti <span class="muted">(${c.guests} inv.)</span></div></div>`).join("") : '<div class="muted">Nessun confermato.</div>'}
+    <div class="muted" style="margin:10px 0 4px;font-size:12px;"><b>Menu scelti dai profili</b></div>
+    ${menus.map(([m, n]) => `<div class="row" style="padding:4px 0;"><div class="grow">${esc(MENU_LABELS[m] || m || "Da scegliere")}</div><div>${n} ${n === 1 ? "persona" : "persone"}</div></div>`).join("")}
+    ${missing.length ? `<div class="muted" style="font-size:12px;margin-top:4px;">Senza menu: ${missing.map(esc).join(", ")}</div>` : ""}
+    ${allergies.length ? `<div class="muted" style="margin:10px 0 4px;font-size:12px;"><b>Allergie degli accompagnatori</b></div>${allergies.map((a) => `<div class="muted" style="font-size:12px;">${esc(a)}</div>`).join("")}` : ""}
     <div class="muted" style="margin:10px 0 4px;font-size:12px;"><b>Esigenze alimentari</b></div>
     ${dts.length ? dts.map((d) => `<div class="row" style="padding:4px 0;flex-direction:column;align-items:stretch;"><div><b>${esc(d.note)}</b> · ${d.covers} ${d.covers === 1 ? "persona" : "persone"}</div><div class="muted" style="font-size:12px;">${d.guests.map(esc).join(", ")}</div></div>`).join("") : '<div class="muted">Nessun menu speciale segnalato.</div>'}
     <div class="muted" style="margin-top:8px;font-size:11px;">Gli organizzatori possono scaricare il CSV completo da ⚙️ Impostazioni.</div>
@@ -482,9 +506,14 @@ function guestDialog(onDone) {
 // ============================ NAVETTA ============================
 export async function bus(el) {
   const bookings = await Repo.allBookings();
-  const booked = bookings.reduce((s, b) => s + (b.seatsCount || 0), 0);
+  const serverMode = Repo.mode === "server";
+  const confirmedB = bookings.filter((b) => b.status !== "WAITLIST");
+  const booked = confirmedB.reduce((s, b) => s + (b.seatsCount || 0), 0);
+  const waiting = bookings.filter((b) => b.status === "WAITLIST").reduce((s, b) => s + (b.seatsCount || 0), 0);
+  const checkedIn = bookings.filter((b) => b.checkedInAt).reduce((s, b) => s + (b.seatsCount || 0), 0);
   const available = Math.max(0, MAX_BUS_SEATS - booked);
   const pct = Math.min(100, (booked / MAX_BUS_SEATS) * 100);
+  const admin = isAdmin() && serverMode;
   el.innerHTML = `
     <h2 class="section">Navetta Autobus Riservata</h2>
     <div class="muted" style="margin-top:-4px;margin-bottom:12px;">${esc(BUS_SCHEDULE.subtitle || "")}</div>
@@ -494,8 +523,11 @@ export async function bus(el) {
         <span class="pill ${available > 10 ? "pill-conf" : "pill-decl"}">${available} liberi</span>
       </div>
       <div class="meter"><span style="width:${pct}%;${pct > 90 ? "background:#EF4444;" : ""}"></span></div>
-      <div style="display:flex;justify-content:space-between;" class="muted"><span>Adesioni raccolte: ${booked} posti</span><span>${pct.toFixed(0)}% occupato</span></div>
+      <div style="display:flex;justify-content:space-between;" class="muted"><span>Posti confermati: ${booked}${waiting ? ` · in lista d'attesa: ${waiting}` : ""}${admin && checkedIn ? ` · saliti: ${checkedIn}` : ""}</span><span>${pct.toFixed(0)}% occupato</span></div>
     </div>
+    ${serverMode ? `<div class="card profile-card"><b style="font-size:14px;">👤 Prenota dal tuo profilo</b>
+      <div class="muted" style="margin:4px 0 8px;">Dal profilo la prenotazione è legata a te: ricevi la conferma via email con il codice e l'evento per il calendario, e se i posti sono finiti entri in lista d'attesa.</div>
+      <button class="btn btn-primary" id="bus-profile">${hasProfile() ? "Apri il mio profilo" : "Accedi con la tua email"}</button></div>` : ""}
     <div class="card">
       <b style="font-size:14px;">Orari & Fermate Transfer</b>
       ${busTripRow("ANDATA", BUS_SCHEDULE.andata)}
@@ -507,16 +539,22 @@ export async function bus(el) {
         <div class="row">
           <div style="width:36px;height:36px;border-radius:50%;background:#E0F2FE;color:#0284C7;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${b.seatsCount}</div>
           <div class="grow">
-            <div class="name">${esc(b.passengerName)}</div>
-            <div class="cat">Fermata: ${esc(b.pickupStop)}${b.contactPhone ? " · " + esc(b.contactPhone) : ""}</div>
+            <div class="name">${esc(b.passengerName)}${b.status === "WAITLIST" ? ` <span class="pill pill-pend">lista d'attesa</span>` : ""}${b.checkedInAt ? ` <span class="pill pill-conf">salito</span>` : ""}</div>
+            <div class="cat">Fermata: ${esc(b.pickupStop)}${b.code ? " · " + esc(b.code) : ""}${b.contactPhone ? " · " + esc(b.contactPhone) : ""}</div>
             ${b.returnTripWanted ? `<div class="cat" style="color:#10B981;font-weight:600;">Include corsa di rientro notturna</div>` : ""}
             ${b.notes ? `<div class="cat" style="font-style:italic;">Note: ${esc(b.notes)}</div>` : ""}
           </div>
+          ${admin && b.status !== "WAITLIST" ? `<button class="icon-btn" data-checkin="${b.id}" data-next="${b.checkedInAt ? "false" : "true"}" title="${b.checkedInAt ? "Annulla check-in" : "Segna come salito"}">${b.checkedInAt ? "↩️" : "✅"}</button>` : ""}
           <button class="icon-btn" data-cancel="${b.id}" title="Cancella prenotazione">🗑️</button>
         </div>`).join("")}
     </div>
     <button class="fab" id="book-bus">🚌 Aderisci all'Autobus</button>
   `;
+  const bp = el.querySelector("#bus-profile");
+  if (bp) bp.onclick = () => openProfile();
+  el.querySelectorAll("[data-checkin]").forEach((b) => b.onclick = async () => {
+    if (await tryAction(() => api.busCheckin(Number(b.dataset.checkin), b.dataset.next === "true"), b.dataset.next === "true" ? "Segnato come salito ✓" : "Check-in annullato")) { await Repo.pollState(); bus(el); }
+  });
   el.querySelectorAll("[data-cancel]").forEach((b) => b.onclick = async () => {
     if (!confirm("Cancellare questa prenotazione?")) return;
     if (await tryAction(() => Repo.deleteBooking(Number(b.dataset.cancel)), "Prenotazione annullata")) bus(el);

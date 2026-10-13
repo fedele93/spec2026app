@@ -42,6 +42,17 @@ const clickExpectToast = async (selector) => { await resetToast(); await page.cl
 console.log("1) Avvio e schermata Programma");
 await page.goto(BASE + "/", { waitUntil: "networkidle" });
 await page.waitForSelector(".hero h1");
+console.log("0) Guida alla prima apertura");
+await page.waitForSelector("#guide", { timeout: 10000 });
+check("guida aperta alla prima apertura", (await page.textContent("#guide")).includes("Benvenuto"));
+await page.click("#guide-next");
+check("secondo passo della guida", (await page.textContent(".guide-title")).includes("Programma"));
+let guideSteps = 2;
+while ((await page.textContent("#guide-next")) !== "Inizia! 🎉") { await page.click("#guide-next"); guideSteps += 1; if (guideSteps > 12) break; }
+check("la guida include profilo, navetta e assistente", (await page.textContent("#guide-dots")) !== null && guideSteps >= 6);
+await page.click("#guide-next");
+await page.waitForTimeout(300);
+check("guida chiusa e segnata come vista", (await page.$("#guide")) === null && (await page.evaluate(() => localStorage.getItem("np.guideSeen"))) !== null);
 check("hero con titolo evento", (await page.textContent(".hero h1")).includes("Seduta"));
 check("9 laureandi nell'hero", (await page.textContent(".hero .graduates")).includes("Donato Regina"));
 check("timeline con 5 tappe", (await page.$$(".timeline")).length === 5);
@@ -360,6 +371,49 @@ await page.waitForSelector("#ml-test");
 check("pannello email: n8n non attivo e email non inviate in outbox", (await page.textContent(".modal")).includes("Non attivo") && (await page.textContent(".modal")).includes("non inviata"));
 await page.click(".modal .close");
 await shot("08-profilo");
+
+console.log("13) Navetta dal profilo: prenotazione, lista d'attesa, promozione, check-in");
+await tab("bus");
+await page.waitForSelector("#bus-profile");
+await page.click("#bus-profile");
+await page.waitForSelector("#pb-save", { timeout: 10000 });
+check("sezione navetta nel profilo con fermate", (await page.$$("#pb-stop option")).length >= 3);
+check("navetta prenotata dal profilo", (await clickExpectToast("#pb-save")).includes("prenotata"));
+await page.waitForSelector("#pb-cancel", { timeout: 10000 });
+check("profilo mostra codice e stato confermata", /NP-[A-Z0-9]{4}/.test(await page.textContent("#pf-bus")) && (await page.textContent("#pf-bus")).includes("confermata"));
+const myBooking = (await fetch(BASE + "/api/bus/bookings").then((r) => r.json())).find((b) => b.guestId === nuova.id);
+check("prenotazione legata al profilo con 2 posti (le persone)", myBooking && myBooking.seatsCount === 2 && myBooking.status === "CONFIRMED");
+await page.click(".modal .close");
+// riempio il pullman via API: i posti restanti vanno a un gruppo, poi il profilo chiede 3 posti -> lista d'attesa
+const summary0 = await fetch(BASE + "/api/bus/summary").then((r) => r.json());
+const filler = await fetch(BASE + "/api/bus/bookings", { method: "POST", headers: { "Content-Type": "application/json", "X-Client-Id": "filler" }, body: JSON.stringify({ passengerName: "Gruppo Pieno", seatsCount: summary0.availableSeats }) }).then((r) => r.json());
+await page.click("#bus-profile");
+await page.waitForSelector("#pb-seats");
+await page.fill("#pb-seats", "3");
+check("a posti esauriti si va in lista d'attesa", (await clickExpectToast("#pb-save")).includes("lista d'attesa"));
+await page.waitForSelector("#pb-cancel");
+check("profilo in lista d'attesa", (await page.textContent("#pf-bus")).includes("lista d'attesa"));
+await page.click(".modal .close");
+await fetch(BASE + `/api/bus/bookings/${filler.id}`, { method: "DELETE", headers: { "X-Client-Id": "filler" } });
+const promoted = (await fetch(BASE + "/api/bus/bookings").then((r) => r.json())).find((b) => b.guestId === nuova.id);
+check("promossa automaticamente quando si liberano posti", promoted.status === "CONFIRMED" && promoted.seatsCount === 3);
+check("promemoria navetta disponibile agli organizzatori", (await fetch(BASE + "/api/mail/reminders/bus", { method: "POST", headers: adminHeaders }).then((r) => r.json())).sent >= 1);
+await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+await page.waitForTimeout(1200);
+await tab("bus");
+await page.waitForSelector(`[data-checkin="${promoted.id}"]`);
+check("check-in dell'organizzatore", (await clickExpectToast(`[data-checkin="${promoted.id}"]`)).includes("salito"));
+await page.waitForTimeout(800);
+check("passeggero segnato come salito", (await page.textContent("#screen")).includes("salito") && (await fetch(BASE + "/api/bus/summary").then((r) => r.json())).checkedInSeats >= 3);
+await tab("rsvp");
+await page.waitForSelector("#catering");
+check("riepilogo catering con i menu scelti", (await page.textContent("#catering")).includes("Menu scelti") && (await page.textContent("#catering")).includes("Vegetariano"));
+await tab("program");
+await page.click("#open-guide");
+await page.waitForSelector("#guide");
+check("guida riapribile dal pulsante ?", (await page.textContent(".guide-title")).includes("Benvenuto"));
+await page.click("#guide-skip");
+await shot("09-navetta-profilo");
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

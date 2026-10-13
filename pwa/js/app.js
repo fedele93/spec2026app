@@ -3,6 +3,7 @@ import { Repo, Status, initData, onDataChange } from "./data.js";
 import { resyncPushSubscription } from "./notify.js";
 import { initAssistant } from "./assistant.js";
 import { initProfileFromHash, openProfile } from "./profile.js";
+import { maybeOpenGuide } from "./guide.js";
 import * as Screens from "./screens.js";
 
 let currentTab = "program";
@@ -98,6 +99,8 @@ async function init() {
   await initData();
   await render();
   if (fromLink) { goto("rsvp"); openProfile(); }
+  await initAssistant(); // prima della guida: così la guida sa se c'è l'assistente
+  maybeOpenGuide({ fromLink }); // guida alla prima apertura
   // link personale incollato con l'app già aperta (cambia solo il frammento: nessun ricaricamento)
   window.addEventListener("hashchange", async () => { if (await initProfileFromHash()) { goto("rsvp"); openProfile(); } });
 
@@ -108,7 +111,6 @@ async function init() {
   window.addEventListener("offline", updateStatusBar);
   setTimeout(pollLoop, POLL_MS);
   resyncPushSubscription();
-  initAssistant(); // pulsante dell'assistente vocale (se il server ha Mistral configurato)
 }
 
 init().catch((e) => {

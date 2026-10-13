@@ -183,7 +183,7 @@ check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.te
 check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
 check("pulsanti copia IBAN e PayPal/Satispay", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 9);
 check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
-check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Aki"));
+check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Akilesh Bhunjun"));
 await page.click("#pool-open");
 await page.waitForSelector("#q-save");
 check("metodi cassa: IBAN, PayPal, Contanti (no Satispay)", (await Promise.all((await page.$$("#q-methods .chip")).map((c) => c.textContent()))).join(",") === "IBAN,PayPal,Contanti");
@@ -198,15 +198,15 @@ const poolToast = await clickExpectToast("#q-save");
 check("quota unica registrata", poolToast.includes("150,00"), poolToast);
 await page.waitForTimeout(600);
 check("la mia quota compare in 'Le tue quote registrate' con il cassiere", (await page.textContent(".mine")).includes("150,00 €") && (await page.textContent(".mine")).includes("a Paolo Roberto"));
-// seconda quota, versata ad Aki
+// seconda quota, versata ad Akilesh
 await page.click('[data-pool-open="aki"]');
 await page.waitForSelector("#q-save");
-check("dialogo intestato ad Aki", (await page.textContent(".modal h3")).includes("Dott. Aki"));
+check("dialogo intestato ad Akilesh", (await page.textContent(".modal h3")).includes("Dott. Akilesh Bhunjun"));
 await page.fill("#q-donor", "Cugina Playwright");
 await page.click('#q-presets .chip[data-amt="50"]');
 check("quota ad Aki registrata", (await clickExpectToast("#q-save")).includes("50,00"));
 await page.waitForTimeout(600);
-check("entrambe le quote elencate", (await page.textContent(".mine")).includes("a Aki"));
+check("entrambe le quote elencate", (await page.textContent(".mine")).includes("a Akilesh Bhunjun"));
 const myPool = await fetch(BASE + "/api/gifts/pool/mine", { headers: { "X-Client-Id": await page.evaluate(() => localStorage.getItem("np.clientId")) } }).then((r) => r.json());
 check("ripartizione salvata sul server (8 parti) e cassieri distinti", myPool.length === 2 && myPool[1].allocations.length === 8 && !myPool[1].allocations.some((a) => a.graduateId === "luisi") && myPool[0].collectorId === "aki" && myPool[1].collectorId === "roberto");
 check("email del donatore salvata (conferma via n8n, qui non configurato)", myPool[1].email === "zio@example.org" && myPool[1].mail === undefined && myPool[1].treasurerNote === "");
@@ -290,8 +290,8 @@ const statusToast = await clickExpectToast('[data-pool-status][data-next="RECEIV
 check("segnata come ricevuta", statusToast.includes("ricevuta"));
 await page.waitForTimeout(600);
 const poolCsv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/export/gift-pool.csv", { headers: { "X-Treasurer-Token": localStorage.getItem("np.treasurerToken") } }); return { ok: r.ok, body: await r.text() }; }, BASE);
-check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Cassiere;Donatore;Contatto;Email;Metodo") && poolCsv.body.includes("TOTALE;") && poolCsv.body.includes("TOTALE DOTT. AKI"));
-check("la quota ricevuta non si può più annullare dal donatore (resta solo quella ad Aki)", (await page.$$("[data-pool-del]")).length === 1);
+check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Cassiere;Donatore;Contatto;Email;Metodo") && poolCsv.body.includes("TOTALE;") && poolCsv.body.includes("TOTALE DOTT. AKILESH BHUNJUN"));
+check("la quota ricevuta non si può più annullare dal donatore (resta solo quella ad Akilesh)", (await page.$$("[data-pool-del]")).length === 1);
 check("CSV con appunti del cassiere", poolCsv.body.includes("bonifico visto il 3/11"));
 await shot("06b-cassa");
 

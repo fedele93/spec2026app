@@ -34,7 +34,8 @@ data class MapPoint(
     val latitude: Double,
     val longitude: Double,
     val iconType: String, // "GRADUATION", "BUS", "PARTY"
-    val description: String
+    val description: String,
+    val mapsUrl: String = "" // link Google Maps del punto (condiviso dagli organizzatori); vuoto = coordinate
 )
 
 /** Stato della connessione al backend condiviso. */

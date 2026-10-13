@@ -31,7 +31,7 @@ data class BusBookingEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val passengerName: String,
     val seatsCount: Int = 1,
-    val pickupStop: String = "Policlinico (Piazzale Principale)",
+    val pickupStop: String = "Piazza Giulio Cesare (Policlinico di Bari)",
     val returnTripWanted: Boolean = true,
     val contactPhone: String = "",
     val notes: String = "",

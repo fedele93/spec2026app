@@ -48,7 +48,7 @@ fun SendPushNotificationDialog(
 
     val quickTemplates = listOf(
         Pair("🎓 Seduta del 9 Novembre!", "La seduta di proclamazione è in corso all'Aula Magna \"G. De Benedictis\" del Policlinico di Bari."),
-        Pair("🚌 Partenza Navetta Imminente", "L'autobus è in sosta al Piazzale Principale del Policlinico di Bari. Partenza tra 15 minuti!"),
+        Pair("🚌 Partenza Navetta Imminente", "L'autobus è in sosta in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Partenza tra 15 minuti!"),
         Pair("🥂 Benvenuti alla Festa!", "Venerdì 13 novembre al Giardino dei Tempi: aperitivo di benvenuto aperto! Vi aspettiamo per il primo brindisi insieme."),
         Pair("🎂 Taglio della Torta & Dj Set", "Tutti attorno alla torta di specializzazione per il momento più atteso della serata!"),
         Pair("📸 Caricate le vostre foto!", "Aprite la sezione Foto dell'app e condividete gli scatti più belli con i neo-specialisti!")

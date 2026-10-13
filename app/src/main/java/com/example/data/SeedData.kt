@@ -331,7 +331,7 @@ object SeedData {
             giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Fedele.",
             iban = "IT13 U030 6941 5131 0000 0010 092",
             ibanHolder = "Fedele Luisi",
-            satispayUrl = "https://tag.satispay.com/fedeleluisi",
+            satispayUrl = "https://web.satispay.com/download/qrcode/S6Y-CON--6F32BD93-1233-47D0-A362-4EB4C249ACE1?locale=it",
             paypalMeUrl = "https://www.paypal.com/qrcodes/p2pqrc/MBSHEM4F557R8"
         ),
         GiftTargetEntity(
@@ -427,7 +427,7 @@ object SeedData {
             giftDescription = "Contributo per la dotazione diagnostica al letto del paziente e l'aggiornamento in neuro-oncologia di Donato.",
             iban = "IT05 S054 2404 0100 0000 1066 123",
             ibanHolder = "Donato Regina",
-            satispayUrl = "https://tag.satispay.com/donatoregina",
+            satispayUrl = "",
             paypalMeUrl = "https://www.paypal.me/DonatoRegina"
         ),
     )

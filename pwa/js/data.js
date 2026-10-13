@@ -95,6 +95,7 @@ export const Status = {
   adminEnabled: false, // il server ha un ADMIN_TOKEN configurato
   treasurerEnabled: false, // il server ha un TREASURER_TOKEN[_<ID>] per il cruscotto delle quote uniche
   canSeeLists: true,       // con i token di questo dispositivo il server mostra gli elenchi completi di invitati e navetta
+  roles: null,             // ruoli sbloccati dai token di questo dispositivo {admin, treasurer, treasurerIds, graduate}; null = server senza il campo
   pushSubscriptions: 0,
   lastError: ""
 };
@@ -146,6 +147,7 @@ const ServerRepo = {
       Status.adminEnabled = !!s.adminEnabled;
       Status.treasurerEnabled = !!s.treasurerEnabled;
       Status.canSeeLists = s.canSeeLists !== false;
+      Status.roles = s.roles || null;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
       if (s.version !== Status.version) {
         await refreshSnapshot();
@@ -353,6 +355,7 @@ export async function initData() {
       Status.adminEnabled = !!s.adminEnabled;
       Status.treasurerEnabled = !!s.treasurerEnabled;
       Status.canSeeLists = s.canSeeLists !== false;
+      Status.roles = s.roles || null;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
       impl = ServerRepo;
       await ServerRepo.prepopulateIfNeeded();

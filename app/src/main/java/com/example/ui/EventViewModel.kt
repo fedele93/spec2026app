@@ -7,7 +7,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.data.*
+import com.example.data.remote.DashboardDto
 import com.example.data.remote.GiftPoolContribution
+import com.example.data.remote.ImportResultDto
+import com.example.data.remote.ImportRowRequest
 import com.example.data.remote.PoolContributionRequest
 import com.example.data.remote.RemoteClient
 import com.example.data.remote.RemoteException
@@ -405,6 +408,43 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Quota unica al cassiere
+    // ------------------------------------------------------------------ organizzatori
+
+    private val _dashboard = MutableStateFlow<DashboardDto?>(null)
+    val dashboard: StateFlow<DashboardDto?> = _dashboard.asStateFlow()
+
+    /** Carica (o ricarica) il cruscotto; gli errori arrivano come messaggio e il cruscotto resta vuoto. */
+    fun loadDashboard() {
+        viewModelScope.launch {
+            try {
+                _dashboard.value = repository.dashboard()
+            } catch (e: Exception) {
+                _dashboard.value = null
+                _uiMessage.emit(e.message ?: "Cruscotto non disponibile")
+            }
+        }
+    }
+
+    /** Import invitati: anteprima (dryRun) o import vero; il risultato va al dialogo con onResult. */
+    fun importGuests(rows: List<ImportRowRequest>, sendLinks: Boolean, dryRun: Boolean, onResult: (ImportResultDto?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = repository.importGuests(rows, sendLinks, dryRun)
+                if (!dryRun) {
+                    _uiMessage.emit(
+                        "Import: ${result.created} creati, ${result.updated} aggiornati" +
+                            (if (result.invited > 0) ", ${result.invited} link inviati" else "") +
+                            (if (result.inviteFailed > 0) ", ${result.inviteFailed} email non inviate" else "")
+                    )
+                }
+                onResult(result)
+            } catch (e: Exception) {
+                _uiMessage.emit(e.message ?: "Import non riuscito")
+                onResult(null)
+            }
+        }
+    }
+
     fun refreshMyPoolContributions() {
         viewModelScope.launch {
             try {

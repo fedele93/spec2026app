@@ -33,9 +33,13 @@ import com.example.ui.theme.SynapseCyan
 @Composable
 fun GuestsRsvpScreen(
     viewModel: EventViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigate: (String) -> Unit = {}
 ) {
     val allGuests by viewModel.allGuests.collectAsState()
+    val serverStatus by viewModel.serverStatus.collectAsState()
+    var showDashboard by remember { mutableStateOf(false) }
+    var showImport by remember { mutableStateOf(false) }
     val filteredGuests by viewModel.filteredGuests.collectAsState()
     val activeFilter by viewModel.guestFilter.collectAsState()
     val searchQuery by viewModel.guestSearch.collectAsState()
@@ -114,6 +118,13 @@ fun GuestsRsvpScreen(
                         accentColor = SynapseCyan,
                         modifier = Modifier.weight(1f)
                     )
+                }
+            }
+
+            // Organizzatori (token + server): cruscotto e import della lista
+            if (serverStatus.configured && viewModel.isAdmin) {
+                item {
+                    OrganizerCard(onOpenDashboard = { showDashboard = true }, onOpenImport = { showImport = true })
                 }
             }
 
@@ -235,6 +246,19 @@ fun GuestsRsvpScreen(
                 }
             }
         }
+    }
+
+    if (showDashboard) {
+        DashboardDialog(
+            viewModel = viewModel,
+            onDismiss = { showDashboard = false },
+            onOpenImport = { showDashboard = false; showImport = true },
+            onNavigate = { showDashboard = false; onNavigate(it) }
+        )
+    }
+
+    if (showImport) {
+        ImportGuestsDialog(viewModel = viewModel, onDismiss = { showImport = false }, onDone = { showImport = false })
     }
 
     if (showAddGuestDialog) {

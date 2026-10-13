@@ -50,9 +50,10 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
   codice e file calendario, lista d'attesa automatica); gli organizzatori generano e inviano i
   link dalla lista invitati, fanno il check-in alla partenza e lanciano i promemoria.
 - **Guida alla prima apertura** (PWA): spiega le schede e come usarle; riapribile dal pulsante ?.
-- **Organizzatori** (PWA, token `ADMIN_TOKEN`): cruscotto con i numeri e le cose da fare,
-  import della lista invitati da Excel/CSV con invio dei link personali, pannello email,
-  export CSV, check-in navetta, configurazione degli avatar.
+- **Organizzatori** (token `ADMIN_TOKEN`): cruscotto con i numeri e le cose da fare e import
+  della lista invitati da Excel/CSV con invio dei link personali, sia nella PWA sia nell'app
+  Android (card nella tab Invitati); nella PWA anche pannello email, export CSV, check-in
+  navetta e configurazione degli avatar.
 - **Assistente vocale con avatar** (solo PWA, per ora): pulsante "Chiedi" che apre una
   conversazione a voce o per iscritto con uno dei neo-specialisti (voce clonata dal suo campione,
   oppure preimpostata); risponde in italiano sulla festa e può agire sull'app (RSVP, navetta,

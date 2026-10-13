@@ -329,10 +329,10 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Stetoscopio Digitale Littmann & Fellowship Clinica",
             giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Fedele.",
-            iban = "IT44 X030 6909 6061 0000 9876 543",
+            iban = "IT13 U030 6941 5131 0000 0010 092",
             ibanHolder = "Fedele Luisi",
-            satispayUrl = "https://tag.satispay.com/fedeleluisineuro",
-            paypalMeUrl = "https://paypal.me/fedeleluisimd"
+            satispayUrl = "https://web.satispay.com/download/qrcode/S6Y-CON--6F32BD93-1233-47D0-A362-4EB4C249ACE1?locale=it",
+            paypalMeUrl = "https://www.paypal.com/qrcodes/p2pqrc/MBSHEM4F557R8"
         ),
         GiftTargetEntity(
             id = "carlone",

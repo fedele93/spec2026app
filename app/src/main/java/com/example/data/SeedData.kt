@@ -425,10 +425,10 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Ecografo Palmare & Corso Neuro-Oncologia",
             giftDescription = "Contributo per la dotazione diagnostica al letto del paziente e l'aggiornamento in neuro-oncologia di Donato.",
-            iban = "IT22 F030 6909 6061 0000 2223 334",
+            iban = "IT05 S054 2404 0100 0000 1066 123",
             ibanHolder = "Donato Regina",
             satispayUrl = "https://tag.satispay.com/donatoregina",
-            paypalMeUrl = "https://paypal.me/donatoregina"
+            paypalMeUrl = "https://www.paypal.me/DonatoRegina"
         ),
     )
 

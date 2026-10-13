@@ -1,5 +1,6 @@
 // Test end-to-end della PWA con Playwright contro un backend locale.
-// Uso:  BASE_URL=http://127.0.0.1:8765 ADMIN_TOKEN=test-token node pwa/tests/e2e.mjs
+// Uso:  BASE_URL=http://127.0.0.1:8765 ADMIN_TOKEN=test-token GRADUATE_TOKEN=grad-luisi node pwa/tests/e2e.mjs
+// (il backend va avviato anche con GRADUATE_TOKEN_LUISI=grad-luisi per la sezione 14)
 // Richiede: npm i playwright (o @playwright/test) e un backend avviato con PWA_DIR=pwa e SEED_DEMO_DATA=true.
 import { chromium } from "playwright";
 import fs from "node:fs";
@@ -7,6 +8,7 @@ import path from "node:path";
 
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "test-token";
+const GRADUATE_TOKEN = process.env.GRADUATE_TOKEN || "grad-luisi";
 const OUT = process.env.SCREENSHOT_DIR || "pwa/tests/screenshots";
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -30,7 +32,8 @@ const consoleErrors = [];
 page.on("pageerror", (e) => consoleErrors.push("pageerror: " + e.message));
 // "Failed to load resource" arriva anche per le risposte 403/409 attese dai test negativi e per le tile mappa senza rete
 page.on("console", (m) => { if (m.type() === "error" && !m.text().startsWith("Failed to load resource")) consoleErrors.push(m.text()); });
-page.on("dialog", (d) => d.accept());
+let promptAnswer; // risposta per i prompt() (appunti del cassiere); confirm() e alert() vengono sempre accettati
+page.on("dialog", (d) => d.accept(d.type() === "prompt" ? promptAnswer : undefined));
 
 const shot = (name) => page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: true });
 const tab = async (name) => { await page.click(`.tab[data-tab="${name}"]`); await page.waitForTimeout(400); };
@@ -42,6 +45,17 @@ const clickExpectToast = async (selector) => { await resetToast(); await page.cl
 console.log("1) Avvio e schermata Programma");
 await page.goto(BASE + "/", { waitUntil: "networkidle" });
 await page.waitForSelector(".hero h1");
+console.log("0) Guida alla prima apertura");
+await page.waitForSelector("#guide", { timeout: 10000 });
+check("guida aperta alla prima apertura", (await page.textContent("#guide")).includes("Benvenuto"));
+await page.click("#guide-next");
+check("secondo passo della guida", (await page.textContent(".guide-title")).includes("Programma"));
+let guideSteps = 2;
+while ((await page.textContent("#guide-next")) !== "Inizia! 🎉") { await page.click("#guide-next"); guideSteps += 1; if (guideSteps > 12) break; }
+check("la guida include profilo, navetta e assistente", (await page.textContent("#guide-dots")) !== null && guideSteps >= 6);
+await page.click("#guide-next");
+await page.waitForTimeout(300);
+check("guida chiusa e segnata come vista", (await page.$("#guide")) === null && (await page.evaluate(() => localStorage.getItem("np.guideSeen"))) !== null);
 check("hero con titolo evento", (await page.textContent(".hero h1")).includes("Seduta"));
 check("9 laureandi nell'hero", (await page.textContent(".hero .graduates")).includes("Donato Regina"));
 check("timeline con 5 tappe", (await page.$$(".timeline")).length === 5);
@@ -146,10 +160,13 @@ check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.te
 check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
 check("pulsanti copia IBAN e PayPal/Satispay", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 9);
 check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
+check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Aki"));
 await page.click("#pool-open");
 await page.waitForSelector("#q-save");
 check("metodi cassa: IBAN, PayPal, Contanti (no Satispay)", (await Promise.all((await page.$$("#q-methods .chip")).map((c) => c.textContent()))).join(",") === "IBAN,PayPal,Contanti");
 await page.fill("#q-donor", "Zio Playwright");
+await page.fill("#q-email", "zio@example.org");
+await page.fill("#q-contact", "333 1234567");
 await page.click('#q-presets .chip[data-amt="150"]');
 await page.click('[data-who="luisi"]'); // escludo un neo-specialista: 150 € su 8
 check("anteprima parti uguali (18,75 € ciascuno)", (await page.textContent('[data-each="carlone"]')).includes("18,75"));
@@ -157,9 +174,19 @@ check("causale suggerita con il nome", (await page.textContent("#q-reason")).inc
 const poolToast = await clickExpectToast("#q-save");
 check("quota unica registrata", poolToast.includes("150,00"), poolToast);
 await page.waitForTimeout(600);
-check("la mia quota compare nella card del cassiere", (await page.textContent(".collector .mine")).includes("150,00 €"));
+check("la mia quota compare in 'Le tue quote registrate' con il cassiere", (await page.textContent(".mine")).includes("150,00 €") && (await page.textContent(".mine")).includes("a Paolo Roberto"));
+// seconda quota, versata ad Aki
+await page.click('[data-pool-open="aki"]');
+await page.waitForSelector("#q-save");
+check("dialogo intestato ad Aki", (await page.textContent(".modal h3")).includes("Dott. Aki"));
+await page.fill("#q-donor", "Cugina Playwright");
+await page.click('#q-presets .chip[data-amt="50"]');
+check("quota ad Aki registrata", (await clickExpectToast("#q-save")).includes("50,00"));
+await page.waitForTimeout(600);
+check("entrambe le quote elencate", (await page.textContent(".mine")).includes("a Aki"));
 const myPool = await fetch(BASE + "/api/gifts/pool/mine", { headers: { "X-Client-Id": await page.evaluate(() => localStorage.getItem("np.clientId")) } }).then((r) => r.json());
-check("ripartizione salvata sul server (8 parti)", myPool.length === 1 && myPool[0].allocations.length === 8 && !myPool[0].allocations.some((a) => a.graduateId === "luisi"));
+check("ripartizione salvata sul server (8 parti) e cassieri distinti", myPool.length === 2 && myPool[1].allocations.length === 8 && !myPool[1].allocations.some((a) => a.graduateId === "luisi") && myPool[0].collectorId === "aki" && myPool[1].collectorId === "roberto");
+check("email del donatore salvata (conferma via n8n, qui non configurato)", myPool[1].email === "zio@example.org" && myPool[1].mail === undefined && myPool[1].treasurerNote === "");
 check("le quote non sono pubbliche", (await fetch(BASE + "/api/gifts/pool")).status === 403);
 await shot("05-regali");
 
@@ -211,13 +238,28 @@ await tab("gifts");
 await page.waitForSelector(".board");
 const boardText = await page.textContent(".board");
 check("totali per neo-specialista", boardText.includes("Carlone") && boardText.includes("18,75"));
+check("cruscotto con una sezione per cassiere", (await page.$$(".board-section")).length === 2 && (await page.textContent('[data-board-collector="aki"]')).includes("Cugina Playwright"));
 check("quota di Zio Playwright elencata in attesa", boardText.includes("Zio Playwright") && boardText.includes("In attesa"));
+const zioRow = `[data-pool-row="${myPool[1].id}"]`;
+check("pulsanti contatta (email e telefono) per la quota con i recapiti", (await page.$(`${zioRow} a[href="mailto:zio@example.org"]`)) !== null && (await page.$(`${zioRow} a[href="tel:3331234567"]`)) !== null);
+promptAnswer = "bonifico visto il 3/11";
+await page.click(`${zioRow} [data-pool-note]`);
+await page.waitForSelector(`${zioRow} .pool-note`);
+promptAnswer = undefined;
+check("appunti del cassiere salvati e mostrati", (await page.textContent(`${zioRow} .pool-note`)).includes("bonifico visto il 3/11"));
+check("promemoria ai donatori e selezione multipla disponibili", (await page.$("#pool-remind")) !== null && (await page.$("#pool-batch")) !== null && (await page.$eval("#pool-batch", (b) => b.disabled)));
+const remindToast = await clickExpectToast("#pool-remind");
+check("promemoria: nessuna quota in attesa da 7 giorni", remindToast.includes("Nessuna quota"), remindToast);
+await page.check(`[data-pool-pick="${myPool[0].id}"]`);
+check("pulsante selezione attivo con una quota scelta", (await page.textContent("#pool-batch")).includes("(1)"));
+await page.uncheck(`[data-pool-pick="${myPool[0].id}"]`);
 const statusToast = await clickExpectToast('[data-pool-status][data-next="RECEIVED"]');
 check("segnata come ricevuta", statusToast.includes("ricevuta"));
 await page.waitForTimeout(600);
 const poolCsv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/export/gift-pool.csv", { headers: { "X-Admin-Token": localStorage.getItem("np.adminToken") } }); return { ok: r.ok, body: await r.text() }; }, BASE);
-check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Donatore;Contatto;Metodo") && poolCsv.body.includes("TOTALE;"));
-check("la quota ricevuta non si può più annullare dal donatore", (await page.$("[data-pool-del]")) === null);
+check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Cassiere;Donatore;Contatto;Email;Metodo") && poolCsv.body.includes("TOTALE;") && poolCsv.body.includes("TOTALE DOTT. AKI"));
+check("la quota ricevuta non si può più annullare dal donatore (resta solo quella ad Aki)", (await page.$$("[data-pool-del]")).length === 1);
+check("CSV con appunti del cassiere", poolCsv.body.includes("bonifico visto il 3/11"));
 await shot("06b-cassa");
 
 console.log("8) Persistenza: ricarico la pagina e i dati restano (server)");
@@ -300,6 +342,148 @@ await page.waitForSelector(".as-msg.assistant", { timeout: 15000 });
 check("risposta con il nuovo avatar", (await page.textContent(".as-msg.assistant .as-bubble")).includes("Hai detto"));
 await page.click(".modal .close");
 await shot("07b-assistente-admin");
+
+console.log("12) Profilo invitato con link personale ed email tramite n8n (qui non configurato)");
+await tab("rsvp");
+await page.waitForSelector("#profile-card");
+check("card del profilo per gli invitati", (await page.textContent("#open-profile")).includes("Accedi con la tua email"));
+await page.click("#open-profile");
+await page.waitForSelector("#pl-send");
+await page.fill("#pl-email", "nuova@example.org");
+await page.fill("#pl-name", "Nuova Invitata");
+await page.click("#pl-send");
+await page.waitForFunction(() => (document.querySelector("#pl-msg")?.textContent || "").length > 0, null, { timeout: 10000 });
+check("senza n8n il server lo dice", (await page.textContent("#pl-msg")).includes("organizzatori"));
+await page.click(".modal .close");
+const nuova = (await fetch(BASE + "/api/guests").then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
+check("invitata creata in attesa, senza email pubblica", nuova && nuova.rsvpStatus === "PENDING" && !("email" in nuova));
+const linkInfo = await fetch(BASE + `/api/guests/${nuova.id}/link`, { headers: adminHeaders }).then((r) => r.json());
+check("link personale generato dagli organizzatori", linkInfo.link.includes("#profilo="));
+await page.goto(BASE + "/#profilo=" + linkInfo.link.split("#profilo=")[1], { waitUntil: "networkidle" });
+await page.waitForSelector("#pf-save", { timeout: 15000 });
+check("il link apre il profilo precompilato", (await page.inputValue("#pf-name")) === "Nuova Invitata" && (await page.inputValue("#pf-email")) === "nuova@example.org");
+await page.click('#pf-status .chip[data-st="CONFIRMED"]');
+await page.selectOption("#pf-menu", "VEGETARIANO");
+await page.fill("#pf-diet", "allergia al sedano");
+await page.click("#pf-add");
+await page.fill(".pf-comp [data-cname]", "Figlio Piccolo");
+await page.selectOption(".pf-comp [data-cmenu]", "SENZA_GLUTINE");
+check("conteggio persone aggiornato", (await page.textContent("#pf-count")).includes("2 persone"));
+await page.click("#pf-save");
+check("consenso obbligatorio", (await toastText()).includes("consenso"));
+await page.check("#pf-consent");
+check("profilo salvato", (await clickExpectToast("#pf-save")).includes("salvato"));
+await page.waitForTimeout(800);
+const nuovaDopo = (await fetch(BASE + "/api/guests").then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
+check("RSVP, menu e accompagnatore salvati sul server", nuovaDopo.rsvpStatus === "CONFIRMED" && nuovaDopo.guestsCount === 2 && nuovaDopo.menu === "VEGETARIANO" && nuovaDopo.companions[0].name === "Figlio Piccolo");
+check("riepilogo catering per menu", (await fetch(BASE + "/api/guests/summary").then((r) => r.json())).byMenu.some((m) => m.menu === "SENZA_GLUTINE" && m.covers >= 1));
+check("lista invitati con menu e accompagnatori", (await page.textContent("#screen")).includes("con Figlio Piccolo") && (await page.textContent("#open-profile")).includes("Apri il mio profilo"));
+await page.waitForSelector("[data-link]");
+await page.click(`[data-link="${nuova.id}"]`);
+await page.waitForSelector("#gl-link");
+check("dialogo link per gli organizzatori", (await page.textContent("#gl-link")).includes("#profilo=") && (await page.textContent(".modal")).includes("nuova@example.org"));
+await page.click(".modal .close");
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-mail");
+await page.click("#s-mail");
+await page.waitForSelector("#ml-test");
+check("pannello email: n8n non attivo e email non inviate in outbox", (await page.textContent(".modal")).includes("Non attivo") && (await page.textContent(".modal")).includes("non inviata"));
+await page.click(".modal .close");
+await shot("08-profilo");
+
+console.log("13) Navetta dal profilo: prenotazione, lista d'attesa, promozione, check-in");
+await tab("bus");
+await page.waitForSelector("#bus-profile");
+await page.click("#bus-profile");
+await page.waitForSelector("#pb-save", { timeout: 10000 });
+check("sezione navetta nel profilo con fermate", (await page.$$("#pb-stop option")).length >= 3);
+check("navetta prenotata dal profilo", (await clickExpectToast("#pb-save")).includes("prenotata"));
+await page.waitForSelector("#pb-cancel", { timeout: 10000 });
+check("profilo mostra codice e stato confermata", /NP-[A-Z0-9]{4}/.test(await page.textContent("#pf-bus")) && (await page.textContent("#pf-bus")).includes("confermata"));
+const myBooking = (await fetch(BASE + "/api/bus/bookings").then((r) => r.json())).find((b) => b.guestId === nuova.id);
+check("prenotazione legata al profilo con 2 posti (le persone)", myBooking && myBooking.seatsCount === 2 && myBooking.status === "CONFIRMED");
+await page.click(".modal .close");
+// riempio il pullman via API: i posti restanti vanno a un gruppo, poi il profilo chiede 3 posti -> lista d'attesa
+const summary0 = await fetch(BASE + "/api/bus/summary").then((r) => r.json());
+const filler = await fetch(BASE + "/api/bus/bookings", { method: "POST", headers: { "Content-Type": "application/json", "X-Client-Id": "filler" }, body: JSON.stringify({ passengerName: "Gruppo Pieno", seatsCount: summary0.availableSeats }) }).then((r) => r.json());
+await page.click("#bus-profile");
+await page.waitForSelector("#pb-seats");
+await page.fill("#pb-seats", "3");
+check("a posti esauriti si va in lista d'attesa", (await clickExpectToast("#pb-save")).includes("lista d'attesa"));
+await page.waitForSelector("#pb-cancel");
+check("profilo in lista d'attesa", (await page.textContent("#pf-bus")).includes("lista d'attesa"));
+await page.click(".modal .close");
+await fetch(BASE + `/api/bus/bookings/${filler.id}`, { method: "DELETE", headers: { "X-Client-Id": "filler" } });
+const promoted = (await fetch(BASE + "/api/bus/bookings").then((r) => r.json())).find((b) => b.guestId === nuova.id);
+check("promossa automaticamente quando si liberano posti", promoted.status === "CONFIRMED" && promoted.seatsCount === 3);
+check("promemoria navetta disponibile agli organizzatori", (await fetch(BASE + "/api/mail/reminders/bus", { method: "POST", headers: adminHeaders }).then((r) => r.json())).sent >= 1);
+await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+await page.waitForTimeout(1200);
+await tab("bus");
+await page.waitForSelector(`[data-checkin="${promoted.id}"]`);
+check("check-in dell'organizzatore", (await clickExpectToast(`[data-checkin="${promoted.id}"]`)).includes("salito"));
+await page.waitForTimeout(800);
+check("passeggero segnato come salito", (await page.textContent("#screen")).includes("salito") && (await fetch(BASE + "/api/bus/summary").then((r) => r.json())).checkedInSeats >= 3);
+await tab("rsvp");
+await page.waitForSelector("#catering");
+check("riepilogo catering con i menu scelti", (await page.textContent("#catering")).includes("Menu scelti") && (await page.textContent("#catering")).includes("Vegetariano"));
+await tab("program");
+await page.click("#open-guide");
+await page.waitForSelector("#guide");
+check("guida riapribile dal pulsante ?", (await page.textContent(".guide-title")).includes("Benvenuto"));
+await page.click("#guide-skip");
+await shot("09-navetta-profilo");
+
+console.log("14) Area festeggiato (token GRADUATE_TOKEN_LUISI) e strumenti in blocco del cassiere");
+check("nessun pulsante 🎓 senza token", (await page.$("#graduate-area")) === null);
+await page.click("#settings");
+await page.waitForSelector("#s-graduate");
+await page.fill("#s-graduate", "token-sbagliato");
+await page.click("#s-save");
+await page.waitForTimeout(600);
+await page.waitForSelector("#graduate-area");
+const badGrad = await clickExpectToast("#graduate-area");
+check("token festeggiato sbagliato: avviso e rimozione", badGrad.includes("non valido"), badGrad);
+await page.waitForTimeout(600);
+check("pulsante 🎓 sparito dopo il token sbagliato", (await page.$("#graduate-area")) === null);
+await page.click("#settings");
+await page.waitForSelector("#s-graduate");
+await page.fill("#s-graduate", GRADUATE_TOKEN);
+await page.click("#s-save");
+await page.waitForTimeout(600);
+await page.waitForSelector("#graduate-area");
+await page.click("#graduate-area");
+await page.waitForSelector("#grad-wishes");
+const gradText = await page.textContent(".modal");
+check("area festeggiato intestata a Fedele", gradText.includes("Ciao Fedele"));
+check("auguri per lui (quello dei colleghi di reparto) e per tutti", (await page.textContent("#grad-wishes")).includes("colleghi di reparto") && /\d+ per te, \d+ per tutti/.test(await page.textContent("#grad-wishes")));
+check("chi viene e coordinate di pagamento, senza cifre delle quote", (await page.$("#grad-guests")) !== null && (await page.$("#grad-pay .iban")) !== null && !gradText.includes("150,00") && !gradText.includes("50,00 €"));
+check("avatar personale con stato", (await page.textContent("#grad-avatar")).includes("pronto"));
+await shot("10-festeggiato");
+await page.click("#grad-avatar-open");
+await page.waitForSelector(".as-admin");
+check("il festeggiato vede solo il proprio avatar", (await page.$$(".as-admin")).length === 1 && (await page.textContent(".as-admin")).includes("Fedele Luisi"));
+await page.fill(".as-admin [data-persona]", "Sono Fedele: parlo piano e con calma.");
+check("persona salvata dal festeggiato", (await clickExpectToast(".as-admin [data-save]")).includes("salvato"));
+await page.click(".modal .close");
+const gradHeaders = { "X-Graduate-Token": GRADUATE_TOKEN };
+check("il token festeggiato non apre gli altri avatar né le quote", (await fetch(BASE + "/api/assistant/admin/avatars/carlone", { method: "PUT", headers: { ...gradHeaders, "Content-Type": "application/json" }, body: JSON.stringify({ persona: "x" }) })).status === 403 && (await fetch(BASE + "/api/gifts/pool", { headers: gradHeaders })).status === 403);
+// stato in blocco: registro due quote via API e le segno ricevute insieme dal cruscotto
+for (const name of ["Blocco Uno", "Blocco Due"]) await fetch(BASE + "/api/gifts/pool", { method: "POST", headers: { "X-Client-Id": "blocco", "Content-Type": "application/json" }, body: JSON.stringify({ collectorId: "roberto", donorName: name, paymentMethod: "Contanti", splitMode: "EQUAL", totalAmount: 20, graduateIds: ["luisi", "carlone"] }) });
+await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+await page.waitForTimeout(1200);
+await tab("gifts");
+await page.waitForSelector(".board");
+const picks = await page.$$("[data-pool-pick]");
+const pendingNow = (await fetch(BASE + "/api/gifts/pool", { headers: adminHeaders }).then((r) => r.json())).contributions.filter((c) => c.status !== "RECEIVED").length;
+check("tutte le quote in attesa sono selezionabili (comprese le due nuove)", picks.length === pendingNow && picks.length >= 3, `${picks.length} vs ${pendingNow}`);
+for (const p of picks) await p.check();
+check("contatore delle selezionate", (await page.textContent("#pool-batch")).includes(`(${picks.length})`));
+check("segnate ricevute in blocco", (await clickExpectToast("#pool-batch")).includes(`${picks.length} quote`));
+await page.waitForTimeout(800);
+check("nessuna quota in attesa dopo il blocco", (await page.$$("[data-pool-pick]")).length === 0 && (await page.textContent(".board")).includes("in attesa 0,00"));
+await shot("10b-cassa-blocco");
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

@@ -16,9 +16,10 @@ import androidx.room.RoomDatabase
         EventNotificationEntity::class
     ],
     // v2: regali senza importi, cassiere delle quote uniche, niente quote per singolo regalo.
+    // v3: più cassieri (tabella gift_collectors con id testuale).
     // Il DB è una cache dello snapshot del server (o dei dati demo): in caso di cambio schema
     // viene ricreato da zero e ripopolato.
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

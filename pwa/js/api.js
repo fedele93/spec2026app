@@ -7,6 +7,8 @@ const LS_API = "np.apiBase";
 const LS_TOKEN = "np.adminToken";
 const LS_CLIENT = "np.clientId";
 const LS_TREASURER = "np.treasurerToken";
+const LS_GRADUATE = "np.graduateToken";
+const LS_GUEST = "np.guestToken";
 
 function ls(key, fallback = "") {
   try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; }
@@ -36,10 +38,16 @@ export function setApiBase(url) { lsSet(LS_API, (url || "").trim().replace(/\/+$
 export function getAdminToken() { return ls(LS_TOKEN); }
 export function setAdminToken(token) { lsSet(LS_TOKEN, (token || "").trim()); }
 export function isAdmin() { return !!getAdminToken(); }
+export function getGuestToken() { return ls(LS_GUEST); }
+export function setGuestToken(token) { lsSet(LS_GUEST, (token || "").trim()); }
 export function getTreasurerToken() { return ls(LS_TREASURER); }
 export function setTreasurerToken(token) { lsSet(LS_TREASURER, (token || "").trim()); }
 // Il cruscotto delle quote uniche è visibile al cassiere e agli organizzatori (il server accetta entrambi i token).
 export function isTreasurer() { return !!getTreasurerToken() || isAdmin(); }
+// Festeggiato: GRADUATE_TOKEN_<ID> sul server apre l'area 🎓 (chi viene, auguri, coordinate, il proprio avatar)
+export function getGraduateToken() { return ls(LS_GRADUATE); }
+export function setGraduateToken(token) { lsSet(LS_GRADUATE, (token || "").trim()); }
+export function isGraduate() { return !!getGraduateToken(); }
 
 export class ApiError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -51,6 +59,10 @@ function headers(extra = {}) {
   if (t) h["X-Admin-Token"] = t;
   const tt = getTreasurerToken();
   if (tt) h["X-Treasurer-Token"] = tt;
+  const gt = getGuestToken();
+  if (gt) h["X-Guest-Token"] = gt;
+  const gr = getGraduateToken();
+  if (gr) h["X-Graduate-Token"] = gr;
   return h;
 }
 
@@ -115,7 +127,7 @@ export const api = {
   likePhoto: (id) => request(`/api/photos/${id}/like`, { method: "POST" }),
 
   giftTargets: () => request("/api/gifts/targets"),
-  giftCollector: () => request("/api/gifts/collector"),
+  giftCollectors: () => request("/api/gifts/collectors"),
   // quota unica al cassiere: registrazione, le proprie quote, cancellazione (finché in attesa)
   addPoolContribution: (c) => request("/api/gifts/pool", { method: "POST", json: c }),
   myPoolContributions: () => request("/api/gifts/pool/mine"),
@@ -123,12 +135,33 @@ export const api = {
   // cruscotto del cassiere (token cassiere o organizzatore)
   poolBoard: () => request("/api/gifts/pool"),
   setPoolStatus: (id, status) => request(`/api/gifts/pool/${id}/status`, { method: "PATCH", json: { status } }),
+  setPoolStatusBatch: (ids, status) => request("/api/gifts/pool/status", { method: "POST", json: { ids, status } }),
+  setPoolNote: (id, treasurerNote) => request(`/api/gifts/pool/${id}`, { method: "PATCH", json: { treasurerNote } }),
+  mailRemindPool: (days = 7) => request(`/api/mail/reminders/pool?days=${days}`, { method: "POST", timeoutMs: 60000 }),
+  graduateMe: () => request("/api/graduate/me"),
 
   notifications: (since = 0) => request(`/api/notifications${since ? `?since=${since}` : ""}`),
   sendNotification: (n) => request("/api/notifications", { method: "POST", json: n }),
   scheduledNotifications: () => request("/api/notifications/scheduled"),
   deleteNotification: (id) => request(`/api/notifications/${id}`, { method: "DELETE" }),
   guestsSummary: () => request("/api/guests/summary"),
+
+  // profilo personale dell'invitato (vedi profile.js) ed email tramite n8n
+  profileRequestLink: (body) => request("/api/profile/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
+  profileGet: () => request("/api/profile"),
+  profilePut: (body) => request("/api/profile", { method: "PUT", json: body, timeoutMs: 30000 }),
+  profileLogout: () => request("/api/profile/logout", { method: "POST" }),
+  profileBusPut: (body) => request("/api/profile/bus", { method: "PUT", json: body, timeoutMs: 30000 }),
+  profileBusDelete: () => request("/api/profile/bus", { method: "DELETE", timeoutMs: 30000 }),
+  busCheckin: (id, checkedIn) => request(`/api/bus/bookings/${id}/checkin`, { method: "POST", json: { checkedIn } }),
+  mailRemindMenu: () => request("/api/mail/reminders/menu", { method: "POST", timeoutMs: 60000 }),
+  mailRemindBus: () => request("/api/mail/reminders/bus", { method: "POST", timeoutMs: 60000 }),
+  guestLink: (id) => request(`/api/guests/${id}/link`),
+  guestInvite: (id) => request(`/api/guests/${id}/invite`, { method: "POST", timeoutMs: 30000 }),
+  mailStatus: () => request("/api/mail/status"),
+  mailOutbox: (limit = 50) => request(`/api/mail/outbox?limit=${limit}`),
+  mailResend: (id) => request(`/api/mail/outbox/${id}/resend`, { method: "POST", timeoutMs: 30000 }),
+  mailTest: (to) => request("/api/mail/test", { method: "POST", json: { to }, timeoutMs: 30000 }),
 
   // assistente vocale con avatar (vedi assistant.js)
   assistantStatus: () => request("/api/assistant/status", { timeoutMs: 8000 }),

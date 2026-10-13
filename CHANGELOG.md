@@ -5,6 +5,86 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-10-13
+
+Fase 4 del piano: area festeggiato, strumenti dei cassieri, scelta del cassiere su Android.
+
+### Aggiunto
+
+- **Area festeggiato** (PWA): con il token personale `GRADUATE_TOKEN_<ID>` in ⚙️ Impostazioni
+  compare il pulsante 🎓: chi ha confermato (con accompagnatori) e chi è in attesa, posti
+  navetta, gli auguri dedicati e quelli per tutti, le proprie coordinate di pagamento come le
+  vedono gli invitati, stato e configurazione del **proprio avatar** dell'assistente (persona,
+  voce, campione) senza passare dal token organizzatore. Nessuna cifra delle quote uniche.
+- **Email ai donatori e ai festeggiati**: nel dialogo della quota unica il campo email
+  (precompilato dal profilo, con nome e telefono) fa arrivare la conferma con IBAN e causale del
+  cassiere; se la quota resta in attesa parte un promemoria (pulsante nel cruscotto o workflow
+  n8n settimanale). Ogni neo-specialista con un'`email` privata in `giftTargets` riceve un'email
+  per ogni augurio dedicato a lui.
+- **Cruscotto del cassiere**: pulsanti ✉️ Email e 📞 Chiama per ogni quota, appunti del
+  cassiere (anche nel CSV, colonne "Email" e "Appunti cassiere"), selezione multipla con "Segna
+  ricevute le selezionate", "Promemoria ai donatori in attesa". Backend: `PATCH
+  /api/gifts/pool/{id}`, `POST /api/gifts/pool/status`, `POST /api/mail/reminders/pool`,
+  `GET /api/graduate/me`, `?collector=` sul CSV; workflow n8n `csv-cassieri-settimanale.json`.
+- **App Android 1.7.0**: scelta del cassiere (una card per cassiere, dialogo intestato al
+  cassiere scelto, "a chi" nelle proprie quote), campo email nella quota unica; `giftCollectors`
+  dallo snapshot (tabella `gift_collectors`, database v3 ricreato), `SeedData.giftCollectors`.
+- Service worker v2.8.0; 21 nuovi controlli e2e (135).
+
+## [1.8.0] - 2026-10-13
+
+Fasi 2 e 3 del piano: menu con data limite, navetta dal profilo, guida alla prima apertura.
+
+### Aggiunto
+
+- **Guida alla prima apertura** (PWA): popup a passi con cosa fa ogni scheda e come usarla
+  (programma, profilo, navetta, auguri e foto, regali, assistente se attivo); si riapre dal
+  pulsante ? nell'intestazione e da ⚙️ Impostazioni. Non compare quando si arriva da un link
+  personale.
+- **Navetta dal profilo**: sezione Navetta nel profilo (posti = persone, fermata, ritorno),
+  conferma via email con codice e `navetta.ics`, lista d'attesa a posti esauriti con promozione
+  automatica (email "posto confermato"), annullamento; card "Prenota dal tuo profilo" nella
+  scheda Navetta; per gli organizzatori check-in ✅ di chi sale e contatori (confermati, in
+  attesa, saliti); etichette lista d'attesa/salito e codice nelle righe.
+- **Menu con data limite**: `meta.menuDeadline` e `meta.busDeadline` in `event-data.json`;
+  il profilo avvisa della scadenza e dopo blocca menu, accompagnatori, partecipazione e navetta;
+  riepilogo catering con menu scelti, persone senza menu e allergie degli accompagnatori;
+  `invitati.csv` con menu, accompagnatori, email e telefono; `navetta.csv` con stato, codice,
+  email e check-in.
+- Pannello Email: pulsanti "Promemoria menu mancante" e "Promemoria navetta" (anche da n8n a
+  orario con il token automazioni). Workflow n8n con allegati. Service worker v2.7.0; 16 nuovi
+  controlli e2e (114).
+
+## [1.7.0] - 2026-10-12
+
+Fase 1 del piano (`docs/piano-miglioramenti.md`): profilo dell'invitato ed email tramite n8n.
+
+### Aggiunto
+
+- **Profilo personale** (PWA): card "Il mio profilo" nella tab Invitati e icona 👤 nell'intestazione.
+  L'invitato inserisce la propria email (e il nome se non è in lista) e riceve un link personale
+  `#profilo=<token>` che apre il profilo: partecipazione, categoria, email e telefono, menu
+  (completo, vegetariano, vegano, senza glutine, altro) con note allergie, accompagnatori con
+  nome e menu, consenso al trattamento dei dati; salvando arriva l'email di conferma. "Esci"
+  invalida il link. Il link funziona anche incollato con l'app già aperta.
+- Lista invitati con menu, accompagnatori ed etichetta "profilo"; per gli organizzatori il
+  pulsante 🔗 con il link da copiare o l'invio dell'email con il link.
+- Pannello organizzatori **Email (tramite n8n)** in ⚙️ Impostazioni: stato del collegamento,
+  ultime email con esito, reinvio, email di prova.
+- Backend: `/api/profile`, `/api/mail`, evento webhook `mail.send`, outbox, riepilogo catering
+  per menu, workflow n8n aggiornato. Service worker v2.6.0; 13 nuovi controlli e2e (98).
+
+## [1.6.1] - 2026-10-12
+
+### Aggiunto
+
+- Secondo cassiere per le quote uniche, **Dott. Aki**: `giftCollectors` (lista con id) in
+  `event-data.json`; nella PWA una card per cassiere, il dialogo della quota è intestato al
+  cassiere scelto, "Le tue quote registrate" indica a chi è stata versata, il cruscotto ha una
+  sezione per cassiere e il CSV la colonna "Cassiere" con i totali per cassiere. Backend:
+  `collectorId` nelle quote, `TREASURER_TOKEN_<ID>` per far vedere a ogni cassiere solo le sue
+  quote. L'app Android 1.6 continua a usare il primo cassiere (`giftCollector` nello snapshot).
+
 ## [1.6.0] - 2026-09-30
 
 Sezione Regali rifatta: niente cifre raccolte, quota unica al cassiere e cruscotto.

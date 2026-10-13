@@ -78,9 +78,9 @@ fun GiftsScreen(
 ) {
     val context = LocalContext.current
     val targets by viewModel.giftTargets.collectAsState()
-    val collector by viewModel.giftCollector.collectAsState()
+    val collectors by viewModel.giftCollectors.collectAsState()
     val myPool by viewModel.myPoolContributions.collectAsState()
-    var showPoolDialog by remember { mutableStateOf(false) }
+    var poolCollector by remember { mutableStateOf<GiftCollectorEntity?>(null) }
     var contributionToDelete by remember { mutableStateOf<GiftPoolContribution?>(null) }
 
     LaunchedEffect(Unit) { viewModel.refreshMyPoolContributions() }
@@ -101,21 +101,27 @@ fun GiftsScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Scegli come partecipare: una quota unica tramite il cassiere, oppure un regalo diretto a ciascun neo-specialista. Nessuna cifra raccolta viene mostrata.",
+                    text = "Scegli come partecipare: una quota unica tramite ${if (collectors.size > 1) "uno dei cassieri" else "il cassiere"}, oppure un regalo diretto a ciascun neo-specialista. Nessuna cifra raccolta viene mostrata.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        item {
+        items(collectors.size, key = { "collector-" + collectors[it].id }) { index ->
+            val collector = collectors[index]
             CollectorCard(
                 collector = collector,
-                targetsCount = targets.size,
-                myPool = myPool,
-                onParticipate = { showPoolDialog = true },
-                onDelete = { contributionToDelete = it }
+                multi = collectors.size > 1,
+                first = index == 0,
+                onParticipate = { poolCollector = collector }
             )
+        }
+
+        if (myPool.isNotEmpty()) {
+            item {
+                MyPoolCard(targetsCount = targets.size, myPool = myPool, onDelete = { contributionToDelete = it })
+            }
         }
 
         item {
@@ -144,15 +150,14 @@ fun GiftsScreen(
         }
     }
 
-    val c = collector
-    if (showPoolDialog && c != null) {
+    poolCollector?.let { c ->
         PoolContributionDialog(
             targets = targets,
             collector = c,
-            onDismiss = { showPoolDialog = false },
+            onDismiss = { poolCollector = null },
             onConfirm = { request ->
                 viewModel.addPoolContribution(request)
-                showPoolDialog = false
+                poolCollector = null
             }
         )
     }
@@ -172,13 +177,11 @@ fun GiftsScreen(
 
 @Composable
 private fun CollectorCard(
-    collector: GiftCollectorEntity?,
-    targetsCount: Int,
-    myPool: List<GiftPoolContribution>,
-    onParticipate: () -> Unit,
-    onDelete: (GiftPoolContribution) -> Unit
+    collector: GiftCollectorEntity,
+    multi: Boolean,
+    first: Boolean,
+    onParticipate: () -> Unit
 ) {
-    val dateFormat = remember { SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()) }
     Card(
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, LaurelGold.copy(alpha = 0.5f)),
@@ -186,7 +189,7 @@ private fun CollectorCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("gift_collector_card")
+            .testTag(if (first) "gift_collector_card" else "gift_collector_card_${collector.id}")
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -202,76 +205,92 @@ private fun CollectorCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Quota unica tramite ${collector?.name ?: "il cassiere"}",
+                        text = "Quota unica tramite ${collector.name}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = collector?.roleTitle ?: "",
+                        text = collector.roleTitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
-            if (!collector?.description.isNullOrBlank()) {
+            if (collector.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = collector?.description ?: "",
+                    text = collector.description,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Metodi: " + (collector?.paymentMethods ?: emptyList()).joinToString(" · "),
+                text = "Metodi: " + collector.paymentMethods.joinToString(" · "),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onParticipate,
-                enabled = collector != null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("pool_open_button"),
+                    .testTag(if (first) "pool_open_button" else "pool_open_button_${collector.id}"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = LaurelGold, contentColor = NeuroDarkNavy)
             ) {
                 Icon(Icons.Default.VolunteerActivism, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Partecipa con una quota unica", fontWeight = FontWeight.Bold)
+                Text(if (multi) "Quota unica (${shortName(collector.name)})" else "Partecipa con una quota unica", fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
 
-            if (myPool.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = LaurelGold.copy(alpha = 0.35f))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Le tue quote registrate", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                myPool.forEach { c ->
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "${formatEuro(c.totalAmount)} · ${c.paymentMethod}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                StatusPill(received = c.isReceived)
-                            }
-                            val who = if (c.allocations.size == targetsCount && targetsCount > 0) "tutti i neo-specialisti"
-                            else c.allocations.joinToString(", ") { shortName(it.graduateName) }
+/** Le quote uniche registrate da questo dispositivo, con il cassiere a cui sono state versate. */
+@Composable
+private fun MyPoolCard(
+    targetsCount: Int,
+    myPool: List<GiftPoolContribution>,
+    onDelete: (GiftPoolContribution) -> Unit
+) {
+    val dateFormat = remember { SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()) }
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, LaurelGold.copy(alpha = 0.5f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("my_pool_card")
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Le tue quote registrate", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            myPool.forEach { c ->
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "${c.donorName} · $who · ${dateFormat.format(Date(c.createdAt))}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = "${formatEuro(c.totalAmount)} · ${c.paymentMethod}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            StatusPill(received = c.isReceived)
                         }
-                        if (!c.isReceived) {
-                            IconButton(onClick = { onDelete(c) }, modifier = Modifier.testTag("pool_delete_${c.id}")) {
-                                Icon(Icons.Default.Delete, contentDescription = "Annulla quota", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                        val who = if (c.allocations.size == targetsCount && targetsCount > 0) "tutti i neo-specialisti"
+                        else c.allocations.joinToString(", ") { shortName(it.graduateName) }
+                        val to = if (c.collectorName.isNotBlank()) "a ${shortName(c.collectorName)} · " else ""
+                        Text(
+                            text = "$to${c.donorName} · $who · ${dateFormat.format(Date(c.createdAt))}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (!c.isReceived) {
+                        IconButton(onClick = { onDelete(c) }, modifier = Modifier.testTag("pool_delete_${c.id}")) {
+                            Icon(Icons.Default.Delete, contentDescription = "Annulla quota", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -390,6 +409,7 @@ fun PoolContributionDialog(
 ) {
     val context = LocalContext.current
     var donorName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var contact by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf(MODE_EQUAL) }
@@ -414,7 +434,8 @@ fun PoolContributionDialog(
         val parts = GiftSplit.splitEqually(GiftSplit.cents(equalTotal), selectedIds.size)
         selectedIds.mapIndexed { i, id -> id to parts[i] / 100.0 }.toMap()
     } else emptyMap()
-    val canConfirm = donorName.isNotBlank() && total > 0 &&
+    val emailOk = email.isBlank() || (email.contains("@") && email.trim().length >= 5)
+    val canConfirm = donorName.isNotBlank() && emailOk && total > 0 &&
         (mode == MODE_CUSTOM || (selectedIds.isNotEmpty() && GiftSplit.cents(equalTotal) >= selectedIds.size))
     val transferReason = "${collector.transferReason.ifBlank { "Regalo specializzazione" }} - ${donorName.trim().ifBlank { "Nome Cognome" }}"
 
@@ -450,10 +471,23 @@ fun PoolContributionDialog(
                         .testTag("pool_donor_input")
                 )
                 OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("La tua email (facoltativa)") },
+                    supportingText = { Text("Ricevi la conferma con IBAN e causale") },
+                    isError = !emailOk,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("pool_email_input")
+                )
+                OutlinedTextField(
                     value = contact,
                     onValueChange = { contact = it },
-                    label = { Text("Contatto (facoltativo)") },
+                    label = { Text("Telefono (facoltativo, per il cassiere)") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -617,12 +651,12 @@ fun PoolContributionDialog(
                 onClick = {
                     val request = if (mode == MODE_EQUAL) {
                         PoolContributionRequest(
-                            donorName = donorName.trim(), contact = contact.trim(), paymentMethod = method,
+                            collectorId = collector.id, donorName = donorName.trim(), contact = contact.trim(), email = email.trim(), paymentMethod = method,
                             splitMode = MODE_EQUAL, totalAmount = equalTotal, graduateIds = selectedIds.toList(), note = note.trim()
                         )
                     } else {
                         PoolContributionRequest(
-                            donorName = donorName.trim(), contact = contact.trim(), paymentMethod = method,
+                            collectorId = collector.id, donorName = donorName.trim(), contact = contact.trim(), email = email.trim(), paymentMethod = method,
                             splitMode = MODE_CUSTOM, allocations = customRows, note = note.trim()
                         )
                     }

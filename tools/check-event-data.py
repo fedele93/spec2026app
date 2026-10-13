@@ -65,12 +65,20 @@ def main() -> int:
     if "giftContributions" in d:
         errors.append("'giftContributions' non esiste più: le quote di esempio vanno in 'giftPoolContributions'")
 
-    collector = d.get("giftCollector") or {}
-    if not collector.get("name"):
-        errors.append("manca 'giftCollector' (cassiere delle quote uniche) o il suo nome")
-    bad_methods = [m for m in collector.get("paymentMethods", []) if m not in ("IBAN", "PayPal", "Contanti")]
-    if bad_methods:
-        errors.append("giftCollector.paymentMethods ammette solo IBAN, PayPal, Contanti: %s" % bad_methods)
+    collectors = d.get("giftCollectors")
+    if collectors is None:
+        collectors = [d["giftCollector"]] if d.get("giftCollector") else []
+    if not collectors:
+        errors.append("manca 'giftCollectors' (cassieri delle quote uniche)")
+    cids = [str(c.get("id") or "").lower() for c in collectors]
+    if len(set(cids)) != len(cids) or "" in cids:
+        errors.append("ogni cassiere in giftCollectors deve avere un id unico (minuscolo): %s" % cids)
+    for c in collectors:
+        if not c.get("name"):
+            errors.append("cassiere '%s': manca il nome" % c.get("id"))
+        bad_methods = [m for m in c.get("paymentMethods", []) if m not in ("IBAN", "PayPal", "Contanti")]
+        if bad_methods:
+            errors.append("cassiere '%s': paymentMethods ammette solo IBAN, PayPal, Contanti: %s" % (c.get("id"), bad_methods))
     ids_set = set(ids)
     avatars = (d.get("assistant") or {}).get("avatars", [])
     for a in avatars:
@@ -79,6 +87,8 @@ def main() -> int:
     if avatars and not any(a.get("enabled") for a in avatars):
         warnings.append("nessun avatar dell'assistente abilitato in assistant.avatars")
     for c in d.get("giftPoolContributions", []):
+        if c.get("collectorId") and c["collectorId"] not in cids:
+            errors.append("quota di '%s' versata a un cassiere sconosciuto: %s" % (c.get("donorName"), c.get("collectorId")))
         for a in c.get("allocations", []):
             if a.get("graduateId") not in ids_set:
                 errors.append("quota di '%s' ripartita su un regalo sconosciuto: %s" % (c.get("donorName"), a.get("graduateId")))
@@ -102,8 +112,7 @@ def main() -> int:
             errors.append("punto mappa '%s' fuori dalla zona di Bari: %s, %s" % (p.get("id"), lat, lon))
 
     bad_ibans = [t.get("id") for t in targets if not iban_is_valid(t.get("iban", ""))]
-    if collector and not iban_is_valid(collector.get("iban", "")):
-        bad_ibans.append("giftCollector")
+    bad_ibans += ["cassiere " + str(c.get("id")) for c in collectors if not iban_is_valid(c.get("iban", ""))]
     if bad_ibans:
         msg = "IBAN non validi (segnaposto?) nei regali: %s" % ", ".join(bad_ibans)
         (errors if strict else warnings).append(msg)

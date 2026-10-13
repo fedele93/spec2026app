@@ -79,11 +79,13 @@ data class GiftTargetEntity(
     val paypalMeUrl: String
 )
 
-/** Cassiere delle quote uniche (blocco "giftCollector" di event-data.json / snapshot.event).
- *  Una sola riga (id = 1); i metodi ammessi sono salvati come lista separata da virgole. */
-@Entity(tableName = "gift_collector")
+/** Cassiere delle quote uniche (lista "giftCollectors" di event-data.json / snapshot.event).
+ *  Una riga per cassiere (id = quello del JSON, es. "roberto"); i metodi ammessi sono salvati
+ *  come lista separata da virgole. */
+@Entity(tableName = "gift_collectors")
 data class GiftCollectorEntity(
-    @PrimaryKey val id: Int = 1,
+    @PrimaryKey val id: String,
+    val sortOrder: Int = 0,
     val name: String,
     val roleTitle: String = "",
     val description: String = "",

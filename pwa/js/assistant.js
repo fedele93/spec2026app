@@ -6,7 +6,7 @@
 //   apertura sezione) le esegue il server e qui vengono solo mostrate/applicate;
 // - pannello organizzatori: persona, abilitazione, voce preimpostata, campione vocale da
 //   clonare (file o registrazione), riascolto, prova della voce.
-import { api, fetchBlobUrl, isAdmin } from "./api.js";
+import { api, fetchBlobUrl, isAdmin, isGraduate } from "./api.js";
 import { Repo } from "./data.js";
 import { toast, openModal, goto } from "./app.js";
 
@@ -184,7 +184,8 @@ export async function openAssistant() {
 // ---------------------------------------------------------------- pannello organizzatori
 
 export async function openAssistantAdmin() {
-  if (!isAdmin()) { toast("Serve il token organizzatore"); return; }
+  if (!isAdmin() && !isGraduate()) { toast("Serve il token organizzatore o quello del festeggiato"); return; }
+  const own = !isAdmin(); // festeggiato: il server restituisce solo il suo avatar
   let board, voices;
   try { [board, voices] = await Promise.all([api.assistantAdminAvatars(), api.assistantAdminVoices()]); }
   catch (e) { toast(e.message); return; }
@@ -193,7 +194,7 @@ export async function openAssistantAdmin() {
   const kindPill = (a) => `<span class="pill ${a.ready ? "pill-conf" : a.enabled ? "pill-pend" : "pill-decl"}">${a.ready ? "pronto" : a.enabled ? "abilitato, senza voce" : "disabilitato"}</span> <span class="pill pill-pend">voce ${esc(a.voiceKind)}</span>`;
   const canRecord = !!pickRecorderMime() && !!navigator.mediaDevices?.getUserMedia;
 
-  openModal(`<h3>🎙️ Assistente vocale · avatar</h3>
+  openModal(`<h3>🎙️ ${own ? "Il mio avatar" : "Assistente vocale · avatar"}</h3>
     <div class="muted" style="margin-bottom:10px;">${board.configured ? (board.fake ? "Server in modalità simulata (ASSISTANT_FAKE): niente chiamate a Mistral." : "Collegato a Mistral.") : "MISTRAL_API_KEY non configurata sul server: puoi preparare persona e abilitazioni, ma le voci e le conversazioni non funzionano."}
       Un avatar è selezionabile dagli invitati solo se abilitato e con una voce (clonata dal campione, preimpostata scelta o di riserva). Carica campioni solo con il consenso della persona: 5-15 secondi di parlato pulito, senza rumore.</div>
     ${board.avatars.map((a) => `<div class="card as-admin" data-id="${esc(a.id)}">

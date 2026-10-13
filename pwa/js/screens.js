@@ -1,9 +1,12 @@
 // Schermate PWA - mirror delle 5 schermate Compose dell'app Android
-import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, GIFT_COLLECTOR, splitEqually, reconnect } from "./data.js";
+import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, GIFT_COLLECTORS, collectorById, splitEqually, reconnect } from "./data.js";
 import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
-import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getClientId, downloadCsv } from "./api.js";
+import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getGraduateToken, setGraduateToken, isGraduate, getGuestToken, getClientId, downloadCsv } from "./api.js";
+import { openGraduateArea } from "./graduate.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
+import { openProfile, openMailAdmin, hasProfile, MENU_LABELS } from "./profile.js";
+import { openGuide } from "./guide.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -35,6 +38,9 @@ export async function program(el) {
       <div class="top">
         <div class="badge">🎓 ${esc(P.badge)}</div>
         <div style="display:flex;gap:6px;">
+          <button class="icon-round" id="open-guide" aria-label="Guida" title="Come funziona l'app">?</button>
+          ${serverMode ? `<button class="icon-round" id="my-profile" aria-label="Il mio profilo" title="Il mio profilo">👤</button>` : ""}
+          ${serverMode && isGraduate() ? `<button class="icon-round" id="graduate-area" aria-label="Area festeggiato" title="Area festeggiato">🎓</button>` : ""}
           <button class="icon-round" id="ntf-show" aria-label="Notifiche">🔔${unread > 0 ? `<span class="dot">${unread}</span>` : ""}</button>
           <button class="icon-round" id="settings" aria-label="Impostazioni">⚙️</button>
         </div>
@@ -86,6 +92,11 @@ export async function program(el) {
     showNotifications(await Repo.allNotifications());
   };
   el.querySelector("#settings").onclick = () => settingsDialog();
+  const mp = el.querySelector("#my-profile");
+  if (mp) mp.onclick = () => openProfile();
+  el.querySelector("#open-guide").onclick = () => openGuide();
+  const grad = el.querySelector("#graduate-area");
+  if (grad) grad.onclick = () => openGraduateArea();
   const calBtn = el.querySelector("#cal-add");
   if (calBtn && !serverMode) calBtn.onclick = (e) => { e.preventDefault(); downloadIcs(EVENT); toast("File calendario scaricato: aprilo per aggiungere seduta e festa 📅"); };
   const sendBtn = el.querySelector("#ntf-send");
@@ -266,21 +277,30 @@ function settingsDialog() {
     <div class="muted" style="margin-bottom:10px;">Con il token puoi inviare notifiche push a tutti e cancellare qualsiasi invitato o prenotazione.</div>
     <div class="field"><label>Token cassiere quote uniche (X-Treasurer-Token)</label><input id="s-treasurer" type="password" value="${esc(getTreasurerToken())}" placeholder="Solo per chi raccoglie le quote uniche"></div>
     <div class="muted" style="margin-bottom:10px;">Con il token cassiere la tab Regali mostra il cruscotto delle quote uniche (chi, quanto, per chi) e il CSV per Excel.</div>
+    <div class="field"><label>Token festeggiato (X-Graduate-Token)</label><input id="s-graduate" type="password" value="${esc(getGraduateToken())}" placeholder="Solo per i neo-specialisti"></div>
+    <div class="muted" style="margin-bottom:10px;">Con il tuo token personale compare il pulsante 🎓 in alto: chi viene, gli auguri per te, le tue coordinate di pagamento e il tuo avatar dell'assistente.</div>
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📄 Esporta per ristorante e autista</b>
       <div class="muted" style="margin-bottom:8px;">File CSV (si aprono con Excel) con tutti gli invitati e le prenotazioni della navetta.</div>
       <div class="btn-row"><button class="btn btn-ghost" id="s-exp-guests">Esporta invitati</button><button class="btn btn-ghost" id="s-exp-bus">Esporta navetta</button></div></div>` : ""}
+    ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">✉️ Email agli invitati (tramite n8n)</b>
+      <div class="muted" style="margin-bottom:8px;">Stato del collegamento, email inviate e non consegnate, reinvio, email di prova.</div>
+      <button class="btn btn-ghost" id="s-mail">Apri le email</button></div>` : ""}
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">🎙️ Assistente vocale (avatar dei neo-specialisti)</b>
       <div class="muted" style="margin-bottom:8px;">Persona, abilitazione, voce preimpostata e campione vocale da clonare per ogni avatar.</div>
       <button class="btn btn-ghost" id="s-assistant">Configura gli avatar</button></div>` : ""}
     ${serverMode && isTreasurer() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📒 Esporta quote uniche per il cassiere</b>
       <div class="muted" style="margin-bottom:8px;">CSV con una riga per quota, una colonna per neo-specialista e i totali: si apre con Excel.</div>
       <button class="btn btn-ghost" id="s-exp-pool">Esporta quote uniche</button></div>` : ""}
+    <div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">❓ Guida all'app</b><div class="muted" style="margin-bottom:8px;">I passi mostrati alla prima apertura: cosa fa ogni scheda e come usarla.</div><button class="btn btn-ghost" id="s-guide">Riapri la guida</button></div>
     <div class="field"><label>URL del server (avanzato)</label><input id="s-api" value="${esc(localStorage.getItem("np.apiBase") || "")}" placeholder="vuoto = stesso dominio della PWA"></div>
     <div class="btn-row"><button class="btn btn-primary" id="s-save">Salva</button><button class="btn btn-ghost" id="s-test">Prova connessione</button></div>`,
     (bg, close) => {
       const expG = bg.querySelector("#s-exp-guests"), expB = bg.querySelector("#s-exp-bus");
       if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
       if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
+      bg.querySelector("#s-guide").onclick = () => { close(); openGuide(); };
+      const mailBtn = bg.querySelector("#s-mail");
+      if (mailBtn) mailBtn.onclick = () => { close(); openMailAdmin(); };
       const asst = bg.querySelector("#s-assistant");
       if (asst) asst.onclick = () => { close(); openAssistantAdmin(); };
       const expP = bg.querySelector("#s-exp-pool");
@@ -296,6 +316,7 @@ function settingsDialog() {
         const changedApi = (bg.querySelector("#s-api").value.trim().replace(/\/+$/, "")) !== (localStorage.getItem("np.apiBase") || "");
         setAdminToken(bg.querySelector("#s-token").value);
         setTreasurerToken(bg.querySelector("#s-treasurer").value);
+        setGraduateToken(bg.querySelector("#s-graduate").value);
         setApiBase(bg.querySelector("#s-api").value);
         close();
         if (changedApi || !serverMode) { await reconnect(); updateStatusBar(); }
@@ -332,6 +353,11 @@ export async function rsvp(el) {
         ${statCard("In Attesa", pending.length, "da confermare", "#D97706")}
         ${statCard("Menu Speciali", special, "intolleranze/diete", "#0284C7")}
       </div>
+      ${Repo.mode === "server" ? `<div class="card profile-card" id="profile-card">
+        <b style="font-size:14px;">👤 ${hasProfile() ? "Il mio profilo" : "Sei un invitato? Crea il tuo profilo"}</b>
+        <div class="muted" style="margin:4px 0 8px;">${hasProfile() ? "Partecipazione, chi viene con te e menu: modifica quando vuoi, ricevi la conferma via email." : "Con un link personale via email confermi la partecipazione, indichi chi viene con te e il menu di ciascuno. Niente password."}</div>
+        <button class="btn ${hasProfile() ? "btn-primary" : "btn-gold"}" id="open-profile">${hasProfile() ? "Apri il mio profilo" : "Accedi con la tua email"}</button>
+      </div>` : ""}
       ${cateringSummary(confirmed, pending)}
       <div class="card">
         <input id="g-search" placeholder="🔍 Cerca invitato o categoria..." value="${esc(query)}">
@@ -348,8 +374,9 @@ export async function rsvp(el) {
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="grow">
                 <div class="name">${esc(g.fullName)}</div>
-                <div class="cat">${esc(g.category)}${g.guestsCount > 1 ? ` · ${g.guestsCount} persone` : ""}${g.dietaryNotes ? " · 🍽️ " + esc(g.dietaryNotes) : ""}${g.contactInfo ? " · ☎ " + esc(g.contactInfo) : ""}</div>
+                <div class="cat">${esc(g.category)}${g.guestsCount > 1 ? ` · ${g.guestsCount} persone` : ""}${g.menu ? " · 🍽️ " + esc(MENU_LABELS[g.menu] || g.menu) : ""}${(g.companions || []).length ? " · con " + g.companions.map((c) => esc(c.name)).join(", ") : ""}${g.dietaryNotes ? " · ⚠️ " + esc(g.dietaryNotes) : ""}${g.contactInfo ? " · ☎ " + esc(g.contactInfo) : ""}${g.hasProfile ? ' · <span class="pill pill-conf" title="Ha un profilo personale">profilo</span>' : ""}</div>
               </div>
+              ${isAdmin() && Repo.mode === "server" ? `<button class="icon-btn" data-link="${g.id}" title="Link personale / invito via email">🔗</button>` : ""}
               <button class="icon-btn" data-del="${g.id}" title="Rimuovi invitato">🗑️</button>
             </div>
             <div class="status-row">
@@ -375,8 +402,29 @@ export async function rsvp(el) {
       if (await tryAction(() => Repo.deleteGuest(Number(b.dataset.del)), "Invitato rimosso")) { guests = await Repo.allGuests(); paint(); }
     });
     el.querySelector("#add-guest").onclick = () => guestDialog(async () => { guests = await Repo.allGuests(); paint(); });
+    const op = el.querySelector("#open-profile");
+    if (op) op.onclick = () => openProfile();
+    el.querySelectorAll("[data-link]").forEach((b) => b.onclick = () => guestLinkDialog(Number(b.dataset.link)));
   }
   paint();
+}
+
+// Organizzatori: link personale dell'invitato da copiare, oppure invio dell'email con il link.
+async function guestLinkDialog(id) {
+  let info;
+  try { info = await api.guestLink(id); } catch (e) { toast(e.message); return; }
+  openModal(`<h3>🔗 Link personale · ${esc(info.guest.fullName)}</h3>
+    <div class="muted" style="margin-bottom:8px;">Chi apre questo link può vedere e modificare il profilo dell'invitato: mandalo solo a lui (email, WhatsApp o QR sull'invito).</div>
+    <div class="mono iban" style="word-break:break-all;" id="gl-link">${esc(info.link)}</div>
+    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-primary" id="gl-copy">📋 Copia link</button><button class="btn btn-gold" id="gl-send" ${info.email ? "" : "disabled"}>✉️ Invia via email</button></div>
+    <div class="muted" style="margin-top:8px;">${info.email ? `Email nel profilo: <b>${esc(info.email)}</b>` : "Nessuna email nel profilo: l'invitato la inserirà aprendo il link."}</div>`,
+    (bg, close) => {
+      bg.querySelector("#gl-copy").onclick = async () => { try { await navigator.clipboard.writeText(info.link); toast("Link copiato"); } catch { toast("Copia non disponibile: seleziona il testo"); } };
+      bg.querySelector("#gl-send").onclick = async () => {
+        try { const r = await api.guestInvite(id); toast(r.mail && (r.mail.status === "DELIVERED" || r.mail.status === "QUEUED") ? "Email con il link inviata ✓" : `Email non inviata: ${r.mail?.error || "n8n non configurato"}`); close(); }
+        catch (e) { toast(e.message); }
+      };
+    });
 }
 
 // Riepilogo per il ristorante: coperti per categoria ed esigenze alimentari con i nomi.
@@ -398,10 +446,29 @@ function cateringSummary(confirmed, pending) {
   const cats = [...byCat.values()].sort((a, b) => b.covers - a.covers);
   const dts = [...diets.values()].sort((a, b) => b.covers - a.covers);
   const pendingCovers = pending.reduce((s, g) => s + (g.guestsCount || 0), 0);
+  // menu scelti dal profilo (invitato + accompagnatori), allergie per persona, chi non ha scelto
+  const byMenu = new Map();
+  const allergies = [];
+  const missing = [];
+  for (const g of confirmed) {
+    const people = [g.menu || ""].concat((g.companions || []).map((c) => c.menu || ""));
+    while (people.length < (g.guestsCount || 1)) people.push("");
+    people.slice(0, Math.max(g.guestsCount || 1, 1)).forEach((m) => byMenu.set(m, (byMenu.get(m) || 0) + 1));
+    if (!g.menu) missing.push(g.fullName);
+    for (const c of g.companions || []) {
+      if (c.notes) allergies.push(`${c.name}: ${c.notes}`);
+      if (!c.menu) missing.push(`${c.name} (con ${g.fullName})`);
+    }
+  }
+  const menus = [...byMenu.entries()].sort((a, b) => b[1] - a[1]);
   return `<details class="card catering" id="catering">
     <summary><b>🍽️ Riepilogo per il catering</b> <span class="muted">· ${confirmed.reduce((s, g) => s + (g.guestsCount || 0), 0)} coperti confermati${pendingCovers ? ` (+${pendingCovers} in attesa)` : ""}</span></summary>
     <div class="muted" style="margin:8px 0 4px;font-size:12px;"><b>Per categoria</b></div>
     ${cats.length ? cats.map((c) => `<div class="row" style="padding:4px 0;"><div class="grow">${esc(c.category)}</div><div>${c.covers} coperti <span class="muted">(${c.guests} inv.)</span></div></div>`).join("") : '<div class="muted">Nessun confermato.</div>'}
+    <div class="muted" style="margin:10px 0 4px;font-size:12px;"><b>Menu scelti dai profili</b></div>
+    ${menus.map(([m, n]) => `<div class="row" style="padding:4px 0;"><div class="grow">${esc(MENU_LABELS[m] || m || "Da scegliere")}</div><div>${n} ${n === 1 ? "persona" : "persone"}</div></div>`).join("")}
+    ${missing.length ? `<div class="muted" style="font-size:12px;margin-top:4px;">Senza menu: ${missing.map(esc).join(", ")}</div>` : ""}
+    ${allergies.length ? `<div class="muted" style="margin:10px 0 4px;font-size:12px;"><b>Allergie degli accompagnatori</b></div>${allergies.map((a) => `<div class="muted" style="font-size:12px;">${esc(a)}</div>`).join("")}` : ""}
     <div class="muted" style="margin:10px 0 4px;font-size:12px;"><b>Esigenze alimentari</b></div>
     ${dts.length ? dts.map((d) => `<div class="row" style="padding:4px 0;flex-direction:column;align-items:stretch;"><div><b>${esc(d.note)}</b> · ${d.covers} ${d.covers === 1 ? "persona" : "persone"}</div><div class="muted" style="font-size:12px;">${d.guests.map(esc).join(", ")}</div></div>`).join("") : '<div class="muted">Nessun menu speciale segnalato.</div>'}
     <div class="muted" style="margin-top:8px;font-size:11px;">Gli organizzatori possono scaricare il CSV completo da ⚙️ Impostazioni.</div>
@@ -446,9 +513,14 @@ function guestDialog(onDone) {
 // ============================ NAVETTA ============================
 export async function bus(el) {
   const bookings = await Repo.allBookings();
-  const booked = bookings.reduce((s, b) => s + (b.seatsCount || 0), 0);
+  const serverMode = Repo.mode === "server";
+  const confirmedB = bookings.filter((b) => b.status !== "WAITLIST");
+  const booked = confirmedB.reduce((s, b) => s + (b.seatsCount || 0), 0);
+  const waiting = bookings.filter((b) => b.status === "WAITLIST").reduce((s, b) => s + (b.seatsCount || 0), 0);
+  const checkedIn = bookings.filter((b) => b.checkedInAt).reduce((s, b) => s + (b.seatsCount || 0), 0);
   const available = Math.max(0, MAX_BUS_SEATS - booked);
   const pct = Math.min(100, (booked / MAX_BUS_SEATS) * 100);
+  const admin = isAdmin() && serverMode;
   el.innerHTML = `
     <h2 class="section">Navetta Autobus Riservata</h2>
     <div class="muted" style="margin-top:-4px;margin-bottom:12px;">${esc(BUS_SCHEDULE.subtitle || "")}</div>
@@ -458,8 +530,11 @@ export async function bus(el) {
         <span class="pill ${available > 10 ? "pill-conf" : "pill-decl"}">${available} liberi</span>
       </div>
       <div class="meter"><span style="width:${pct}%;${pct > 90 ? "background:#EF4444;" : ""}"></span></div>
-      <div style="display:flex;justify-content:space-between;" class="muted"><span>Adesioni raccolte: ${booked} posti</span><span>${pct.toFixed(0)}% occupato</span></div>
+      <div style="display:flex;justify-content:space-between;" class="muted"><span>Posti confermati: ${booked}${waiting ? ` · in lista d'attesa: ${waiting}` : ""}${admin && checkedIn ? ` · saliti: ${checkedIn}` : ""}</span><span>${pct.toFixed(0)}% occupato</span></div>
     </div>
+    ${serverMode ? `<div class="card profile-card"><b style="font-size:14px;">👤 Prenota dal tuo profilo</b>
+      <div class="muted" style="margin:4px 0 8px;">Dal profilo la prenotazione è legata a te: ricevi la conferma via email con il codice e l'evento per il calendario, e se i posti sono finiti entri in lista d'attesa.</div>
+      <button class="btn btn-primary" id="bus-profile">${hasProfile() ? "Apri il mio profilo" : "Accedi con la tua email"}</button></div>` : ""}
     <div class="card">
       <b style="font-size:14px;">Orari & Fermate Transfer</b>
       ${busTripRow("ANDATA", BUS_SCHEDULE.andata)}
@@ -471,16 +546,22 @@ export async function bus(el) {
         <div class="row">
           <div style="width:36px;height:36px;border-radius:50%;background:#E0F2FE;color:#0284C7;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${b.seatsCount}</div>
           <div class="grow">
-            <div class="name">${esc(b.passengerName)}</div>
-            <div class="cat">Fermata: ${esc(b.pickupStop)}${b.contactPhone ? " · " + esc(b.contactPhone) : ""}</div>
+            <div class="name">${esc(b.passengerName)}${b.status === "WAITLIST" ? ` <span class="pill pill-pend">lista d'attesa</span>` : ""}${b.checkedInAt ? ` <span class="pill pill-conf">salito</span>` : ""}</div>
+            <div class="cat">Fermata: ${esc(b.pickupStop)}${b.code ? " · " + esc(b.code) : ""}${b.contactPhone ? " · " + esc(b.contactPhone) : ""}</div>
             ${b.returnTripWanted ? `<div class="cat" style="color:#10B981;font-weight:600;">Include corsa di rientro notturna</div>` : ""}
             ${b.notes ? `<div class="cat" style="font-style:italic;">Note: ${esc(b.notes)}</div>` : ""}
           </div>
+          ${admin && b.status !== "WAITLIST" ? `<button class="icon-btn" data-checkin="${b.id}" data-next="${b.checkedInAt ? "false" : "true"}" title="${b.checkedInAt ? "Annulla check-in" : "Segna come salito"}">${b.checkedInAt ? "↩️" : "✅"}</button>` : ""}
           <button class="icon-btn" data-cancel="${b.id}" title="Cancella prenotazione">🗑️</button>
         </div>`).join("")}
     </div>
     <button class="fab" id="book-bus">🚌 Aderisci all'Autobus</button>
   `;
+  const bp = el.querySelector("#bus-profile");
+  if (bp) bp.onclick = () => openProfile();
+  el.querySelectorAll("[data-checkin]").forEach((b) => b.onclick = async () => {
+    if (await tryAction(() => api.busCheckin(Number(b.dataset.checkin), b.dataset.next === "true"), b.dataset.next === "true" ? "Segnato come salito ✓" : "Check-in annullato")) { await Repo.pollState(); bus(el); }
+  });
   el.querySelectorAll("[data-cancel]").forEach((b) => b.onclick = async () => {
     if (!confirm("Cancellare questa prenotazione?")) return;
     if (await tryAction(() => Repo.deleteBooking(Number(b.dataset.cancel)), "Prenotazione annullata")) bus(el);
@@ -636,25 +717,25 @@ async function copyText(text, okMsg) {
 
 export async function gifts(el) {
   const targets = await Repo.allGiftTargets();
-  const collector = GIFT_COLLECTOR;
+  const collectors = GIFT_COLLECTORS;
   const serverMode = Repo.mode === "server";
   const mine = await Repo.myPoolContributions();
   const showBoard = isTreasurer() && (!serverMode || Status.treasurerEnabled);
   el.innerHTML = `
     <h2 class="section">Regali di Specializzazione</h2>
-    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Scegli come partecipare: una quota unica tramite il cassiere, oppure un regalo diretto a ciascun neo-specialista. Nessuna cifra raccolta viene mostrata.</div>
+    <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Scegli come partecipare: una quota unica tramite ${collectors.length > 1 ? "uno dei cassieri" : "il cassiere"}, oppure un regalo diretto a ciascun neo-specialista. Nessuna cifra raccolta viene mostrata.</div>
 
-    <div class="card collector">
+    ${collectors.map((collector, i) => `<div class="card collector" data-collector="${esc(collector.id)}">
       <div class="gname">👛 Quota unica tramite ${esc(collector.name || "il cassiere")}</div>
       <div class="grole">${esc(collector.roleTitle)}</div>
       <div class="muted" style="margin-top:6px;">${esc(collector.description)}</div>
       <div class="muted" style="margin-top:6px;">Metodi: ${(collector.paymentMethods || []).map((m) => `<b>${esc(m)}</b>`).join(" · ")}</div>
-      <button class="btn btn-gold" id="pool-open" style="margin-top:12px;">🤝 Partecipa con una quota unica</button>
-      ${mine.length ? `<div class="mine"><b>Le tue quote registrate</b>${mine.map((c) => `
+      <button class="btn btn-gold" data-pool-open="${esc(collector.id)}" ${i === 0 ? 'id="pool-open"' : ""} style="margin-top:12px;">🤝 Partecipa con una quota unica${collectors.length > 1 ? ` (${esc(shortName(collector.name))})` : ""}</button>
+    </div>`).join("")}
+    ${mine.length ? `<div class="card collector mine-card"><div class="mine"><b>Le tue quote registrate</b>${mine.map((c) => `
         <div class="row"><div class="grow"><div class="name">${eur2(c.totalAmount)} · ${esc(c.paymentMethod)} · <span class="pill ${c.status === "RECEIVED" ? "pill-conf" : "pill-pend"}">${POOL_STATUS[c.status] || c.status}</span></div>
-          <div class="cat">${esc(c.donorName)} · ${c.allocations.length === targets.length ? "tutti i neo-specialisti" : c.allocations.map((a) => esc(shortName(a.graduateName))).join(", ")} · ${fmtTime(c.createdAt)}</div></div>
-          ${c.status !== "RECEIVED" ? `<button class="icon-btn" data-pool-del="${c.id}" aria-label="Annulla quota">🗑️</button>` : ""}</div>`).join("")}</div>` : ""}
-    </div>
+          <div class="cat">a ${esc(shortName(c.collectorName || collectorById(c.collectorId).name))} · ${esc(c.donorName)} · ${c.allocations.length === targets.length ? "tutti i neo-specialisti" : c.allocations.map((a) => esc(shortName(a.graduateName))).join(", ")} · ${fmtTime(c.createdAt)}</div></div>
+          ${c.status !== "RECEIVED" ? `<button class="icon-btn" data-pool-del="${c.id}" aria-label="Annulla quota">🗑️</button>` : ""}</div>`).join("")}</div></div>` : ""}
 
     <div id="pool-board"></div>
 
@@ -671,7 +752,7 @@ export async function gifts(el) {
         </div>
       </div>`).join("")}
   `;
-  el.querySelector("#pool-open").onclick = () => poolDialog(targets, collector, () => gifts(el));
+  el.querySelectorAll("[data-pool-open]").forEach((b) => b.onclick = () => poolDialog(targets, collectorById(b.dataset.poolOpen), () => gifts(el)));
   el.querySelectorAll("[data-copy-iban]").forEach((b) => {
     const t = targets.find((x) => x.id === b.dataset.copyIban);
     b.onclick = () => copyText(t.iban, `IBAN di ${shortName(t.name)} copiato!`);
@@ -693,7 +774,8 @@ function poolDialog(targets, collector, onDone) {
   openModal(`<h3>🤝 Quota unica • ${esc(collector.name || "cassiere")}</h3>
     <div class="muted" style="margin-bottom:10px;">Un solo versamento: ${esc(shortName(collector.name) || "il cassiere")} lo ripartisce fra i neo-specialisti secondo le tue indicazioni.</div>
     <div class="field"><label>Il tuo nome e cognome *</label><input id="q-donor" placeholder="Serve al cassiere per riconoscere il versamento"></div>
-    <div class="field"><label>Contatto (facoltativo: telefono o e-mail)</label><input id="q-contact"></div>
+    <div class="field"><label>La tua email (facoltativa: ricevi la conferma con IBAN e causale)</label><input id="q-email" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></div>
+    <div class="field"><label>Telefono (facoltativo, per il cassiere)</label><input id="q-contact" type="tel" inputmode="tel" autocomplete="tel"></div>
     <div class="field"><label>Come vuoi ripartire la quota?</label>
       <div class="chips" id="q-modes"><button class="chip active" data-mode="EQUAL">In parti uguali</button><button class="chip" data-mode="CUSTOM">Personalizza</button></div></div>
     <div id="q-equal">
@@ -750,10 +832,18 @@ function poolDialog(targets, collector, onDone) {
       $$("#q-methods .chip").forEach((c) => c.onclick = () => { $$("#q-methods .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active"); method = c.dataset.m; paintPay(); });
       $("#q-donor").oninput = () => { if (method === "IBAN") paintPay(); };
       paintPay(); refresh();
+      // chi ha il profilo trova nome, email e telefono già compilati
+      if (getGuestToken() && Repo.mode === "server") api.profileGet().then((d) => {
+        if (!$("#q-donor").value) { $("#q-donor").value = d.guest.fullName || ""; if (method === "IBAN") paintPay(); }
+        if (!$("#q-email").value) $("#q-email").value = d.guest.email || "";
+        if (!$("#q-contact").value) $("#q-contact").value = d.guest.phone || "";
+      }).catch(() => {});
       $("#q-save").onclick = async () => {
         const donorName = $("#q-donor").value.trim();
         if (!donorName) { toast("Inserisci nome e cognome: servono al cassiere"); return; }
-        const body = { donorName, contact: $("#q-contact").value.trim(), paymentMethod: method, splitMode: mode, note: $("#q-note").value.trim() };
+        const email = $("#q-email").value.trim();
+        if (email && !email.includes("@")) { toast("Email non valida"); return; }
+        const body = { collectorId: collector.id, donorName, contact: $("#q-contact").value.trim(), email, paymentMethod: method, splitMode: mode, note: $("#q-note").value.trim() };
         if (mode === "EQUAL") {
           if (!amount || amount <= 0) { toast("Inserisci un importo valido"); return; }
           if (!selectedIds().length) { toast("Scegli almeno un neo-specialista"); return; }
@@ -762,7 +852,7 @@ function poolDialog(targets, collector, onDone) {
           body.allocations = customRows();
           if (!body.allocations.length) { toast("Indica almeno un importo"); return; }
         }
-        const ok = await tryAction(() => Repo.addPoolContribution(body), `Quota di ${eur2(totalNow())} registrata: grazie! 🎉`);
+        const ok = await tryAction(() => Repo.addPoolContribution(body), `Quota di ${eur2(totalNow())} registrata: grazie! 🎉${email ? " Ti abbiamo inviato la conferma via email." : ""}`);
         if (ok) { close(); onDone(); }
       };
     });
@@ -774,22 +864,59 @@ async function poolBoard(box, targets) {
   try { board = await Repo.poolBoard(); }
   catch (e) { box.innerHTML = `<div class="card"><div class="muted">Cruscotto cassiere non disponibile: ${esc(e.message)}</div></div>`; return; }
   const s = board.summary, serverMode = Repo.mode === "server";
-  box.innerHTML = `<details class="card board" open>
-    <summary><b>📒 Cassa quote uniche</b> <span class="muted">${s.contributions} quote · ${eur2(s.totalAmount)} (ricevute ${eur2(s.receivedAmount)}, in attesa ${eur2(s.pendingAmount)})</span></summary>
-    <div class="muted" style="margin:8px 0 4px;"><b>Quanto spetta a ciascuno</b> (tra parentesi la parte già ricevuta)</div>
-    <table class="tbl"><tbody>${s.byGraduate.map((g) => `<tr><td>${esc(shortName(g.graduateName))}</td><td class="num"><b>${eur2(g.amount)}</b> <span class="muted">(${eur2(g.receivedAmount)})</span></td></tr>`).join("")}</tbody></table>
-    ${serverMode ? `<button class="btn btn-primary" id="pool-csv" style="margin-top:10px;">📄 Scarica per Excel (CSV)</button>` : ""}
-    <div class="muted" style="margin:12px 0 4px;"><b>Quote registrate</b> · tocca lo stato per segnarla ricevuta</div>
-    ${board.contributions.length ? board.contributions.map((c) => `<div class="row">
+  const sections = (s.byCollector && s.byCollector.length) ? s.byCollector : [{ collectorId: "", collectorName: "", ...s }];
+  const multi = sections.length > 1;
+  const rowsOf = (cid) => board.contributions.filter((c) => !multi || (c.collectorId || sections[0].collectorId) === cid);
+  const contactLinks = (c) => {
+    const out = [];
+    const mail = c.email || ((c.contact || "").includes("@") ? c.contact : "");
+    const tel = /\d{5,}/.test(c.contact || "") && !(c.contact || "").includes("@") ? c.contact.replace(/[^+\d]/g, "") : "";
+    if (mail) out.push(`<a class="contact-link" href="mailto:${esc(mail)}" title="${esc(mail)}">✉️ Email</a>`);
+    if (tel) out.push(`<a class="contact-link" href="tel:${esc(tel)}" title="${esc(c.contact)}">📞 Chiama</a>`);
+    return out.join(" ");
+  };
+  const contributionRow = (c) => `<div class="row pool-row" data-pool-row="${c.id}">
+      ${c.status !== "RECEIVED" ? `<input type="checkbox" class="pool-pick" data-pool-pick="${c.id}" aria-label="Seleziona">` : `<span class="pool-pick-space"></span>`}
       <div class="grow"><div class="name">${esc(c.donorName)} · ${eur2(c.totalAmount)} · ${esc(c.paymentMethod)}</div>
         <div class="cat">${c.allocations.length === targets.length && c.splitMode === "EQUAL" ? `parti uguali (${eur2(c.allocations[0]?.amount)} ciascuno)` : c.allocations.map((a) => `${esc(shortName(a.graduateName))} ${eur2(a.amount)}`).join(", ")}</div>
-        <div class="cat">${fmtTime(c.createdAt)}${c.contact ? ` · ${esc(c.contact)}` : ""}${c.note ? ` · “${esc(c.note)}”` : ""}</div></div>
+        <div class="cat">${fmtTime(c.createdAt)}${c.contact ? ` · ${esc(c.contact)}` : ""}${c.email ? ` · ${esc(c.email)}` : ""}${c.note ? ` · “${esc(c.note)}”` : ""}</div>
+        <div class="cat pool-tools">${contactLinks(c)} <button class="contact-link" data-pool-note="${c.id}">📝 ${c.treasurerNote ? "Appunti" : "Aggiungi appunti"}</button>${c.treasurerNote ? `<div class="pool-note">${esc(c.treasurerNote)}</div>` : ""}</div></div>
       <button class="pill ${c.status === "RECEIVED" ? "pill-conf" : "pill-pend"}" data-pool-status="${c.id}" data-next="${c.status === "RECEIVED" ? "PENDING" : "RECEIVED"}">${POOL_STATUS[c.status] || c.status}</button>
-    </div>`).join("") : `<div class="muted">Nessuna quota registrata finora.</div>`}
+    </div>`;
+  box.innerHTML = `<details class="card board" open>
+    <summary><b>📒 Cassa quote uniche</b> <span class="muted">${s.contributions} quote · ${eur2(s.totalAmount)} (ricevute ${eur2(s.receivedAmount)}, in attesa ${eur2(s.pendingAmount)})</span></summary>
+    ${serverMode ? `<div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" id="pool-csv">📄 Scarica per Excel (CSV)</button><button class="btn btn-ghost" id="pool-remind" title="Email a chi ha lasciato l'indirizzo e la cui quota è in attesa da almeno 7 giorni">🔔 Promemoria ai donatori in attesa</button></div>` : ""}
+    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" id="pool-batch" disabled>✓ Segna ricevute le selezionate</button></div>
+    ${sections.map((sec) => `<div class="board-section" data-board-collector="${esc(sec.collectorId)}">
+      ${multi ? `<h4 class="board-title">👛 ${esc(sec.collectorName)} <span class="muted">· ${sec.contributions} quote · ${eur2(sec.totalAmount)} (ricevute ${eur2(sec.receivedAmount)})</span></h4>` : ""}
+      <div class="muted" style="margin:8px 0 4px;"><b>Quanto spetta a ciascuno</b> (tra parentesi la parte già ricevuta)</div>
+      <table class="tbl"><tbody>${sec.byGraduate.map((g) => `<tr><td>${esc(shortName(g.graduateName))}</td><td class="num"><b>${eur2(g.amount)}</b> <span class="muted">(${eur2(g.receivedAmount)})</span></td></tr>`).join("")}</tbody></table>
+      <div class="muted" style="margin:12px 0 4px;"><b>Quote registrate</b> · tocca lo stato per segnarla ricevuta, oppure selezionane più di una</div>
+      ${rowsOf(sec.collectorId).length ? rowsOf(sec.collectorId).map(contributionRow).join("") : `<div class="muted">Nessuna quota registrata finora.</div>`}
+    </div>`).join("")}
   </details>`;
   const csv = box.querySelector("#pool-csv");
   if (csv) csv.onclick = () => tryAction(() => downloadCsv("gift-pool"), "quote-uniche.csv scaricato");
   box.querySelectorAll("[data-pool-status]").forEach((b) => b.onclick = async () => {
     if (await tryAction(() => Repo.setPoolStatus(Number(b.dataset.poolStatus), b.dataset.next), b.dataset.next === "RECEIVED" ? "Segnata come ricevuta ✓" : "Rimessa in attesa")) poolBoard(box, targets);
   });
+  const batch = box.querySelector("#pool-batch");
+  const picked = () => [...box.querySelectorAll("[data-pool-pick]:checked")].map((c) => Number(c.dataset.poolPick));
+  box.querySelectorAll("[data-pool-pick]").forEach((c) => c.onchange = () => { const n = picked().length; batch.disabled = n === 0; batch.textContent = n ? `✓ Segna ricevute le selezionate (${n})` : "✓ Segna ricevute le selezionate"; });
+  batch.onclick = async () => {
+    const ids = picked(); if (!ids.length) return;
+    if (await tryAction(() => Repo.setPoolStatusBatch(ids, "RECEIVED"), `${ids.length} quote segnate come ricevute ✓`)) poolBoard(box, targets);
+  };
+  box.querySelectorAll("[data-pool-note]").forEach((b) => b.onclick = async () => {
+    const id = Number(b.dataset.poolNote);
+    const current = board.contributions.find((c) => c.id === id)?.treasurerNote || "";
+    const note = prompt("Appunti del cassiere (visibili solo a cassieri e organizzatori):", current);
+    if (note === null) return;
+    if (await tryAction(() => Repo.setPoolNote(id, note.trim()), note.trim() ? "Appunti salvati" : "Appunti rimossi")) poolBoard(box, targets);
+  });
+  const remind = box.querySelector("#pool-remind");
+  if (remind) remind.onclick = async () => {
+    if (!confirm("Mandare un promemoria (con IBAN e causale) a chi ha lasciato l'email e la cui quota è in attesa da almeno 7 giorni?")) return;
+    try { const r = await api.mailRemindPool(7); toast(r.sent ? `Promemoria inviati: ${r.sent}` : "Nessuna quota in attesa da 7 giorni con un'email"); } catch (e) { toast(e.message); }
+  };
 }

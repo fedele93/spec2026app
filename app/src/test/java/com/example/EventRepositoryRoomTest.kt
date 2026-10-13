@@ -59,11 +59,15 @@ class EventRepositoryRoomTest {
     @Test
     fun `quota unica in modalita locale viene ripartita e si puo annullare`() = runTest {
         repository.prepopulateIfNeeded()
-        assertEquals(SeedData.giftCollector.name, repository.giftCollector.first()!!.name)
+        assertEquals(SeedData.giftCollectors.map { it.id }, repository.giftCollectors.first().map { it.id })
+        assertEquals(SeedData.giftCollectors.first().name, repository.giftCollector.first()!!.name)
         val c = repository.addPoolContribution(
-            PoolContributionRequest(donorName = "Test", totalAmount = 100.0, paymentMethod = "PayPal", graduateIds = listOf("luisi", "carlone", "totaro"))
+            PoolContributionRequest(collectorId = "aki", donorName = "Test", email = "Test@Example.org", totalAmount = 100.0, paymentMethod = "PayPal", graduateIds = listOf("luisi", "carlone", "totaro"))
         )
         assertEquals(100.0, c.totalAmount, 0.001)
+        assertEquals("aki", c.collectorId)
+        assertEquals("Dott. Aki", c.collectorName)
+        assertEquals("test@example.org", c.email)
         assertEquals(listOf(33.34, 33.33, 33.33), c.allocations.map { it.amount })
         assertEquals("Dott. Fedele Luisi", c.allocations.first().graduateName)
         assertEquals(1, repository.myPoolContributions().size)

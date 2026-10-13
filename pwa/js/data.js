@@ -369,6 +369,7 @@ export async function initData() {
         Status.mode = "server";
         Status.online = false;
         Status.lastError = e.message;
+        Status.roles = null; // non confermabili offline
         Status.version = cached.version || 0;
         applyEvent(cached.event);
         impl = ServerRepo;
@@ -381,6 +382,7 @@ export async function initData() {
   applyEvent(localData);
   Status.mode = "locale";
   Status.online = false;
+  Status.roles = null; // nessun server: nessun ruolo confermato
   impl = LocalRepo;
   await LocalRepo.prepopulateIfNeeded();
   return Status;

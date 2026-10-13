@@ -54,9 +54,10 @@ await page.click("#guide-next");
 check("secondo passo della guida: come è fatta l'app", (await page.textContent(".guide-title")).includes("Come è fatta"));
 let guideSteps = 2;
 const guideTitles = [await page.textContent(".guide-title")];
-while ((await page.textContent("#guide-next")) !== "Inizia! 🎉") { await page.click("#guide-next"); guideSteps += 1; guideTitles.push(await page.textContent(".guide-title")); if (guideSteps > 12) break; }
+let roleStepText = "";
+while ((await page.textContent("#guide-next")) !== "Inizia! 🎉") { await page.click("#guide-next"); guideSteps += 1; const t = await page.textContent(".guide-title"); guideTitles.push(t); if (t.includes("ruolo")) roleStepText = await page.textContent("#guide-body"); if (guideSteps > 12) break; }
 check("la guida include programma, profilo, navetta, regali, assistente, ruoli e da dove cominciare", guideSteps >= 9 && ["Programma", "Conferma la presenza", "Navetta", "Regali", "Chiedi a un festeggiato", "ruolo", "Da dove cominciare"].every((t) => guideTitles.some((x) => x.includes(t))), guideTitles.join(" | "));
-check("il passo sui ruoli spiega i token in Impostazioni", (await page.textContent("#guide-body")).includes("cominciare") && guideTitles.some((x) => x.includes("ruolo")));
+check("il passo sui ruoli spiega i token in Impostazioni", roleStepText.includes("token") && roleStepText.includes("Impostazioni"));
 await page.click("#guide-next");
 await page.waitForTimeout(300);
 check("guida chiusa e segnata come vista", (await page.$("#guide")) === null && (await page.evaluate(() => localStorage.getItem("np.guideSeen"))) !== null);

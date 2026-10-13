@@ -282,6 +282,7 @@ function rejectedTokens() {
 
 function settingsDialog() {
   const serverMode = Repo.mode === "server";
+  const roles = activeRoles(); // ruoli confermati dal server (guide dei ruoli)
   openModal(`<h3>⚙️ Impostazioni</h3>
     <div class="card" style="margin-bottom:12px;">
       <b style="font-size:13px;">Stato</b>
@@ -310,8 +311,8 @@ function settingsDialog() {
     ${serverMode && isTreasurer() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📒 Esporta quote uniche per il cassiere</b>
       <div class="muted" style="margin-bottom:8px;">CSV con una riga per quota, una colonna per neo-specialista e i totali: si apre con Excel.</div>
       <button class="btn btn-ghost" id="s-exp-pool">Esporta quote uniche</button></div>` : ""}
-    ${activeRoles().length ? `<div class="card" style="margin-bottom:12px;" id="s-role-guides"><b style="font-size:13px;">🔑 Guida del tuo ruolo</b><div class="muted" style="margin-bottom:8px;">Le funzioni sbloccate dal tuo token e dove trovarle: si apre da sola la prima volta che il server riconosce il token.</div>
-      <div class="btn-row">${activeRoles().map((r) => `<button class="btn btn-ghost" data-role-guide="${r}">Guida ${esc(ROLE_LABELS[r])}</button>`).join("")}</div></div>` : ""}
+    ${roles.length ? `<div class="card" style="margin-bottom:12px;" id="s-role-guides"><b style="font-size:13px;">🔑 Guida del tuo ruolo</b><div class="muted" style="margin-bottom:8px;">Le funzioni sbloccate dal tuo token e dove trovarle: si apre da sola la prima volta che il server riconosce il token.</div>
+      <div class="btn-row">${roles.map((r) => `<button class="btn btn-ghost" data-role-guide="${r}">Guida ${esc(ROLE_LABELS[r])}</button>`).join("")}</div></div>` : ""}
     <div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">❓ Guida all'app</b><div class="muted" style="margin-bottom:8px;">I passi mostrati alla prima apertura: cosa fa ogni scheda e da dove cominciare.</div><button class="btn btn-ghost" id="s-guide">Riapri la guida</button></div>
     <div class="field"><label>URL del server (avanzato)</label><input id="s-api" value="${esc(localStorage.getItem("np.apiBase") || "")}" placeholder="vuoto = stesso dominio della PWA"></div>
     <div class="btn-row"><button class="btn btn-primary" id="s-save">Salva</button><button class="btn btn-ghost" id="s-test">Prova connessione</button></div>`,
@@ -348,7 +349,7 @@ function settingsDialog() {
         await reconnect(); updateStatusBar();
         toast(`Impostazioni salvate${rejectedTokens().map((r) => ` · token ${ROLE_LABELS[r]} non riconosciuto dal server`).join("")}`);
         render();
-        initAssistant();
+        await initAssistant(); // prima della guida del ruolo: così sa se c'è l'assistente (passo avatar)
         maybeOpenRoleGuides(); // guida del ruolo appena sbloccato (una volta sola per ruolo)
       };
     });

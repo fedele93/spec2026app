@@ -6,8 +6,7 @@
 //    (organizzatore, cassiere, festeggiato) si apre una volta sola la guida di quel ruolo, con le
 //    funzioni appena sbloccate e dove trovarle (localStorage np.roleGuideSeen.<ruolo>). Si riapre da
 //    ⚙️ Impostazioni. I ruoli attivi arrivano dal server (campo "roles" di GET /api/state).
-import { Repo, Status, GRADUATES, GIFT_COLLECTORS } from "./data.js";
-import { isAdmin, isTreasurer, isGraduate } from "./api.js";
+import { Repo, Status, GIFT_COLLECTORS } from "./data.js";
 import { openModal } from "./app.js";
 
 const LS_SEEN = "np.guideSeen";
@@ -132,23 +131,24 @@ export function openGuide(opts = {}) {
 export async function openRoleGuide(role, { chainNext = false } = {}) {
   if (!ROLE_LABELS[role]) return;
   const name = role === "graduate" ? await graduateName((Status.roles || {}).graduate) : "";
+  if (chainNext && document.querySelector(".modal-bg")) return; // nel frattempo l'utente ha aperto altro: riproposta al prossimo avvio
   showSteps(roleSteps(role, { assistant: hasAssistant(), name }), { role, onFinish: () => { markRoleGuideSeen(role); if (chainNext) maybeOpenRoleGuides(); } });
 }
 
-// Nome del festeggiato dal suo id: dai regali (id + nome), altrimenti dall'elenco dei nomi (cognome = id).
+// Nome del festeggiato dal suo id (roles.graduate è l'id, es. "luisi"): dai regali, che hanno id e nome.
 async function graduateName(id) {
-  if (!id) return "";
+  if (typeof id !== "string" || !id) return "";
   try { const t = (await Repo.allGiftTargets()).find((x) => x.id === id); if (t) return shortName(t.name); } catch { /* offline */ }
-  const g = GRADUATES.find((n) => (typeof n === "string" ? n : n.name || "").toLowerCase().includes(String(id).toLowerCase()));
-  return g ? shortName(typeof g === "string" ? g : g.name) : "";
+  return "";
 }
 
-// Ruoli attivi su questo dispositivo: confermati dal server quando lo dice (campo roles), altrimenti
-// dedotti dal token salvato (server vecchio o modalità demo).
+// Ruoli attivi su questo dispositivo, solo se confermati dal server (campo roles di GET /api/state:
+// admin e treasurer booleani, graduate = id del festeggiato o null). Senza conferma (server vecchio,
+// offline, modalità demo) nessuna guida di ruolo: un token sbagliato non deve "consumarla".
 export function activeRoles() {
   const r = Status.roles;
-  if (r) return ["admin", "treasurer", "graduate"].filter((k) => !!r[k]);
-  return [isAdmin() && "admin", isTreasurer() && "treasurer", isGraduate() && "graduate"].filter(Boolean);
+  if (!r || Repo.mode !== "server" || !Status.online) return [];
+  return ["admin", "treasurer", "graduate"].filter((k) => !!r[k]);
 }
 
 // Apre la guida del primo ruolo attivo non ancora spiegato (una alla volta, in catena).

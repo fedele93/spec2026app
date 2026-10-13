@@ -121,6 +121,27 @@ fun GuestsRsvpScreen(
                 }
             }
 
+            // Senza token (organizzatore o festeggiato) il server manda solo i record di questo telefono
+            if (serverStatus.configured && !serverStatus.canSeeLists) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = LaurelGold.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, LaurelGold.copy(alpha = 0.5f)),
+                        modifier = Modifier.fillMaxWidth().testTag("limited_lists_note")
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text("🔒 Elenco riservato", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text(
+                                "L'elenco completo degli invitati e dei passeggeri della navetta lo vedono solo organizzatori e festeggiati (token in ⚙️). Qui ci sono le persone inserite da questo telefono.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
             // Organizzatori (token + server): cruscotto e import della lista
             if (serverStatus.configured && viewModel.isAdmin) {
                 item {

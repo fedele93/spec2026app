@@ -126,7 +126,7 @@ jobs:
         run: |
           pip install -r backend/requirements.txt
           cd backend
-          DATA_DIR=/tmp/npdata SEED_DEMO_DATA=true ADMIN_TOKEN=ci-token GRADUATE_TOKEN_LUISI=grad-luisi ASSISTANT_FAKE=true PWA_DIR="$GITHUB_WORKSPACE/pwa" \
+          DATA_DIR=/tmp/npdata SEED_DEMO_DATA=true ADMIN_TOKEN=ci-token GRADUATE_TOKEN_LUISI=grad-luisi TREASURER_TOKEN=cassa ASSISTANT_FAKE=true PWA_DIR="$GITHUB_WORKSPACE/pwa" \
             nohup uvicorn app.main:app --host 127.0.0.1 --port 8765 > /tmp/backend.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/api/health && break; sleep 1; done
 
@@ -141,6 +141,7 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:8765
           ADMIN_TOKEN: ci-token
+          TREASURER_TOKEN: cassa
           SCREENSHOT_DIR: pwa-screenshots
         run: node pwa/tests/e2e.mjs
 

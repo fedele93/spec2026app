@@ -43,6 +43,7 @@ data class ServerStatus(
     val online: Boolean = false,
     val version: Long = -1L,
     val adminEnabled: Boolean = false,
+    val canSeeLists: Boolean = true, // elenchi completi di invitati e navetta (serve un token organizzatore o festeggiato)
     val lastError: String? = null
 )
 
@@ -262,7 +263,8 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
                 showUnseenNotifications(state.serverTime)
             }
             _serverStatus.value = ServerStatus(
-                configured = true, online = true, version = state.version, adminEnabled = state.adminEnabled
+                configured = true, online = true, version = state.version, adminEnabled = state.adminEnabled,
+                canSeeLists = state.canSeeLists
             )
             true
         } catch (e: Exception) {
@@ -378,6 +380,18 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
 
     fun heartWish(wishId: Long) {
         runAction { repository.incrementWishHearts(wishId) }
+    }
+
+    fun deleteWish(wishId: Long) {
+        runAction("Augurio eliminato") { repository.deleteWish(wishId) }
+    }
+
+    fun deletePhoto(photoId: Long) {
+        runAction("Foto eliminata") { repository.deletePhoto(photoId) }
+    }
+
+    fun clearNotificationHistory() {
+        runAction("Cronologia svuotata") { repository.clearNotifications() }
     }
 
     // Photo operations

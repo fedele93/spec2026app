@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.data.SeedData
@@ -59,6 +60,8 @@ fun PhotoAndWishesScreen(
     var showPostWishDialog by remember { mutableStateOf(false) }
     var showUploadPhotoDialog by remember { mutableStateOf(false) }
     var selectedPhotoForPreview by remember { mutableStateOf<SharedPhotoEntity?>(null) }
+    var wishToDelete by remember { mutableStateOf<WishEntity?>(null) }
+    var photoToDelete by remember { mutableStateOf<SharedPhotoEntity?>(null) }
 
     // Android Photo Picker contract (compliance zero-permission)
     var pickedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -190,7 +193,8 @@ fun PhotoAndWishesScreen(
                     items(wishes, key = { it.id }) { wish ->
                         WishCard(
                             wish = wish,
-                            onHeart = { viewModel.heartWish(wish.id) }
+                            onHeart = { viewModel.heartWish(wish.id) },
+                            onDelete = if (viewModel.isAdmin) ({ wishToDelete = wish }) else null
                         )
                     }
                 }
@@ -207,7 +211,8 @@ fun PhotoAndWishesScreen(
                         PhotoGridItem(
                             photo = photo,
                             onLike = { viewModel.likePhoto(photo.id) },
-                            onClick = { selectedPhotoForPreview = photo }
+                            onClick = { selectedPhotoForPreview = photo },
+                            onDelete = if (viewModel.isAdmin) ({ photoToDelete = photo }) else null
                         )
                     }
                 }
@@ -240,6 +245,26 @@ fun PhotoAndWishesScreen(
         )
     }
 
+    wishToDelete?.let { w ->
+        AlertDialog(
+            onDismissRequest = { wishToDelete = null },
+            title = { Text("Eliminare l'augurio?") },
+            text = { Text("L'augurio di ${w.authorName} sparirà per tutti.") },
+            confirmButton = { TextButton(onClick = { viewModel.deleteWish(w.id); wishToDelete = null }, modifier = Modifier.testTag("wish_delete_confirm")) { Text("Elimina") } },
+            dismissButton = { TextButton(onClick = { wishToDelete = null }) { Text("Annulla") } }
+        )
+    }
+
+    photoToDelete?.let { p ->
+        AlertDialog(
+            onDismissRequest = { photoToDelete = null },
+            title = { Text("Eliminare la foto?") },
+            text = { Text("La foto di ${p.authorName} sparirà per tutti.") },
+            confirmButton = { TextButton(onClick = { viewModel.deletePhoto(p.id); photoToDelete = null }, modifier = Modifier.testTag("photo_delete_confirm")) { Text("Elimina") } },
+            dismissButton = { TextButton(onClick = { photoToDelete = null }) { Text("Annulla") } }
+        )
+    }
+
     if (selectedPhotoForPreview != null) {
         PhotoPreviewDialog(
             photo = selectedPhotoForPreview!!,
@@ -254,7 +279,8 @@ fun PhotoAndWishesScreen(
 @Composable
 fun WishCard(
     wish: WishEntity,
-    onHeart: () -> Unit
+    onHeart: () -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -292,6 +318,11 @@ fun WishCard(
                     }
                 }
 
+                if (onDelete != null) {
+                    IconButton(onClick = onDelete, modifier = Modifier.size(28.dp).testTag("wish_delete_${wish.id}")) {
+                        Icon(Icons.Default.Delete, contentDescription = "Elimina augurio", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                    }
+                }
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = Color(0xFFF43F5E).copy(alpha = 0.1f),
@@ -335,7 +366,8 @@ fun WishCard(
 fun PhotoGridItem(
     photo: SharedPhotoEntity,
     onLike: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -355,6 +387,20 @@ fun PhotoGridItem(
                     .height(130.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
+                if (onDelete != null) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.Black.copy(alpha = 0.45f),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .zIndex(1f)
+                    ) {
+                        IconButton(onClick = onDelete, modifier = Modifier.size(28.dp).testTag("photo_delete_${photo.id}")) {
+                            Icon(Icons.Default.Delete, contentDescription = "Elimina foto", tint = Color.White, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
                 if (photo.imageUri.isNotBlank()) {
                     AsyncImage(
                         model = photo.imageUri,

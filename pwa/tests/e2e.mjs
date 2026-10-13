@@ -9,6 +9,8 @@ import path from "node:path";
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "test-token";
 const GRADUATE_TOKEN = process.env.GRADUATE_TOKEN || "grad-luisi";
+const TREASURER_TOKEN = process.env.TREASURER_TOKEN || "cassa"; // il backend va avviato con TREASURER_TOKEN=cassa
+const treasurerHeaders = { "X-Treasurer-Token": TREASURER_TOKEN };
 const OUT = process.env.SCREENSHOT_DIR || "pwa/tests/screenshots";
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -78,6 +80,20 @@ check("badge azzerato dopo lettura", !(await page.textContent("#ntf-show")).incl
 
 console.log("3) Invitati & RSVP");
 await tab("rsvp");
+await page.waitForSelector("#limited-note");
+check("senza token l'elenco invitati è riservato (nessun nome, nota visibile)", (await page.$$("[data-guest]")).length === 0 && (await page.$("#catering")) === null);
+check("API: senza token la lista è vuota e il riepilogo è negato", (await fetch(BASE + "/api/guests").then((r) => r.json())).length === 0 && (await fetch(BASE + "/api/guests/summary")).status === 403);
+await tab("bus");
+await page.waitForSelector("#book-bus");
+check("senza token la navetta mostra solo le proprie prenotazioni", (await page.textContent("#screen")).includes("Le tue prenotazioni (0)"));
+// con il token festeggiato (non organizzatore) l'elenco completo è visibile
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-graduate");
+await page.fill("#s-graduate", GRADUATE_TOKEN);
+await page.click("#s-save");
+await page.waitForTimeout(800);
+await tab("rsvp");
 await page.waitForSelector("[data-guest]");
 const guestsBefore = (await page.$$("[data-guest]")).length;
 check("elenco invitati caricato dal server", guestsBefore >= 7);
@@ -106,8 +122,15 @@ check("toast invitato rimosso (creatore)", (await toastText()).includes("rimosso
 await page.waitForTimeout(500);
 await resetToast();
 await page.locator("[data-guest]", { hasText: "Giulia Colombo" }).locator("[data-del]").click();
-check("rimozione record altrui negata (403)", (await toastText()).includes("organizzatore"));
+check("rimozione record altrui negata (403): il festeggiato vede ma non cancella", (await toastText()).includes("organizzatore"));
 await shot("02-invitati");
+// tolgo il token festeggiato: le sezioni seguenti girano come invitato (poi come organizzatore)
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-graduate");
+await page.fill("#s-graduate", "");
+await page.click("#s-save");
+await page.waitForTimeout(800);
 
 console.log("4) Navetta");
 await tab("bus");
@@ -230,10 +253,20 @@ const csv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/e
 check("export CSV invitati", csv.ok && csv.body.replace(/^\ufeff/, "").startsWith("Nome;Categoria;Stato RSVP"));
 check("export CSV negato senza token", (await fetch(BASE + "/api/export/bus.csv")).status === 403);
 await page.click("#settings");
-check("pulsanti export in Impostazioni", (await page.$("#s-exp-guests")) !== null && (await page.$("#s-exp-bus")) !== null && (await page.$("#s-exp-pool")) !== null);
+check("pulsanti export in Impostazioni (quote solo con token cassiere, impostato dopo)", (await page.$("#s-exp-guests")) !== null && (await page.$("#s-exp-bus")) !== null && (await page.$("#s-exp-pool")) === null);
 await page.click(".modal .close");
 
-console.log("7c) Cruscotto cassiere (il token organizzatore vale anche come cassiere)");
+console.log("7c) Cruscotto cassiere (solo con il token cassiere: quello organizzatore non basta)");
+await tab("gifts");
+await page.waitForTimeout(400);
+check("con il solo token organizzatore nessun cruscotto delle quote", (await page.$(".board")) === null && (await fetch(BASE + "/api/gifts/pool", { headers: adminHeaders })).status === 403);
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-treasurer");
+check("export quote non offerto al solo organizzatore", (await page.$("#s-exp-pool")) === null);
+await page.fill("#s-treasurer", TREASURER_TOKEN);
+await page.click("#s-save");
+await page.waitForTimeout(800);
 await tab("gifts");
 await page.waitForSelector(".board");
 const boardText = await page.textContent(".board");
@@ -256,7 +289,7 @@ await page.uncheck(`[data-pool-pick="${myPool[0].id}"]`);
 const statusToast = await clickExpectToast('[data-pool-status][data-next="RECEIVED"]');
 check("segnata come ricevuta", statusToast.includes("ricevuta"));
 await page.waitForTimeout(600);
-const poolCsv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/export/gift-pool.csv", { headers: { "X-Admin-Token": localStorage.getItem("np.adminToken") } }); return { ok: r.ok, body: await r.text() }; }, BASE);
+const poolCsv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/export/gift-pool.csv", { headers: { "X-Treasurer-Token": localStorage.getItem("np.treasurerToken") } }); return { ok: r.ok, body: await r.text() }; }, BASE);
 check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Cassiere;Donatore;Contatto;Email;Metodo") && poolCsv.body.includes("TOTALE;") && poolCsv.body.includes("TOTALE DOTT. AKI"));
 check("la quota ricevuta non si può più annullare dal donatore (resta solo quella ad Aki)", (await page.$$("[data-pool-del]")).length === 1);
 check("CSV con appunti del cassiere", poolCsv.body.includes("bonifico visto il 3/11"));
@@ -355,8 +388,8 @@ await page.click("#pl-send");
 await page.waitForFunction(() => (document.querySelector("#pl-msg")?.textContent || "").length > 0, null, { timeout: 10000 });
 check("senza n8n il server lo dice", (await page.textContent("#pl-msg")).includes("organizzatori"));
 await page.click(".modal .close");
-const nuova = (await fetch(BASE + "/api/guests").then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
-check("invitata creata in attesa, senza email pubblica", nuova && nuova.rsvpStatus === "PENDING" && !("email" in nuova));
+const nuova = (await fetch(BASE + "/api/guests", { headers: adminHeaders }).then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
+check("invitata creata in attesa; l'email la vede l'organizzatore, l'elenco pubblico è vuoto", nuova && nuova.rsvpStatus === "PENDING" && nuova.email === "nuova@example.org" && (await fetch(BASE + "/api/guests").then((r) => r.json())).length === 0);
 const linkInfo = await fetch(BASE + `/api/guests/${nuova.id}/link`, { headers: adminHeaders }).then((r) => r.json());
 check("link personale generato dagli organizzatori", linkInfo.link.includes("#profilo="));
 await page.goto(BASE + "/#profilo=" + linkInfo.link.split("#profilo=")[1], { waitUntil: "networkidle" });
@@ -374,9 +407,9 @@ check("consenso obbligatorio", (await toastText()).includes("consenso"));
 await page.check("#pf-consent");
 check("profilo salvato", (await clickExpectToast("#pf-save")).includes("salvato"));
 await page.waitForTimeout(800);
-const nuovaDopo = (await fetch(BASE + "/api/guests").then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
+const nuovaDopo = (await fetch(BASE + "/api/guests", { headers: adminHeaders }).then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
 check("RSVP, menu e accompagnatore salvati sul server", nuovaDopo.rsvpStatus === "CONFIRMED" && nuovaDopo.guestsCount === 2 && nuovaDopo.menu === "VEGETARIANO" && nuovaDopo.companions[0].name === "Figlio Piccolo");
-check("riepilogo catering per menu", (await fetch(BASE + "/api/guests/summary").then((r) => r.json())).byMenu.some((m) => m.menu === "SENZA_GLUTINE" && m.covers >= 1));
+check("riepilogo catering per menu", (await fetch(BASE + "/api/guests/summary", { headers: adminHeaders }).then((r) => r.json())).byMenu.some((m) => m.menu === "SENZA_GLUTINE" && m.covers >= 1));
 check("lista invitati con menu e accompagnatori", (await page.textContent("#screen")).includes("con Figlio Piccolo") && (await page.textContent("#open-profile")).includes("Apri il mio profilo"));
 await page.waitForSelector("[data-link]");
 await page.click(`[data-link="${nuova.id}"]`);
@@ -401,7 +434,7 @@ check("sezione navetta nel profilo con fermate", (await page.$$("#pb-stop option
 check("navetta prenotata dal profilo", (await clickExpectToast("#pb-save")).includes("prenotata"));
 await page.waitForSelector("#pb-cancel", { timeout: 10000 });
 check("profilo mostra codice e stato confermata", /NP-[A-Z0-9]{4}/.test(await page.textContent("#pf-bus")) && (await page.textContent("#pf-bus")).includes("confermata"));
-const myBooking = (await fetch(BASE + "/api/bus/bookings").then((r) => r.json())).find((b) => b.guestId === nuova.id);
+const myBooking = (await fetch(BASE + "/api/bus/bookings", { headers: adminHeaders }).then((r) => r.json())).find((b) => b.guestId === nuova.id);
 check("prenotazione legata al profilo con 2 posti (le persone)", myBooking && myBooking.seatsCount === 2 && myBooking.status === "CONFIRMED");
 await page.click(".modal .close");
 // riempio il pullman via API: i posti restanti vanno a un gruppo, poi il profilo chiede 3 posti -> lista d'attesa
@@ -415,7 +448,7 @@ await page.waitForSelector("#pb-cancel");
 check("profilo in lista d'attesa", (await page.textContent("#pf-bus")).includes("lista d'attesa"));
 await page.click(".modal .close");
 await fetch(BASE + `/api/bus/bookings/${filler.id}`, { method: "DELETE", headers: { "X-Client-Id": "filler" } });
-const promoted = (await fetch(BASE + "/api/bus/bookings").then((r) => r.json())).find((b) => b.guestId === nuova.id);
+const promoted = (await fetch(BASE + "/api/bus/bookings", { headers: adminHeaders }).then((r) => r.json())).find((b) => b.guestId === nuova.id);
 check("promossa automaticamente quando si liberano posti", promoted.status === "CONFIRMED" && promoted.seatsCount === 3);
 check("promemoria navetta disponibile agli organizzatori", (await fetch(BASE + "/api/mail/reminders/bus", { method: "POST", headers: adminHeaders }).then((r) => r.json())).sent >= 1);
 await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
@@ -436,6 +469,11 @@ await page.click("#guide-skip");
 await shot("09-navetta-profilo");
 
 console.log("14) Area festeggiato (token GRADUATE_TOKEN_LUISI) e strumenti in blocco del cassiere");
+await page.click("#settings");
+await page.waitForSelector("#s-graduate");
+await page.fill("#s-graduate", "");
+await page.click("#s-save");
+await page.waitForTimeout(600);
 check("nessun pulsante 🎓 senza token", (await page.$("#graduate-area")) === null);
 await page.click("#settings");
 await page.waitForSelector("#s-graduate");
@@ -476,7 +514,7 @@ await page.waitForTimeout(1200);
 await tab("gifts");
 await page.waitForSelector(".board");
 const picks = await page.$$("[data-pool-pick]");
-const pendingNow = (await fetch(BASE + "/api/gifts/pool", { headers: adminHeaders }).then((r) => r.json())).contributions.filter((c) => c.status !== "RECEIVED").length;
+const pendingNow = (await fetch(BASE + "/api/gifts/pool", { headers: treasurerHeaders }).then((r) => r.json())).contributions.filter((c) => c.status !== "RECEIVED").length;
 check("tutte le quote in attesa sono selezionabili (comprese le due nuove)", picks.length === pendingNow && picks.length >= 3, `${picks.length} vs ${pendingNow}`);
 for (const p of picks) await p.check();
 check("contatore delle selezionate", (await page.textContent("#pool-batch")).includes(`(${picks.length})`));
@@ -501,7 +539,7 @@ await page.fill("#as-text", "Cambia il mio menu in vegano");
 await page.click("#as-send");
 await page.waitForSelector(".modal-bg", { state: "detached", timeout: 15000 }); // l'azione apre la sezione Invitati e chiude l'assistente
 await page.waitForTimeout(600);
-const nuovaMenu = (await fetch(BASE + "/api/guests").then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
+const nuovaMenu = (await fetch(BASE + "/api/guests", { headers: adminHeaders }).then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
 check("menu cambiato a voce e sezione Invitati aperta", nuovaMenu.menu === "VEGANO" && (await page.$(".modal-bg")) === null);
 // cruscotto organizzatori
 await tab("program");
@@ -520,7 +558,7 @@ await page.click("#im-preview");
 await page.waitForFunction(() => (document.querySelector("#im-result")?.textContent || "").includes("Anteprima"), null, { timeout: 10000 });
 const preview = await page.textContent("#im-result");
 check("anteprima dell'import", preview.includes("1 da creare") && preview.includes("1 da aggiornare") && preview.includes("1 senza nome") && preview.includes("aggiorna phone"), preview);
-check("nessuna scrittura in anteprima", !(await fetch(BASE + "/api/guests").then((r) => r.json())).some((g) => g.fullName === "Importato Uno"));
+check("nessuna scrittura in anteprima", !(await fetch(BASE + "/api/guests", { headers: adminHeaders }).then((r) => r.json())).some((g) => g.fullName === "Importato Uno"));
 const importToast = await clickExpectToast("#im-go");
 check("import eseguito", importToast.includes("1 creati") && importToast.includes("1 aggiornati"), importToast);
 await page.waitForTimeout(800);
@@ -529,6 +567,25 @@ const uno = imported.find((g) => g.fullName === "Importato Uno"), nuovaImp = imp
 check("invitato creato in attesa con 3 persone e Nuova aggiornata col telefono", uno && uno.rsvpStatus === "PENDING" && uno.guestsCount === 3 && uno.category === "Amici Università" && nuovaImp.phone === "333 0000000");
 check("dopo l'import si apre la lista invitati", (await page.textContent("#screen")).includes("Importato Uno"));
 await shot("11-cruscotto-import");
+
+console.log("16) Pulizia da organizzatore: elimina auguri e foto, svuota la cronologia");
+await tab("wishes");
+await page.waitForSelector(".wish");
+const wishCount = (await page.$$(".wish")).length, photoCount = (await page.$$(".photo")).length;
+check("cestini visibili all'organizzatore su auguri e foto", (await page.$$("[data-wish-del]")).length === wishCount && (await page.$$("[data-photo-del]")).length === photoCount);
+check("augurio eliminato", (await clickExpectToast(".wish [data-wish-del]")).includes("eliminato"));
+await page.waitForTimeout(600);
+check("un augurio in meno", (await page.$$(".wish")).length === wishCount - 1);
+check("foto eliminata", (await clickExpectToast(".photo [data-photo-del]")).includes("eliminata"));
+await page.waitForTimeout(600);
+check("una foto in meno", (await page.$$(".photo")).length === photoCount - 1);
+await tab("program");
+await page.click("#ntf-show");
+await page.waitForSelector("#ntf-clear");
+check("cronologia svuotata", (await clickExpectToast("#ntf-clear")).includes("svuotata"));
+await page.waitForTimeout(600);
+check("nessuna notifica pubblica dopo lo svuotamento", (await fetch(BASE + "/api/notifications").then((r) => r.json())).length === 0);
+await shot("12-pulizia");
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

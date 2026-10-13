@@ -52,7 +52,9 @@ def build_snapshot(backend_dir: str) -> dict:
         # la quota unica non compare nello snapshot (è riservata al cassiere), ma verifica che l'API accetti la richiesta
         c.post("/api/gifts/pool", json={"donorName": "Amici di Donato", "totalAmount": 80, "paymentMethod": "PayPal", "graduateIds": ["regina"], "note": "Per il nuovo ecografo!"}, headers=dev)
         c.post("/api/notifications", json={"title": "📍 Festa al Giardino dei Tempi", "message": "Confermata la sede della festa di venerdì 13 novembre: Il Giardino dei Tempi - Orto Botanico, Via Giovanni Amendola 247, Bari.", "category": "Festa"}, headers=admin)
-        return c.get("/api/snapshot").json()
+        # dallo snapshot senza token invitati e prenotazioni arrivano solo per i propri record: il fixture
+        # rappresenta la vista completa (organizzatore)
+        return c.get("/api/snapshot", headers=admin).json()
 
 
 def signature(snap: dict) -> dict:

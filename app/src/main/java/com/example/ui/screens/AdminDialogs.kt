@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.GuestImport
-import com.example.data.formatEuro
 import com.example.data.remote.DashboardDto
 import com.example.data.remote.ImportResultDto
 import com.example.data.remote.ImportRowRequest
@@ -139,7 +138,7 @@ fun DashboardDialog(
                         StatTile("Email", "$mailTotal", if (m.enabled) "${m.counts["DELIVERED"] ?: 0} consegnate · ${m.counts["FAILED"] ?: 0} fallite" else "n8n non attivo", if (m.enabled) Color(0xFF166534) else Color(0xFF991B1B), Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StatTile("Quote uniche", "${p.contributions}", "${p.pending} in attesa · ${formatEuro(p.receivedAmount)} ricevuti", LaurelGold, Modifier.weight(1f))
+                        StatTile("Quote uniche", "${p.contributions}", "${p.pending} in attesa · ${p.received} ricevute (cifre solo ai cassieri)", LaurelGold, Modifier.weight(1f))
                         StatTile("Bacheca", "${d.wishes}", "auguri · ${d.photos} foto · ${d.pushSubscriptions} push", MaterialTheme.colorScheme.primary, Modifier.weight(1f))
                     }
 

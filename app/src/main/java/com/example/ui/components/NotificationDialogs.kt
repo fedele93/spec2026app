@@ -211,8 +211,19 @@ fun SendPushNotificationDialog(
 @Composable
 fun NotificationsHistoryDialog(
     notifications: List<EventNotificationEntity>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onClear: (() -> Unit)? = null // solo organizzatori: svuota la cronologia per tutti
 ) {
+    var confirmClear by remember { mutableStateOf(false) }
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text("Svuotare la cronologia?") },
+            text = { Text("Le notifiche già inviate spariscono per tutti; quelle programmate restano.") },
+            confirmButton = { TextButton(onClick = { confirmClear = false; onClear?.invoke(); onDismiss() }, modifier = Modifier.testTag("notifications_clear_confirm")) { Text("Svuota") } },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Annulla") } }
+        )
+    }
     val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     AlertDialog(
@@ -313,6 +324,13 @@ fun NotificationsHistoryDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("Chiudi")
+            }
+        },
+        dismissButton = {
+            if (onClear != null && notifications.isNotEmpty()) {
+                TextButton(onClick = { confirmClear = true }, modifier = Modifier.testTag("notifications_clear_button")) {
+                    Text("Svuota cronologia")
+                }
             }
         }
     )

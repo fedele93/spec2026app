@@ -438,7 +438,8 @@ fun ProgramAndEventScreen(
     if (showHistoryDialog) {
         NotificationsHistoryDialog(
             notifications = notifications,
-            onDismiss = { showHistoryDialog = false }
+            onDismiss = { showHistoryDialog = false },
+            onClear = if (viewModel.isAdmin) ({ viewModel.clearNotificationHistory() }) else null
         )
     }
 

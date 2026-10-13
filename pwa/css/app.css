@@ -271,3 +271,14 @@ button.pill { border: none; cursor: pointer; font: inherit; font-size: 11px; fon
 
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
 .btn-danger { background: #FEE2E2; color: #991B1B; }
+
+/* cruscotto cassiere: strumenti per quota, selezione multipla */
+.pool-pick { width: 18px; height: 18px; flex: none; accent-color: var(--primary); }
+.pool-pick-space { width: 18px; flex: none; }
+.pool-tools { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.contact-link { font-size: 12px; font-weight: 600; color: var(--primary); background: none; border: 1px solid var(--outline); border-radius: 999px; padding: 2px 8px; text-decoration: none; cursor: pointer; font-family: inherit; }
+.pool-note { width: 100%; font-size: 12px; color: var(--on-surface); background: #FEF9C3; border-radius: 8px; padding: 4px 8px; margin-top: 2px; }
+/* area festeggiato */
+.grad-stats { display: flex; gap: 8px; margin: 8px 0 12px; }
+.grad-wish { border-left: 3px solid var(--gold); padding: 6px 10px; margin: 6px 0; background: var(--bg); border-radius: 0 8px 8px 0; font-size: 13px; }
+.grad-wish .who { font-size: 12px; color: var(--on-surface-var); }

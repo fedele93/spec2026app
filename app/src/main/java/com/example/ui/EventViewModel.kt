@@ -145,10 +145,10 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         SharingStarted.WhileSubscribed(5000),
         emptyList()
     )
-    val giftCollector = repository.giftCollector.stateIn(
+    val giftCollectors = repository.giftCollectors.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
-        null
+        emptyList()
     )
 
     /** Quote uniche registrate da questo dispositivo: aggiornate quando si apre la tab Regali e dopo ogni modifica. */

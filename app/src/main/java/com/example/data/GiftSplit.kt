@@ -23,7 +23,7 @@ object GiftSplit {
 
     /** Costruisce la quota (con la ripartizione) come farebbe il server; lancia IllegalArgumentException con
      *  un messaggio per l'utente se la richiesta non è valida. */
-    fun build(request: PoolContributionRequest, targets: List<GiftTargetEntity>, id: Long = 0): GiftPoolContribution {
+    fun build(request: PoolContributionRequest, targets: List<GiftTargetEntity>, id: Long = 0, collector: GiftCollectorEntity? = null): GiftPoolContribution {
         require(request.donorName.isNotBlank()) { "Il nome è obbligatorio: serve al cassiere per riconoscere il versamento" }
         val byId = targets.associateBy { it.id }
         val allocations: List<GiftPoolAllocation>
@@ -45,8 +45,11 @@ object GiftSplit {
         val totalCents = allocations.sumOf { cents(it.amount) }
         return GiftPoolContribution(
             id = id,
+            collectorId = collector?.id ?: request.collectorId,
+            collectorName = collector?.name ?: "",
             donorName = request.donorName.trim(),
             contact = request.contact.trim(),
+            email = request.email.trim().lowercase(),
             paymentMethod = request.paymentMethod,
             splitMode = request.splitMode,
             totalAmount = totalCents / 100.0,

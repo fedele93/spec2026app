@@ -13,6 +13,7 @@ import com.example.data.remote.RemoteException
 import com.example.data.remote.SnapshotDto
 import com.example.data.remote.WishRequest
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -37,8 +38,9 @@ class EventRepository(private val db: AppDatabase) {
     val allWishes: Flow<List<WishEntity>> = db.wishDao().getAllWishes()
     val allPhotos: Flow<List<SharedPhotoEntity>> = db.photoDao().getAllPhotos()
     val giftTargets: Flow<List<GiftTargetEntity>> = db.giftDao().getAllTargets()
-    /** Cassiere delle quote uniche (dallo snapshot del server o da SeedData). */
-    val giftCollector: Flow<GiftCollectorEntity?> = db.giftDao().getCollector()
+    /** Cassieri delle quote uniche (dallo snapshot del server o da SeedData), nell'ordine del JSON. */
+    val giftCollectors: Flow<List<GiftCollectorEntity>> = db.giftDao().getCollectors()
+    val giftCollector: Flow<GiftCollectorEntity?> = giftCollectors.map { it.firstOrNull() }
 
     /** Quote uniche registrate in modalità locale/demo: solo in memoria, non sono dati condivisi. */
     private val localPool = MutableStateFlow<List<GiftPoolContribution>>(emptyList())
@@ -75,8 +77,11 @@ class EventRepository(private val db: AppDatabase) {
 
             db.giftDao().deleteAllTargets()
             db.giftDao().insertTargets(snapshot.giftTargets)
-            val collector = snapshot.event?.giftCollector
-            if (collector != null) db.giftDao().upsertCollector(collector.toEntity())
+            val collectors = snapshot.event?.collectors().orEmpty()
+            if (collectors.isNotEmpty()) {
+                db.giftDao().deleteCollectors()
+                db.giftDao().insertCollectors(collectors.mapIndexed { i, c -> c.toEntity(sortOrder = i) })
+            }
 
             db.notificationDao().deleteAll()
             db.notificationDao().insertNotifications(
@@ -226,7 +231,10 @@ class EventRepository(private val db: AppDatabase) {
     suspend fun addPoolContribution(request: PoolContributionRequest): GiftPoolContribution {
         val api = remote
         if (api == null) {
-            val contribution = GiftSplit.build(request, db.giftDao().getAllTargetsOnce(), id = ++localPoolSeq)
+            val collector = db.giftDao().getCollectorOnce(request.collectorId) ?: db.giftDao().getCollectors().first().firstOrNull()
+            val method = request.paymentMethod
+            require(collector == null || method in collector.paymentMethods) { "${collector?.name} non accetta $method" }
+            val contribution = GiftSplit.build(request, db.giftDao().getAllTargetsOnce(), id = ++localPoolSeq, collector = collector)
             localPool.value = listOf(contribution) + localPool.value
             return contribution
         }
@@ -289,7 +297,7 @@ class EventRepository(private val db: AppDatabase) {
         }
         if (db.giftDao().countTargets() == 0) {
             db.giftDao().insertTargets(SeedData.giftTargets)
-            db.giftDao().upsertCollector(SeedData.giftCollector)
+            db.giftDao().insertCollectors(SeedData.giftCollectors)
         }
         if (db.notificationDao().countNotifications() == 0) {
             db.notificationDao().insertNotifications(SeedData.notifications)

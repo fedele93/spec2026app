@@ -49,12 +49,16 @@ data class SnapshotDto(
     val notifications: List<EventNotificationEntity> = emptyList()
 )
 
+/** snapshot.event: i cassieri delle quote uniche (giftCollectors); giftCollector è il primo, per i server più vecchi. */
 @JsonClass(generateAdapter = true)
-data class SnapshotEventDto(val giftCollector: GiftCollectorDto? = null)
+data class SnapshotEventDto(val giftCollector: GiftCollectorDto? = null, val giftCollectors: List<GiftCollectorDto> = emptyList()) {
+    fun collectors(): List<GiftCollectorDto> = giftCollectors.ifEmpty { listOfNotNull(giftCollector) }
+}
 
-/** Blocco "giftCollector" (GET /api/gifts/collector e snapshot.event). */
+/** Un cassiere (GET /api/gifts/collectors, GET /api/gifts/collector e snapshot.event). */
 @JsonClass(generateAdapter = true)
 data class GiftCollectorDto(
+    val id: String = "",
     val name: String = "",
     val roleTitle: String = "",
     val description: String = "",
@@ -64,7 +68,8 @@ data class GiftCollectorDto(
     val paymentMethods: List<String> = listOf("IBAN", "PayPal", "Contanti"),
     val transferReason: String = ""
 ) {
-    fun toEntity(): GiftCollectorEntity = GiftCollectorEntity(
+    fun toEntity(sortOrder: Int = 0): GiftCollectorEntity = GiftCollectorEntity(
+        id = id.ifBlank { name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-') }, sortOrder = sortOrder,
         name = name, roleTitle = roleTitle, description = description, iban = iban, ibanHolder = ibanHolder,
         paypalMeUrl = paypalMeUrl, paymentMethodsCsv = paymentMethods.joinToString(","), transferReason = transferReason
     )
@@ -78,8 +83,11 @@ data class GiftPoolAllocation(val graduateId: String, val graduateName: String =
 @JsonClass(generateAdapter = true)
 data class GiftPoolContribution(
     val id: Long = 0,
+    val collectorId: String = "",
+    val collectorName: String = "",
     val donorName: String,
     val contact: String = "",
+    val email: String = "",
     val paymentMethod: String = "IBAN", // IBAN | PayPal | Contanti
     val splitMode: String = "EQUAL", // EQUAL | CUSTOM
     val totalAmount: Double,
@@ -135,8 +143,10 @@ data class PoolAllocationRequest(val graduateId: String, val amount: Double)
  *  con CUSTOM usa allocations e il totale è la somma. */
 @JsonClass(generateAdapter = true)
 data class PoolContributionRequest(
+    val collectorId: String = "",
     val donorName: String,
     val contact: String = "",
+    val email: String = "",
     val paymentMethod: String = "IBAN",
     val splitMode: String = "EQUAL",
     val totalAmount: Double? = null,
@@ -198,6 +208,9 @@ interface NeuroPartyApi {
 
     @GET("api/gifts/collector")
     suspend fun giftCollector(): GiftCollectorDto
+
+    @GET("api/gifts/collectors")
+    suspend fun giftCollectors(): List<GiftCollectorDto>
 
     @POST("api/gifts/pool")
     suspend fun addPoolContribution(@Body body: PoolContributionRequest): GiftPoolContribution

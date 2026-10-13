@@ -200,20 +200,24 @@ for t in d.get("giftTargets", []):
 out.append("    )")
 out.append("")
 
-# Gift collector: l'app Android 1.6 conosce un solo cassiere -> il primo di giftCollectors
+# Cassieri delle quote uniche (giftCollectors; i file più vecchi hanno un solo giftCollector)
 _collectors = d.get("giftCollectors")
 if _collectors is None:
     _collectors = [d["giftCollector"]] if d.get("giftCollector") else []
-c = _collectors[0] if _collectors else {}
-out.append("    val giftCollector: GiftCollectorEntity = GiftCollectorEntity(")
-out.append("        name = %s," % kt_str(c.get("name")))
-out.append("        roleTitle = %s," % kt_str(c.get("roleTitle")))
-out.append("        description = %s," % kt_str(c.get("description")))
-out.append("        iban = %s," % kt_str(c.get("iban")))
-out.append("        ibanHolder = %s," % kt_str(c.get("ibanHolder")))
-out.append("        paypalMeUrl = %s," % kt_str(c.get("paypalMeUrl")))
-out.append("        paymentMethodsCsv = %s," % kt_str(",".join(c.get("paymentMethods", ["IBAN", "PayPal", "Contanti"])), raw=True))
-out.append("        transferReason = %s" % kt_str(c.get("transferReason")))
+out.append("    val giftCollectors: List<GiftCollectorEntity> = listOf(")
+for i, c in enumerate(_collectors):
+    out.append("        GiftCollectorEntity(")
+    out.append("            id = %s," % kt_str(c.get("id") or "cassiere%d" % (i + 1)))
+    out.append("            sortOrder = %d," % i)
+    out.append("            name = %s," % kt_str(c.get("name")))
+    out.append("            roleTitle = %s," % kt_str(c.get("roleTitle")))
+    out.append("            description = %s," % kt_str(c.get("description")))
+    out.append("            iban = %s," % kt_str(c.get("iban")))
+    out.append("            ibanHolder = %s," % kt_str(c.get("ibanHolder")))
+    out.append("            paypalMeUrl = %s," % kt_str(c.get("paypalMeUrl")))
+    out.append("            paymentMethodsCsv = %s," % kt_str(",".join(c.get("paymentMethods", ["IBAN", "PayPal", "Contanti"])), raw=True))
+    out.append("            transferReason = %s" % kt_str(c.get("transferReason")))
+    out.append("        )%s" % ("," if i < len(_collectors) - 1 else ""))
 out.append("    )")
 out.append("")
 

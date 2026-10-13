@@ -40,11 +40,15 @@ class SnapshotParsingTest {
         assertTrue(snap.giftTargets.none { it.id == "gruppo" })
         val luisi = snap.giftTargets.first { it.id == "luisi" }
         assertTrue(luisi.iban.isNotBlank() && luisi.paypalMeUrl.isNotBlank())
+        val collectors = snap.event?.collectors().orEmpty()
+        assertEquals(listOf("roberto", "aki"), collectors.map { it.id })
         val collector = snap.event?.giftCollector
         assertNotNull(collector)
         assertEquals("Dott. Paolo Roberto", collector!!.name)
         assertEquals(listOf("IBAN", "PayPal", "Contanti"), collector.paymentMethods)
         assertEquals("IBAN,PayPal,Contanti", collector.toEntity().paymentMethodsCsv)
+        assertEquals("roberto", collector.toEntity().id)
+        assertEquals(1, collectors[1].toEntity(sortOrder = 1).sortOrder)
 
         val uploaded = snap.photos.firstOrNull { it.imageUri.isNotBlank() }
         assertNotNull("il server deve restituire URL assoluti per le foto caricate", uploaded)

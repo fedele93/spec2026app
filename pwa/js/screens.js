@@ -2,7 +2,8 @@
 import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, GIFT_COLLECTORS, collectorById, splitEqually, reconnect } from "./data.js";
 import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
-import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getClientId, downloadCsv } from "./api.js";
+import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getGraduateToken, setGraduateToken, isGraduate, getGuestToken, getClientId, downloadCsv } from "./api.js";
+import { openGraduateArea } from "./graduate.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
 import { openProfile, openMailAdmin, hasProfile, MENU_LABELS } from "./profile.js";
 import { openGuide } from "./guide.js";
@@ -39,6 +40,7 @@ export async function program(el) {
         <div style="display:flex;gap:6px;">
           <button class="icon-round" id="open-guide" aria-label="Guida" title="Come funziona l'app">?</button>
           ${serverMode ? `<button class="icon-round" id="my-profile" aria-label="Il mio profilo" title="Il mio profilo">👤</button>` : ""}
+          ${serverMode && isGraduate() ? `<button class="icon-round" id="graduate-area" aria-label="Area festeggiato" title="Area festeggiato">🎓</button>` : ""}
           <button class="icon-round" id="ntf-show" aria-label="Notifiche">🔔${unread > 0 ? `<span class="dot">${unread}</span>` : ""}</button>
           <button class="icon-round" id="settings" aria-label="Impostazioni">⚙️</button>
         </div>
@@ -93,6 +95,8 @@ export async function program(el) {
   const mp = el.querySelector("#my-profile");
   if (mp) mp.onclick = () => openProfile();
   el.querySelector("#open-guide").onclick = () => openGuide();
+  const grad = el.querySelector("#graduate-area");
+  if (grad) grad.onclick = () => openGraduateArea();
   const calBtn = el.querySelector("#cal-add");
   if (calBtn && !serverMode) calBtn.onclick = (e) => { e.preventDefault(); downloadIcs(EVENT); toast("File calendario scaricato: aprilo per aggiungere seduta e festa 📅"); };
   const sendBtn = el.querySelector("#ntf-send");
@@ -273,6 +277,8 @@ function settingsDialog() {
     <div class="muted" style="margin-bottom:10px;">Con il token puoi inviare notifiche push a tutti e cancellare qualsiasi invitato o prenotazione.</div>
     <div class="field"><label>Token cassiere quote uniche (X-Treasurer-Token)</label><input id="s-treasurer" type="password" value="${esc(getTreasurerToken())}" placeholder="Solo per chi raccoglie le quote uniche"></div>
     <div class="muted" style="margin-bottom:10px;">Con il token cassiere la tab Regali mostra il cruscotto delle quote uniche (chi, quanto, per chi) e il CSV per Excel.</div>
+    <div class="field"><label>Token festeggiato (X-Graduate-Token)</label><input id="s-graduate" type="password" value="${esc(getGraduateToken())}" placeholder="Solo per i neo-specialisti"></div>
+    <div class="muted" style="margin-bottom:10px;">Con il tuo token personale compare il pulsante 🎓 in alto: chi viene, gli auguri per te, le tue coordinate di pagamento e il tuo avatar dell'assistente.</div>
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📄 Esporta per ristorante e autista</b>
       <div class="muted" style="margin-bottom:8px;">File CSV (si aprono con Excel) con tutti gli invitati e le prenotazioni della navetta.</div>
       <div class="btn-row"><button class="btn btn-ghost" id="s-exp-guests">Esporta invitati</button><button class="btn btn-ghost" id="s-exp-bus">Esporta navetta</button></div></div>` : ""}
@@ -310,6 +316,7 @@ function settingsDialog() {
         const changedApi = (bg.querySelector("#s-api").value.trim().replace(/\/+$/, "")) !== (localStorage.getItem("np.apiBase") || "");
         setAdminToken(bg.querySelector("#s-token").value);
         setTreasurerToken(bg.querySelector("#s-treasurer").value);
+        setGraduateToken(bg.querySelector("#s-graduate").value);
         setApiBase(bg.querySelector("#s-api").value);
         close();
         if (changedApi || !serverMode) { await reconnect(); updateStatusBar(); }
@@ -767,7 +774,8 @@ function poolDialog(targets, collector, onDone) {
   openModal(`<h3>🤝 Quota unica • ${esc(collector.name || "cassiere")}</h3>
     <div class="muted" style="margin-bottom:10px;">Un solo versamento: ${esc(shortName(collector.name) || "il cassiere")} lo ripartisce fra i neo-specialisti secondo le tue indicazioni.</div>
     <div class="field"><label>Il tuo nome e cognome *</label><input id="q-donor" placeholder="Serve al cassiere per riconoscere il versamento"></div>
-    <div class="field"><label>Contatto (facoltativo: telefono o e-mail)</label><input id="q-contact"></div>
+    <div class="field"><label>La tua email (facoltativa: ricevi la conferma con IBAN e causale)</label><input id="q-email" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></div>
+    <div class="field"><label>Telefono (facoltativo, per il cassiere)</label><input id="q-contact" type="tel" inputmode="tel" autocomplete="tel"></div>
     <div class="field"><label>Come vuoi ripartire la quota?</label>
       <div class="chips" id="q-modes"><button class="chip active" data-mode="EQUAL">In parti uguali</button><button class="chip" data-mode="CUSTOM">Personalizza</button></div></div>
     <div id="q-equal">
@@ -824,10 +832,18 @@ function poolDialog(targets, collector, onDone) {
       $$("#q-methods .chip").forEach((c) => c.onclick = () => { $$("#q-methods .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active"); method = c.dataset.m; paintPay(); });
       $("#q-donor").oninput = () => { if (method === "IBAN") paintPay(); };
       paintPay(); refresh();
+      // chi ha il profilo trova nome, email e telefono già compilati
+      if (getGuestToken() && Repo.mode === "server") api.profileGet().then((d) => {
+        if (!$("#q-donor").value) { $("#q-donor").value = d.guest.fullName || ""; if (method === "IBAN") paintPay(); }
+        if (!$("#q-email").value) $("#q-email").value = d.guest.email || "";
+        if (!$("#q-contact").value) $("#q-contact").value = d.guest.phone || "";
+      }).catch(() => {});
       $("#q-save").onclick = async () => {
         const donorName = $("#q-donor").value.trim();
         if (!donorName) { toast("Inserisci nome e cognome: servono al cassiere"); return; }
-        const body = { collectorId: collector.id, donorName, contact: $("#q-contact").value.trim(), paymentMethod: method, splitMode: mode, note: $("#q-note").value.trim() };
+        const email = $("#q-email").value.trim();
+        if (email && !email.includes("@")) { toast("Email non valida"); return; }
+        const body = { collectorId: collector.id, donorName, contact: $("#q-contact").value.trim(), email, paymentMethod: method, splitMode: mode, note: $("#q-note").value.trim() };
         if (mode === "EQUAL") {
           if (!amount || amount <= 0) { toast("Inserisci un importo valido"); return; }
           if (!selectedIds().length) { toast("Scegli almeno un neo-specialista"); return; }
@@ -836,7 +852,7 @@ function poolDialog(targets, collector, onDone) {
           body.allocations = customRows();
           if (!body.allocations.length) { toast("Indica almeno un importo"); return; }
         }
-        const ok = await tryAction(() => Repo.addPoolContribution(body), `Quota di ${eur2(totalNow())} registrata: grazie! 🎉`);
+        const ok = await tryAction(() => Repo.addPoolContribution(body), `Quota di ${eur2(totalNow())} registrata: grazie! 🎉${email ? " Ti abbiamo inviato la conferma via email." : ""}`);
         if (ok) { close(); onDone(); }
       };
     });
@@ -851,20 +867,31 @@ async function poolBoard(box, targets) {
   const sections = (s.byCollector && s.byCollector.length) ? s.byCollector : [{ collectorId: "", collectorName: "", ...s }];
   const multi = sections.length > 1;
   const rowsOf = (cid) => board.contributions.filter((c) => !multi || (c.collectorId || sections[0].collectorId) === cid);
-  const contributionRow = (c) => `<div class="row">
+  const contactLinks = (c) => {
+    const out = [];
+    const mail = c.email || ((c.contact || "").includes("@") ? c.contact : "");
+    const tel = /\d{5,}/.test(c.contact || "") && !(c.contact || "").includes("@") ? c.contact.replace(/[^+\d]/g, "") : "";
+    if (mail) out.push(`<a class="contact-link" href="mailto:${esc(mail)}" title="${esc(mail)}">✉️ Email</a>`);
+    if (tel) out.push(`<a class="contact-link" href="tel:${esc(tel)}" title="${esc(c.contact)}">📞 Chiama</a>`);
+    return out.join(" ");
+  };
+  const contributionRow = (c) => `<div class="row pool-row" data-pool-row="${c.id}">
+      ${c.status !== "RECEIVED" ? `<input type="checkbox" class="pool-pick" data-pool-pick="${c.id}" aria-label="Seleziona">` : `<span class="pool-pick-space"></span>`}
       <div class="grow"><div class="name">${esc(c.donorName)} · ${eur2(c.totalAmount)} · ${esc(c.paymentMethod)}</div>
         <div class="cat">${c.allocations.length === targets.length && c.splitMode === "EQUAL" ? `parti uguali (${eur2(c.allocations[0]?.amount)} ciascuno)` : c.allocations.map((a) => `${esc(shortName(a.graduateName))} ${eur2(a.amount)}`).join(", ")}</div>
-        <div class="cat">${fmtTime(c.createdAt)}${c.contact ? ` · ${esc(c.contact)}` : ""}${c.note ? ` · “${esc(c.note)}”` : ""}</div></div>
+        <div class="cat">${fmtTime(c.createdAt)}${c.contact ? ` · ${esc(c.contact)}` : ""}${c.email ? ` · ${esc(c.email)}` : ""}${c.note ? ` · “${esc(c.note)}”` : ""}</div>
+        <div class="cat pool-tools">${contactLinks(c)} <button class="contact-link" data-pool-note="${c.id}">📝 ${c.treasurerNote ? "Appunti" : "Aggiungi appunti"}</button>${c.treasurerNote ? `<div class="pool-note">${esc(c.treasurerNote)}</div>` : ""}</div></div>
       <button class="pill ${c.status === "RECEIVED" ? "pill-conf" : "pill-pend"}" data-pool-status="${c.id}" data-next="${c.status === "RECEIVED" ? "PENDING" : "RECEIVED"}">${POOL_STATUS[c.status] || c.status}</button>
     </div>`;
   box.innerHTML = `<details class="card board" open>
     <summary><b>📒 Cassa quote uniche</b> <span class="muted">${s.contributions} quote · ${eur2(s.totalAmount)} (ricevute ${eur2(s.receivedAmount)}, in attesa ${eur2(s.pendingAmount)})</span></summary>
-    ${serverMode ? `<button class="btn btn-primary" id="pool-csv" style="margin-top:10px;">📄 Scarica per Excel (CSV)</button>` : ""}
+    ${serverMode ? `<div class="btn-row" style="margin-top:10px;"><button class="btn btn-primary" id="pool-csv">📄 Scarica per Excel (CSV)</button><button class="btn btn-ghost" id="pool-remind" title="Email a chi ha lasciato l'indirizzo e la cui quota è in attesa da almeno 7 giorni">🔔 Promemoria ai donatori in attesa</button></div>` : ""}
+    <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" id="pool-batch" disabled>✓ Segna ricevute le selezionate</button></div>
     ${sections.map((sec) => `<div class="board-section" data-board-collector="${esc(sec.collectorId)}">
       ${multi ? `<h4 class="board-title">👛 ${esc(sec.collectorName)} <span class="muted">· ${sec.contributions} quote · ${eur2(sec.totalAmount)} (ricevute ${eur2(sec.receivedAmount)})</span></h4>` : ""}
       <div class="muted" style="margin:8px 0 4px;"><b>Quanto spetta a ciascuno</b> (tra parentesi la parte già ricevuta)</div>
       <table class="tbl"><tbody>${sec.byGraduate.map((g) => `<tr><td>${esc(shortName(g.graduateName))}</td><td class="num"><b>${eur2(g.amount)}</b> <span class="muted">(${eur2(g.receivedAmount)})</span></td></tr>`).join("")}</tbody></table>
-      <div class="muted" style="margin:12px 0 4px;"><b>Quote registrate</b> · tocca lo stato per segnarla ricevuta</div>
+      <div class="muted" style="margin:12px 0 4px;"><b>Quote registrate</b> · tocca lo stato per segnarla ricevuta, oppure selezionane più di una</div>
       ${rowsOf(sec.collectorId).length ? rowsOf(sec.collectorId).map(contributionRow).join("") : `<div class="muted">Nessuna quota registrata finora.</div>`}
     </div>`).join("")}
   </details>`;
@@ -873,4 +900,23 @@ async function poolBoard(box, targets) {
   box.querySelectorAll("[data-pool-status]").forEach((b) => b.onclick = async () => {
     if (await tryAction(() => Repo.setPoolStatus(Number(b.dataset.poolStatus), b.dataset.next), b.dataset.next === "RECEIVED" ? "Segnata come ricevuta ✓" : "Rimessa in attesa")) poolBoard(box, targets);
   });
+  const batch = box.querySelector("#pool-batch");
+  const picked = () => [...box.querySelectorAll("[data-pool-pick]:checked")].map((c) => Number(c.dataset.poolPick));
+  box.querySelectorAll("[data-pool-pick]").forEach((c) => c.onchange = () => { const n = picked().length; batch.disabled = n === 0; batch.textContent = n ? `✓ Segna ricevute le selezionate (${n})` : "✓ Segna ricevute le selezionate"; });
+  batch.onclick = async () => {
+    const ids = picked(); if (!ids.length) return;
+    if (await tryAction(() => Repo.setPoolStatusBatch(ids, "RECEIVED"), `${ids.length} quote segnate come ricevute ✓`)) poolBoard(box, targets);
+  };
+  box.querySelectorAll("[data-pool-note]").forEach((b) => b.onclick = async () => {
+    const id = Number(b.dataset.poolNote);
+    const current = board.contributions.find((c) => c.id === id)?.treasurerNote || "";
+    const note = prompt("Appunti del cassiere (visibili solo a cassieri e organizzatori):", current);
+    if (note === null) return;
+    if (await tryAction(() => Repo.setPoolNote(id, note.trim()), note.trim() ? "Appunti salvati" : "Appunti rimossi")) poolBoard(box, targets);
+  });
+  const remind = box.querySelector("#pool-remind");
+  if (remind) remind.onclick = async () => {
+    if (!confirm("Mandare un promemoria (con IBAN e causale) a chi ha lasciato l'email e la cui quota è in attesa da almeno 7 giorni?")) return;
+    try { const r = await api.mailRemindPool(7); toast(r.sent ? `Promemoria inviati: ${r.sent}` : "Nessuna quota in attesa da 7 giorni con un'email"); } catch (e) { toast(e.message); }
+  };
 }

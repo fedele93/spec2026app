@@ -7,6 +7,7 @@ const LS_API = "np.apiBase";
 const LS_TOKEN = "np.adminToken";
 const LS_CLIENT = "np.clientId";
 const LS_TREASURER = "np.treasurerToken";
+const LS_GRADUATE = "np.graduateToken";
 const LS_GUEST = "np.guestToken";
 
 function ls(key, fallback = "") {
@@ -43,6 +44,10 @@ export function getTreasurerToken() { return ls(LS_TREASURER); }
 export function setTreasurerToken(token) { lsSet(LS_TREASURER, (token || "").trim()); }
 // Il cruscotto delle quote uniche è visibile al cassiere e agli organizzatori (il server accetta entrambi i token).
 export function isTreasurer() { return !!getTreasurerToken() || isAdmin(); }
+// Festeggiato: GRADUATE_TOKEN_<ID> sul server apre l'area 🎓 (chi viene, auguri, coordinate, il proprio avatar)
+export function getGraduateToken() { return ls(LS_GRADUATE); }
+export function setGraduateToken(token) { lsSet(LS_GRADUATE, (token || "").trim()); }
+export function isGraduate() { return !!getGraduateToken(); }
 
 export class ApiError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -56,6 +61,8 @@ function headers(extra = {}) {
   if (tt) h["X-Treasurer-Token"] = tt;
   const gt = getGuestToken();
   if (gt) h["X-Guest-Token"] = gt;
+  const gr = getGraduateToken();
+  if (gr) h["X-Graduate-Token"] = gr;
   return h;
 }
 
@@ -128,6 +135,10 @@ export const api = {
   // cruscotto del cassiere (token cassiere o organizzatore)
   poolBoard: () => request("/api/gifts/pool"),
   setPoolStatus: (id, status) => request(`/api/gifts/pool/${id}/status`, { method: "PATCH", json: { status } }),
+  setPoolStatusBatch: (ids, status) => request("/api/gifts/pool/status", { method: "POST", json: { ids, status } }),
+  setPoolNote: (id, treasurerNote) => request(`/api/gifts/pool/${id}`, { method: "PATCH", json: { treasurerNote } }),
+  mailRemindPool: (days = 7) => request(`/api/mail/reminders/pool?days=${days}`, { method: "POST", timeoutMs: 60000 }),
+  graduateMe: () => request("/api/graduate/me"),
 
   notifications: (since = 0) => request(`/api/notifications${since ? `?since=${since}` : ""}`),
   sendNotification: (n) => request("/api/notifications", { method: "POST", json: n }),

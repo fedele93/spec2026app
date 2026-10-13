@@ -110,14 +110,17 @@ interface GiftDao {
     @Query("DELETE FROM gift_targets")
     suspend fun deleteAllTargets()
 
-    @Query("SELECT * FROM gift_collector WHERE id = 1")
-    fun getCollector(): Flow<GiftCollectorEntity?>
+    @Query("SELECT * FROM gift_collectors ORDER BY sortOrder ASC, id ASC")
+    fun getCollectors(): Flow<List<GiftCollectorEntity>>
+
+    @Query("SELECT * FROM gift_collectors WHERE id = :id")
+    suspend fun getCollectorOnce(id: String): GiftCollectorEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertCollector(collector: GiftCollectorEntity)
+    suspend fun insertCollectors(collectors: List<GiftCollectorEntity>)
 
-    @Query("DELETE FROM gift_collector")
-    suspend fun deleteCollector()
+    @Query("DELETE FROM gift_collectors")
+    suspend fun deleteCollectors()
 }
 
 @Dao

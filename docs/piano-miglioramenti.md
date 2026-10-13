@@ -119,9 +119,10 @@ evento dedicato; n8n lo spedisce con il nodo Send Email già configurato.
 
 ## 4. Fasi e ordine di lavoro
 
-Stato al 13 ottobre 2026: fasi 1, 2 e 3 realizzate (PWA e backend); in più la guida alla prima
-apertura. Restano la fase 4 (area festeggiati, promemoria ai donatori, scelta del cassiere su
-Android) e la fase 5 (assistente sul profilo, import invitati, cruscotto organizzatori).
+Stato al 13 ottobre 2026: fasi 1, 2, 3 e 4 realizzate (PWA, backend e, per la fase 4, anche
+Android); in più la guida alla prima apertura. Resta la fase 5 (assistente sul profilo, import
+invitati, cruscotto organizzatori). Della fase 4 non sono state fatte le notifiche push ai
+festeggiati per le foto (arriva l'email per gli auguri dedicati).
 
 | Fase | Contenuto | Stima | Dipendenze |
 |---|---|---|---|

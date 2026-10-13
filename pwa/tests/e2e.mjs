@@ -1,5 +1,6 @@
 // Test end-to-end della PWA con Playwright contro un backend locale.
-// Uso:  BASE_URL=http://127.0.0.1:8765 ADMIN_TOKEN=test-token node pwa/tests/e2e.mjs
+// Uso:  BASE_URL=http://127.0.0.1:8765 ADMIN_TOKEN=test-token GRADUATE_TOKEN=grad-luisi node pwa/tests/e2e.mjs
+// (il backend va avviato anche con GRADUATE_TOKEN_LUISI=grad-luisi per la sezione 14)
 // Richiede: npm i playwright (o @playwright/test) e un backend avviato con PWA_DIR=pwa e SEED_DEMO_DATA=true.
 import { chromium } from "playwright";
 import fs from "node:fs";
@@ -7,6 +8,7 @@ import path from "node:path";
 
 const BASE = process.env.BASE_URL || "http://127.0.0.1:8765";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "test-token";
+const GRADUATE_TOKEN = process.env.GRADUATE_TOKEN || "grad-luisi";
 const OUT = process.env.SCREENSHOT_DIR || "pwa/tests/screenshots";
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -30,7 +32,8 @@ const consoleErrors = [];
 page.on("pageerror", (e) => consoleErrors.push("pageerror: " + e.message));
 // "Failed to load resource" arriva anche per le risposte 403/409 attese dai test negativi e per le tile mappa senza rete
 page.on("console", (m) => { if (m.type() === "error" && !m.text().startsWith("Failed to load resource")) consoleErrors.push(m.text()); });
-page.on("dialog", (d) => d.accept());
+let promptAnswer; // risposta per i prompt() (appunti del cassiere); confirm() e alert() vengono sempre accettati
+page.on("dialog", (d) => d.accept(d.type() === "prompt" ? promptAnswer : undefined));
 
 const shot = (name) => page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: true });
 const tab = async (name) => { await page.click(`.tab[data-tab="${name}"]`); await page.waitForTimeout(400); };
@@ -162,6 +165,8 @@ await page.click("#pool-open");
 await page.waitForSelector("#q-save");
 check("metodi cassa: IBAN, PayPal, Contanti (no Satispay)", (await Promise.all((await page.$$("#q-methods .chip")).map((c) => c.textContent()))).join(",") === "IBAN,PayPal,Contanti");
 await page.fill("#q-donor", "Zio Playwright");
+await page.fill("#q-email", "zio@example.org");
+await page.fill("#q-contact", "333 1234567");
 await page.click('#q-presets .chip[data-amt="150"]');
 await page.click('[data-who="luisi"]'); // escludo un neo-specialista: 150 € su 8
 check("anteprima parti uguali (18,75 € ciascuno)", (await page.textContent('[data-each="carlone"]')).includes("18,75"));
@@ -181,6 +186,7 @@ await page.waitForTimeout(600);
 check("entrambe le quote elencate", (await page.textContent(".mine")).includes("a Aki"));
 const myPool = await fetch(BASE + "/api/gifts/pool/mine", { headers: { "X-Client-Id": await page.evaluate(() => localStorage.getItem("np.clientId")) } }).then((r) => r.json());
 check("ripartizione salvata sul server (8 parti) e cassieri distinti", myPool.length === 2 && myPool[1].allocations.length === 8 && !myPool[1].allocations.some((a) => a.graduateId === "luisi") && myPool[0].collectorId === "aki" && myPool[1].collectorId === "roberto");
+check("email del donatore salvata (conferma via n8n, qui non configurato)", myPool[1].email === "zio@example.org" && myPool[1].mail === undefined && myPool[1].treasurerNote === "");
 check("le quote non sono pubbliche", (await fetch(BASE + "/api/gifts/pool")).status === 403);
 await shot("05-regali");
 
@@ -234,12 +240,26 @@ const boardText = await page.textContent(".board");
 check("totali per neo-specialista", boardText.includes("Carlone") && boardText.includes("18,75"));
 check("cruscotto con una sezione per cassiere", (await page.$$(".board-section")).length === 2 && (await page.textContent('[data-board-collector="aki"]')).includes("Cugina Playwright"));
 check("quota di Zio Playwright elencata in attesa", boardText.includes("Zio Playwright") && boardText.includes("In attesa"));
+const zioRow = `[data-pool-row="${myPool[1].id}"]`;
+check("pulsanti contatta (email e telefono) per la quota con i recapiti", (await page.$(`${zioRow} a[href="mailto:zio@example.org"]`)) !== null && (await page.$(`${zioRow} a[href="tel:3331234567"]`)) !== null);
+promptAnswer = "bonifico visto il 3/11";
+await page.click(`${zioRow} [data-pool-note]`);
+await page.waitForSelector(`${zioRow} .pool-note`);
+promptAnswer = undefined;
+check("appunti del cassiere salvati e mostrati", (await page.textContent(`${zioRow} .pool-note`)).includes("bonifico visto il 3/11"));
+check("promemoria ai donatori e selezione multipla disponibili", (await page.$("#pool-remind")) !== null && (await page.$("#pool-batch")) !== null && (await page.$eval("#pool-batch", (b) => b.disabled)));
+const remindToast = await clickExpectToast("#pool-remind");
+check("promemoria: nessuna quota in attesa da 7 giorni", remindToast.includes("Nessuna quota"), remindToast);
+await page.check(`[data-pool-pick="${myPool[0].id}"]`);
+check("pulsante selezione attivo con una quota scelta", (await page.textContent("#pool-batch")).includes("(1)"));
+await page.uncheck(`[data-pool-pick="${myPool[0].id}"]`);
 const statusToast = await clickExpectToast('[data-pool-status][data-next="RECEIVED"]');
 check("segnata come ricevuta", statusToast.includes("ricevuta"));
 await page.waitForTimeout(600);
 const poolCsv = await page.evaluate(async (b) => { const r = await fetch(b + "/api/export/gift-pool.csv", { headers: { "X-Admin-Token": localStorage.getItem("np.adminToken") } }); return { ok: r.ok, body: await r.text() }; }, BASE);
-check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Cassiere;Donatore;Contatto;Metodo") && poolCsv.body.includes("TOTALE;") && poolCsv.body.includes("TOTALE DOTT. AKI"));
+check("export CSV quote uniche", poolCsv.ok && poolCsv.body.replace(/^\ufeff/, "").startsWith("Data;Cassiere;Donatore;Contatto;Email;Metodo") && poolCsv.body.includes("TOTALE;") && poolCsv.body.includes("TOTALE DOTT. AKI"));
 check("la quota ricevuta non si può più annullare dal donatore (resta solo quella ad Aki)", (await page.$$("[data-pool-del]")).length === 1);
+check("CSV con appunti del cassiere", poolCsv.body.includes("bonifico visto il 3/11"));
 await shot("06b-cassa");
 
 console.log("8) Persistenza: ricarico la pagina e i dati restano (server)");
@@ -414,6 +434,56 @@ await page.waitForSelector("#guide");
 check("guida riapribile dal pulsante ?", (await page.textContent(".guide-title")).includes("Benvenuto"));
 await page.click("#guide-skip");
 await shot("09-navetta-profilo");
+
+console.log("14) Area festeggiato (token GRADUATE_TOKEN_LUISI) e strumenti in blocco del cassiere");
+check("nessun pulsante 🎓 senza token", (await page.$("#graduate-area")) === null);
+await page.click("#settings");
+await page.waitForSelector("#s-graduate");
+await page.fill("#s-graduate", "token-sbagliato");
+await page.click("#s-save");
+await page.waitForTimeout(600);
+await page.waitForSelector("#graduate-area");
+const badGrad = await clickExpectToast("#graduate-area");
+check("token festeggiato sbagliato: avviso e rimozione", badGrad.includes("non valido"), badGrad);
+await page.waitForTimeout(600);
+check("pulsante 🎓 sparito dopo il token sbagliato", (await page.$("#graduate-area")) === null);
+await page.click("#settings");
+await page.waitForSelector("#s-graduate");
+await page.fill("#s-graduate", GRADUATE_TOKEN);
+await page.click("#s-save");
+await page.waitForTimeout(600);
+await page.waitForSelector("#graduate-area");
+await page.click("#graduate-area");
+await page.waitForSelector("#grad-wishes");
+const gradText = await page.textContent(".modal");
+check("area festeggiato intestata a Fedele", gradText.includes("Ciao Fedele"));
+check("auguri per lui (quello dei colleghi di reparto) e per tutti", (await page.textContent("#grad-wishes")).includes("colleghi di reparto") && /\d+ per te, \d+ per tutti/.test(await page.textContent("#grad-wishes")));
+check("chi viene e coordinate di pagamento, senza cifre delle quote", (await page.$("#grad-guests")) !== null && (await page.$("#grad-pay .iban")) !== null && !gradText.includes("150,00") && !gradText.includes("50,00 €"));
+check("avatar personale con stato", (await page.textContent("#grad-avatar")).includes("pronto"));
+await shot("10-festeggiato");
+await page.click("#grad-avatar-open");
+await page.waitForSelector(".as-admin");
+check("il festeggiato vede solo il proprio avatar", (await page.$$(".as-admin")).length === 1 && (await page.textContent(".as-admin")).includes("Fedele Luisi"));
+await page.fill(".as-admin [data-persona]", "Sono Fedele: parlo piano e con calma.");
+check("persona salvata dal festeggiato", (await clickExpectToast(".as-admin [data-save]")).includes("salvato"));
+await page.click(".modal .close");
+const gradHeaders = { "X-Graduate-Token": GRADUATE_TOKEN };
+check("il token festeggiato non apre gli altri avatar né le quote", (await fetch(BASE + "/api/assistant/admin/avatars/carlone", { method: "PUT", headers: { ...gradHeaders, "Content-Type": "application/json" }, body: JSON.stringify({ persona: "x" }) })).status === 403 && (await fetch(BASE + "/api/gifts/pool", { headers: gradHeaders })).status === 403);
+// stato in blocco: registro due quote via API e le segno ricevute insieme dal cruscotto
+for (const name of ["Blocco Uno", "Blocco Due"]) await fetch(BASE + "/api/gifts/pool", { method: "POST", headers: { "X-Client-Id": "blocco", "Content-Type": "application/json" }, body: JSON.stringify({ collectorId: "roberto", donorName: name, paymentMethod: "Contanti", splitMode: "EQUAL", totalAmount: 20, graduateIds: ["luisi", "carlone"] }) });
+await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+await page.waitForTimeout(1200);
+await tab("gifts");
+await page.waitForSelector(".board");
+const picks = await page.$$("[data-pool-pick]");
+const pendingNow = (await fetch(BASE + "/api/gifts/pool", { headers: adminHeaders }).then((r) => r.json())).contributions.filter((c) => c.status !== "RECEIVED").length;
+check("tutte le quote in attesa sono selezionabili (comprese le due nuove)", picks.length === pendingNow && picks.length >= 3, `${picks.length} vs ${pendingNow}`);
+for (const p of picks) await p.check();
+check("contatore delle selezionate", (await page.textContent("#pool-batch")).includes(`(${picks.length})`));
+check("segnate ricevute in blocco", (await clickExpectToast("#pool-batch")).includes(`${picks.length} quote`));
+await page.waitForTimeout(800);
+check("nessuna quota in attesa dopo il blocco", (await page.$$("[data-pool-pick]")).length === 0 && (await page.textContent(".board")).includes("in attesa 0,00"));
+await shot("10b-cassa-blocco");
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

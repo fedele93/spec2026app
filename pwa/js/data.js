@@ -187,6 +187,8 @@ const ServerRepo = {
   deletePoolContribution: (id) => write(() => api.deletePoolContribution(id)),
   poolBoard: () => api.poolBoard(),
   setPoolStatus: (id, status) => write(() => api.setPoolStatus(id, status)),
+  setPoolStatusBatch: (ids, status) => write(() => api.setPoolStatusBatch(ids, status)),
+  setPoolNote: (id, note) => api.setPoolNote(id, note),
 
   allNotifications: async () => {
     const seen = getSeenAt();
@@ -273,8 +275,8 @@ const LocalRepo = {
     const { allocations, totalAmount } = buildAllocations(c, await getAll("giftTargets"));
     const collector = collectorById(c.collectorId);
     if (!(collector.paymentMethods || []).includes(c.paymentMethod || "IBAN")) throw new ApiError(422, `${collector.name} non accetta ${c.paymentMethod}`);
-    const rec = { collectorId: collector.id, collectorName: collector.name, donorName: (c.donorName || "").trim(), contact: c.contact || "", paymentMethod: c.paymentMethod || "IBAN", splitMode: c.splitMode || "EQUAL",
-      totalAmount, note: c.note || "", status: "PENDING", clientId: "local", createdAt: Date.now(), receivedAt: null, allocations };
+    const rec = { collectorId: collector.id, collectorName: collector.name, donorName: (c.donorName || "").trim(), contact: c.contact || "", email: (c.email || "").trim().toLowerCase(), paymentMethod: c.paymentMethod || "IBAN", splitMode: c.splitMode || "EQUAL",
+      totalAmount, note: c.note || "", treasurerNote: "", status: "PENDING", clientId: "local", createdAt: Date.now(), receivedAt: null, allocations };
     if (!rec.donorName) throw new ApiError(422, "Il nome è obbligatorio: serve al cassiere per riconoscere il versamento");
     rec.id = await add("giftPool", rec);
     notify();
@@ -307,6 +309,8 @@ const LocalRepo = {
     return { collectors: GIFT_COLLECTORS.map((c) => ({ id: c.id, name: c.name })), contributions: rows, summary };
   },
   setPoolStatus: (id, status) => updateRecord("giftPool", id, (c) => { c.status = status; c.receivedAt = status === "RECEIVED" ? Date.now() : null; }).then(notify),
+  setPoolStatusBatch: async (ids, status) => { for (const id of ids) await updateRecord("giftPool", id, (c) => { c.status = status; c.receivedAt = status === "RECEIVED" ? Date.now() : null; }); notify(); return { updated: ids.length, skipped: [] }; },
+  setPoolNote: (id, note) => updateRecord("giftPool", id, (c) => { c.treasurerNote = note; }),
 
   allNotifications: () => getAll("notifications"),
   addNotification: ({ sendAt, ...n }) => add("notifications", { ...n, timestamp: Date.now(), isRead: false }).then(notify), // niente programmazione in demo

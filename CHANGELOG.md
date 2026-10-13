@@ -5,6 +5,32 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-10-13
+
+Fase 4 del piano: area festeggiato, strumenti dei cassieri, scelta del cassiere su Android.
+
+### Aggiunto
+
+- **Area festeggiato** (PWA): con il token personale `GRADUATE_TOKEN_<ID>` in ⚙️ Impostazioni
+  compare il pulsante 🎓: chi ha confermato (con accompagnatori) e chi è in attesa, posti
+  navetta, gli auguri dedicati e quelli per tutti, le proprie coordinate di pagamento come le
+  vedono gli invitati, stato e configurazione del **proprio avatar** dell'assistente (persona,
+  voce, campione) senza passare dal token organizzatore. Nessuna cifra delle quote uniche.
+- **Email ai donatori e ai festeggiati**: nel dialogo della quota unica il campo email
+  (precompilato dal profilo, con nome e telefono) fa arrivare la conferma con IBAN e causale del
+  cassiere; se la quota resta in attesa parte un promemoria (pulsante nel cruscotto o workflow
+  n8n settimanale). Ogni neo-specialista con un'`email` privata in `giftTargets` riceve un'email
+  per ogni augurio dedicato a lui.
+- **Cruscotto del cassiere**: pulsanti ✉️ Email e 📞 Chiama per ogni quota, appunti del
+  cassiere (anche nel CSV, colonne "Email" e "Appunti cassiere"), selezione multipla con "Segna
+  ricevute le selezionate", "Promemoria ai donatori in attesa". Backend: `PATCH
+  /api/gifts/pool/{id}`, `POST /api/gifts/pool/status`, `POST /api/mail/reminders/pool`,
+  `GET /api/graduate/me`, `?collector=` sul CSV; workflow n8n `csv-cassieri-settimanale.json`.
+- **App Android 1.7.0**: scelta del cassiere (una card per cassiere, dialogo intestato al
+  cassiere scelto, "a chi" nelle proprie quote), campo email nella quota unica; `giftCollectors`
+  dallo snapshot (tabella `gift_collectors`, database v3 ricreato), `SeedData.giftCollectors`.
+- Service worker v2.8.0; 21 nuovi controlli e2e (135).
+
 ## [1.8.0] - 2026-10-13
 
 Fasi 2 e 3 del piano: menu con data limite, navetta dal profilo, guida alla prima apertura.

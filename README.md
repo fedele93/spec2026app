@@ -36,8 +36,14 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
   versamento registra una **quota unica** a uno dei cassieri (Dott. Paolo Roberto o Dott. Aki) scegliendo se dividerla
   in parti uguali o personalizzarla per neo-specialista; le proprie quote si vedono e si possono
   annullare finché non sono state ricevute. Il cruscotto del cassiere (chi, quanto, per chi, stato,
-  CSV per Excel, una sezione per cassiere) è nella PWA con il token `TREASURER_TOKEN` (o
-  `TREASURER_TOKEN_<ID>` per un solo cassiere). L'app Android mostra per ora solo il primo cassiere.
+  CSV per Excel, una sezione per cassiere, contatti rapidi, appunti, stato in blocco, promemoria
+  ai donatori in attesa) è nella PWA con il token `TREASURER_TOKEN` (o `TREASURER_TOKEN_<ID>` per
+  un solo cassiere). Chi lascia l'email riceve la conferma con IBAN e causale. L'app Android
+  1.7 permette di scegliere il cassiere.
+- **Area festeggiato** (solo PWA): con il token `GRADUATE_TOKEN_<ID>` il pulsante 🎓 mostra chi
+  viene, gli auguri ricevuti, le proprie coordinate di pagamento e la configurazione del proprio
+  avatar dell'assistente; con un'email privata in `giftTargets` il festeggiato riceve un'email a
+  ogni augurio dedicato.
 - **Profilo personale dell'invitato** (solo PWA, per ora): link via email senza password, con
   partecipazione, accompagnatori e menu di ciascuno (con data limite), consenso privacy ed
   email di conferma spedite da n8n; dal profilo si prenota anche la **navetta** (conferma con

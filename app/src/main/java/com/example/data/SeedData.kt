@@ -432,15 +432,31 @@ object SeedData {
         ),
     )
 
-    val giftCollector: GiftCollectorEntity = GiftCollectorEntity(
-        name = "Dott. Paolo Roberto",
-        roleTitle = "Cassiere delle quote uniche",
-        description = "Se preferisci fare un solo versamento per tutti i neo-specialisti, Paolo raccoglie la tua quota e la gira a ciascuno di loro: scegli tu se dividerla in parti uguali o personalizzarla.",
-        iban = "IT00 A000 0000 0000 0000 0000 000",
-        ibanHolder = "Paolo Roberto",
-        paypalMeUrl = "https://paypal.me/paoloroberto",
-        paymentMethodsCsv = "IBAN,PayPal,Contanti",
-        transferReason = "Regalo specializzazione Neurologia 2026"
+    val giftCollectors: List<GiftCollectorEntity> = listOf(
+        GiftCollectorEntity(
+            id = "roberto",
+            sortOrder = 0,
+            name = "Dott. Paolo Roberto",
+            roleTitle = "Cassiere delle quote uniche",
+            description = "Se preferisci fare un solo versamento per tutti i neo-specialisti, Paolo raccoglie la tua quota e la gira a ciascuno di loro: scegli tu se dividerla in parti uguali o personalizzarla.",
+            iban = "IT00 A000 0000 0000 0000 0000 000",
+            ibanHolder = "Paolo Roberto",
+            paypalMeUrl = "https://paypal.me/paoloroberto",
+            paymentMethodsCsv = "IBAN,PayPal,Contanti",
+            transferReason = "Regalo specializzazione Neurologia 2026"
+        ),
+        GiftCollectorEntity(
+            id = "aki",
+            sortOrder = 1,
+            name = "Dott. Aki",
+            roleTitle = "Cassiere delle quote uniche",
+            description = "In alternativa puoi versare la tua quota unica ad Aki, che la ripartisce allo stesso modo fra i neo-specialisti.",
+            iban = "IT00 B000 0000 0000 0000 0000 000",
+            ibanHolder = "Aki",
+            paypalMeUrl = "https://paypal.me/dottaki",
+            paymentMethodsCsv = "IBAN,PayPal,Contanti",
+            transferReason = "Regalo specializzazione Neurologia 2026"
+        )
     )
 
     val notifications: List<EventNotificationEntity> = listOf(

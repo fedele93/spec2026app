@@ -800,7 +800,7 @@ function shortName(n) { return String(n || "").replace(/^Dott\.(ssa)?\s*/i, "");
 
 // Dialogo della quota unica: importo, ripartizione (parti uguali o personalizzata), metodo, dati per pagare.
 function poolDialog(targets, collector, onDone) {
-  const presets = [50, 100, 150, 200];
+  const presets = [180, 270, 360, 450];
   const methods = (collector.paymentMethods || []).filter((m) => ["IBAN", "PayPal", "Contanti"].includes(m));
   openModal(`<h3>🤝 Quota unica • ${esc(collector.name || "cassiere")}</h3>
     <div class="muted" style="margin-bottom:10px;">Un solo versamento: ${esc(shortName(collector.name) || "il cassiere")} lo ripartisce fra i neo-specialisti secondo le tue indicazioni.</div>
@@ -811,7 +811,7 @@ function poolDialog(targets, collector, onDone) {
       <div class="chips" id="q-modes"><button class="chip active" data-mode="EQUAL">In parti uguali</button><button class="chip" data-mode="CUSTOM">Personalizza</button></div></div>
     <div id="q-equal">
       <div class="field"><label>Importo totale</label>
-        <div class="chips" id="q-presets">${presets.map((p) => `<button class="chip ${p === 100 ? "active" : ""}" data-amt="${p}">${p} €</button>`).join("")}</div>
+        <div class="chips" id="q-presets">${presets.map((p) => `<button class="chip ${p === 270 ? "active" : ""}" data-amt="${p}">${p} €</button>`).join("")}</div>
         <input id="q-amount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Oppure un altro importo (€)"></div>
       <div class="field"><label>Per chi (togli la spunta per escludere qualcuno, es. te stesso)</label>
         <div class="split-list" id="q-who">${targets.map((t) => `<label class="split-row"><input type="checkbox" data-who="${esc(t.id)}" checked> <span class="grow">${esc(t.name)}</span><span class="muted" data-each="${esc(t.id)}"></span></label>`).join("")}</div></div>
@@ -823,9 +823,9 @@ function poolDialog(targets, collector, onDone) {
     <div class="field"><label>Metodo di pagamento</label><div class="chips" id="q-methods">${methods.map((m, i) => `<button class="chip ${i === 0 ? "active" : ""}" data-m="${m}">${m}</button>`).join("")}</div></div>
     <div class="card" id="q-pay" style="background:var(--bg);"></div>
     <div class="field"><label>Nota per il cassiere (facoltativa)</label><textarea id="q-note" rows="2" placeholder="es. Consegno i contanti sabato"></textarea></div>
-    <button class="btn btn-gold" id="q-save" style="margin-top:10px;">Registra quota (100,00 €)</button>`,
+    <button class="btn btn-gold" id="q-save" style="margin-top:10px;">Registra quota (270,00 €)</button>`,
     (bg, close) => {
-      let mode = "EQUAL", method = methods[0] || "IBAN", amount = 100;
+      let mode = "EQUAL", method = methods[0] || "IBAN", amount = 270;
       const $ = (sel) => bg.querySelector(sel);
       const $$ = (sel) => [...bg.querySelectorAll(sel)];
       const selectedIds = () => $$("[data-who]:checked").map((c) => c.dataset.who);

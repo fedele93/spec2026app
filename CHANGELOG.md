@@ -5,6 +5,13 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.12.1] - 2026-10-13
+
+Importi rapidi della quota unica (PWA e Android 1.8.2).
+
+### Cambiato
+- I pulsanti rapidi dell'importo della quota unica sono ora 180, 270, 360 e 450 € (multipli dei 9 neo-specialisti: 20, 30, 40 e 50 € a testa); l'importo preselezionato è 270 €.
+
 ## [1.12.0] - 2026-10-13
 
 Privacy degli elenchi e pulizia da organizzatore (PWA e Android 1.8.1).

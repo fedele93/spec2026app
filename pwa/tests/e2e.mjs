@@ -190,21 +190,21 @@ check("metodi cassa: IBAN, PayPal, Contanti (no Satispay)", (await Promise.all((
 await page.fill("#q-donor", "Zio Playwright");
 await page.fill("#q-email", "zio@example.org");
 await page.fill("#q-contact", "333 1234567");
-await page.click('#q-presets .chip[data-amt="150"]');
-await page.click('[data-who="luisi"]'); // escludo un neo-specialista: 150 € su 8
-check("anteprima parti uguali (18,75 € ciascuno)", (await page.textContent('[data-each="carlone"]')).includes("18,75"));
+await page.click('#q-presets .chip[data-amt="180"]');
+await page.click('[data-who="luisi"]'); // escludo un neo-specialista: 180 € su 8
+check("anteprima parti uguali (22,50 € ciascuno)", (await page.textContent('[data-each="carlone"]')).includes("22,50"));
 check("causale suggerita con il nome", (await page.textContent("#q-reason")).includes("Zio Playwright"));
 const poolToast = await clickExpectToast("#q-save");
-check("quota unica registrata", poolToast.includes("150,00"), poolToast);
+check("quota unica registrata", poolToast.includes("180,00"), poolToast);
 await page.waitForTimeout(600);
-check("la mia quota compare in 'Le tue quote registrate' con il cassiere", (await page.textContent(".mine")).includes("150,00 €") && (await page.textContent(".mine")).includes("a Paolo Roberto"));
+check("la mia quota compare in 'Le tue quote registrate' con il cassiere", (await page.textContent(".mine")).includes("180,00 €") && (await page.textContent(".mine")).includes("a Paolo Roberto"));
 // seconda quota, versata ad Akilesh
 await page.click('[data-pool-open="aki"]');
 await page.waitForSelector("#q-save");
 check("dialogo intestato ad Akilesh", (await page.textContent(".modal h3")).includes("Dott. Akilesh Bhunjun"));
 await page.fill("#q-donor", "Cugina Playwright");
-await page.click('#q-presets .chip[data-amt="50"]');
-check("quota ad Aki registrata", (await clickExpectToast("#q-save")).includes("50,00"));
+await page.click('#q-presets .chip[data-amt="270"]');
+check("quota ad Aki registrata", (await clickExpectToast("#q-save")).includes("270,00"));
 await page.waitForTimeout(600);
 check("entrambe le quote elencate", (await page.textContent(".mine")).includes("a Akilesh Bhunjun"));
 const myPool = await fetch(BASE + "/api/gifts/pool/mine", { headers: { "X-Client-Id": await page.evaluate(() => localStorage.getItem("np.clientId")) } }).then((r) => r.json());
@@ -270,7 +270,7 @@ await page.waitForTimeout(800);
 await tab("gifts");
 await page.waitForSelector(".board");
 const boardText = await page.textContent(".board");
-check("totali per neo-specialista", boardText.includes("Carlone") && boardText.includes("18,75"));
+check("totali per neo-specialista", boardText.includes("Carlone") && boardText.includes("22,50"));
 check("cruscotto con una sezione per cassiere", (await page.$$(".board-section")).length === 2 && (await page.textContent('[data-board-collector="aki"]')).includes("Cugina Playwright"));
 check("quota di Zio Playwright elencata in attesa", boardText.includes("Zio Playwright") && boardText.includes("In attesa"));
 const zioRow = `[data-pool-row="${myPool[1].id}"]`;
@@ -496,7 +496,7 @@ await page.waitForSelector("#grad-wishes");
 const gradText = await page.textContent(".modal");
 check("area festeggiato intestata a Fedele", gradText.includes("Ciao Fedele"));
 check("auguri per lui (quello dei colleghi di reparto) e per tutti", (await page.textContent("#grad-wishes")).includes("colleghi di reparto") && /\d+ per te, \d+ per tutti/.test(await page.textContent("#grad-wishes")));
-check("chi viene e coordinate di pagamento, senza cifre delle quote", (await page.$("#grad-guests")) !== null && (await page.$("#grad-pay .iban")) !== null && !gradText.includes("150,00") && !gradText.includes("50,00 €"));
+check("chi viene e coordinate di pagamento, senza cifre delle quote", (await page.$("#grad-guests")) !== null && (await page.$("#grad-pay .iban")) !== null && !gradText.includes("180,00") && !gradText.includes("270,00 €"));
 check("avatar personale con stato", (await page.textContent("#grad-avatar")).includes("pronto"));
 await shot("10-festeggiato");
 await page.click("#grad-avatar-open");

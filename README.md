@@ -33,7 +33,7 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
 - **Galleria foto**: visualizzazione foto (caricamento tramite Coil).
 - **Regali**: nessuna cifra raccolta visibile. Ogni neo-specialista ha la sua card con IBAN da
   copiare e link PayPal/Satispay (regalo diretto, senza registrazione); chi preferisce un solo
-  versamento registra una **quota unica** a uno dei cassieri (Dott. Paolo Roberto o Dott. Aki) scegliendo se dividerla
+  versamento registra una **quota unica** a uno dei cassieri (Dott. Paolo Roberto o Dott. Akilesh Bhunjun) scegliendo se dividerla
   in parti uguali o personalizzarla per neo-specialista; le proprie quote si vedono e si possono
   annullare finché non sono state ricevute. Il cruscotto del cassiere (chi, quanto, per chi, stato,
   CSV per Excel, una sezione per cassiere, contatti rapidi, appunti, stato in blocco, promemoria

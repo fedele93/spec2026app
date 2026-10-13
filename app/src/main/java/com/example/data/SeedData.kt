@@ -331,7 +331,7 @@ object SeedData {
             giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Fedele.",
             iban = "IT13 U030 6941 5131 0000 0010 092",
             ibanHolder = "Fedele Luisi",
-            satispayUrl = "https://web.satispay.com/download/qrcode/S6Y-CON--6F32BD93-1233-47D0-A362-4EB4C249ACE1?locale=it",
+            satispayUrl = "https://tag.satispay.com/fedeleluisi",
             paypalMeUrl = "https://www.paypal.com/qrcodes/p2pqrc/MBSHEM4F557R8"
         ),
         GiftTargetEntity(
@@ -448,12 +448,12 @@ object SeedData {
         GiftCollectorEntity(
             id = "aki",
             sortOrder = 1,
-            name = "Dott. Aki",
+            name = "Dott. Akilesh Bhunjun",
             roleTitle = "Cassiere delle quote uniche",
-            description = "In alternativa puoi versare la tua quota unica ad Aki, che la ripartisce allo stesso modo fra i neo-specialisti.",
+            description = "In alternativa puoi versare la tua quota unica ad Akilesh, che la ripartisce allo stesso modo fra i neo-specialisti.",
             iban = "IT00 B000 0000 0000 0000 0000 000",
-            ibanHolder = "Aki",
-            paypalMeUrl = "https://paypal.me/dottaki",
+            ibanHolder = "Akilesh Bhunjun",
+            paypalMeUrl = "https://paypal.me/akileshbhunjun",
             paymentMethodsCsv = "IBAN,PayPal,Contanti",
             transferReason = "Regalo specializzazione Neurologia 2026"
         )

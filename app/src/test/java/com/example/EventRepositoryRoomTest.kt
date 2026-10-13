@@ -66,7 +66,7 @@ class EventRepositoryRoomTest {
         )
         assertEquals(100.0, c.totalAmount, 0.001)
         assertEquals("aki", c.collectorId)
-        assertEquals("Dott. Aki", c.collectorName)
+        assertEquals("Dott. Akilesh Bhunjun", c.collectorName)
         assertEquals("test@example.org", c.email)
         assertEquals(listOf(33.34, 33.33, 33.33), c.allocations.map { it.amount })
         assertEquals("Dott. Fedele Luisi", c.allocations.first().graduateName)

@@ -6,7 +6,7 @@
 //   apertura sezione) le esegue il server e qui vengono solo mostrate/applicate;
 // - pannello organizzatori: persona, abilitazione, voce preimpostata, campione vocale da
 //   clonare (file o registrazione), riascolto, prova della voce.
-import { api, fetchBlobUrl, isAdmin, isGraduate } from "./api.js";
+import { api, fetchBlobUrl, isAdmin, isGraduate, getGuestToken } from "./api.js";
 import { Repo } from "./data.js";
 import { toast, openModal, goto } from "./app.js";
 
@@ -114,7 +114,7 @@ export async function openAssistant() {
             <div class="as-bubble">${esc(m.text)}</div>
             ${m.actions?.length ? `<div class="as-actions">${m.actions.map((x) => `<span class="pill ${x.ok ? "pill-conf" : "pill-decl"}">${x.ok ? "✓" : "✗"} ${esc(x.summary || x.tool)}</span>`).join(" ")}</div>` : ""}
           </div>`).join("")
-          : `<div class="muted as-empty">Ciao! Sono ${esc(current().shortName)}. Chiedimi del programma, degli orari, della navetta o dei regali; posso anche prenotarti la navetta o confermare la tua presenza.</div>`;
+          : `<div class="muted as-empty">Ciao! Sono ${esc(current().shortName)}. Chiedimi del programma, degli orari, della navetta o dei regali; posso anche prenotarti la navetta o confermare la tua presenza.${getGuestToken() ? " Hai aperto il tuo profilo: puoi chiedermi del tuo menu, dei tuoi accompagnatori e della tua navetta, e cambiarli a voce." : ""}</div>`;
         chat.scrollTop = chat.scrollHeight;
       };
       const setBusy = (v, label) => {

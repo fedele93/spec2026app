@@ -24,7 +24,7 @@ function steps({ serverMode, assistant }) {
   s.push({ icon: "🎉", title: "Auguri e foto", text: "Nella scheda Auguri lasci un messaggio ai neo-specialisti (anche a uno in particolare) e condividi le foto della giornata; i cuori e i like sono per tutti.", tip: "Le foto vengono ridimensionate automaticamente: puoi caricarle anche dal telefono." });
   s.push({ icon: "🎁", title: "Regali", text: "Nella scheda Regali ogni neo-specialista ha IBAN, PayPal e Satispay per un regalo diretto, senza registrare nulla. Chi preferisce un solo versamento per tutti registra una quota unica a uno dei cassieri, scegliendo come ripartirla.", tip: "Non vengono mostrate cifre raccolte: ognuno decide liberamente." });
   if (assistant) {
-    s.push({ icon: "🎙️", title: "Chiedi a un festeggiato", text: "Il pulsante Chiedi in basso a sinistra apre l'assistente vocale: scegli un neo-specialista, tieni premuto per parlare (o scrivi) e lui ti risponde a voce. Può dirti orari e luoghi, i posti sulla navetta, confermare la tua presenza o prenotarti la navetta.", tip: "Prima di ogni azione ti chiede conferma." });
+    s.push({ icon: "🎙️", title: "Chiedi a un festeggiato", text: "Il pulsante Chiedi in basso a sinistra apre l'assistente vocale: scegli un neo-specialista, tieni premuto per parlare (o scrivi) e lui ti risponde a voce. Può dirti orari e luoghi, i posti sulla navetta, confermare la tua presenza o prenotarti la navetta; se hai aperto il tuo profilo, legge e cambia a voce anche il tuo menu e i tuoi accompagnatori.", tip: "Prima di ogni azione ti chiede conferma." });
   }
   return s;
 }

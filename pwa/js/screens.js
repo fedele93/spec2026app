@@ -4,6 +4,7 @@ import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
 import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getGraduateToken, setGraduateToken, isGraduate, getGuestToken, getClientId, downloadCsv } from "./api.js";
 import { openGraduateArea } from "./graduate.js";
+import { openDashboard, openImportDialog } from "./admin.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
 import { openProfile, openMailAdmin, hasProfile, MENU_LABELS } from "./profile.js";
 import { openGuide } from "./guide.js";
@@ -279,6 +280,9 @@ function settingsDialog() {
     <div class="muted" style="margin-bottom:10px;">Con il token cassiere la tab Regali mostra il cruscotto delle quote uniche (chi, quanto, per chi) e il CSV per Excel.</div>
     <div class="field"><label>Token festeggiato (X-Graduate-Token)</label><input id="s-graduate" type="password" value="${esc(getGraduateToken())}" placeholder="Solo per i neo-specialisti"></div>
     <div class="muted" style="margin-bottom:10px;">Con il tuo token personale compare il pulsante 🎓 in alto: chi viene, gli auguri per te, le tue coordinate di pagamento e il tuo avatar dell'assistente.</div>
+    ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📊 Cruscotto organizzatori</b>
+      <div class="muted" style="margin-bottom:8px;">Confermati, menu mancanti, navetta, email, quote e le cose da fare; import della lista invitati con invio dei link.</div>
+      <div class="btn-row"><button class="btn btn-primary" id="s-dash">Apri il cruscotto</button><button class="btn btn-ghost" id="s-import">Importa invitati</button></div></div>` : ""}
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📄 Esporta per ristorante e autista</b>
       <div class="muted" style="margin-bottom:8px;">File CSV (si aprono con Excel) con tutti gli invitati e le prenotazioni della navetta.</div>
       <div class="btn-row"><button class="btn btn-ghost" id="s-exp-guests">Esporta invitati</button><button class="btn btn-ghost" id="s-exp-bus">Esporta navetta</button></div></div>` : ""}
@@ -299,6 +303,10 @@ function settingsDialog() {
       if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
       if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
       bg.querySelector("#s-guide").onclick = () => { close(); openGuide(); };
+      const dash = bg.querySelector("#s-dash");
+      if (dash) dash.onclick = () => { close(); openDashboard(); };
+      const imp = bg.querySelector("#s-import");
+      if (imp) imp.onclick = () => { close(); openImportDialog(); };
       const mailBtn = bg.querySelector("#s-mail");
       if (mailBtn) mailBtn.onclick = () => { close(); openMailAdmin(); };
       const asst = bg.querySelector("#s-assistant");

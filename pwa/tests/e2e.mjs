@@ -485,6 +485,51 @@ await page.waitForTimeout(800);
 check("nessuna quota in attesa dopo il blocco", (await page.$$("[data-pool-pick]")).length === 0 && (await page.textContent(".board")).includes("in attesa 0,00"));
 await shot("10b-cassa-blocco");
 
+console.log("15) Fase 5: assistente sul profilo, cruscotto organizzatori, import invitati");
+// l'assistente conosce il profilo di chi parla (il token del profilo di Nuova Invitata è ancora sul dispositivo)
+await tab("program");
+await page.click("#assistant-fab");
+await page.waitForSelector("#as-chat");
+await page.click("#as-clear").catch(() => {});
+check("l'assistente sa che il profilo è aperto", (await page.textContent("#as-chat")).includes("tuo profilo"));
+await page.fill("#as-text", "Qual è il mio profilo?");
+await page.click("#as-send");
+await page.waitForFunction(() => document.querySelectorAll(".as-msg.assistant").length >= 1, null, { timeout: 15000 });
+const profileReply = await page.textContent(".as-msg.assistant:last-of-type .as-bubble");
+check("l'avatar legge il profilo (nome, menu, accompagnatore)", profileReply.includes("Nuova Invitata") && profileReply.includes("vegetariano") && profileReply.includes("Figlio Piccolo"), profileReply);
+await page.fill("#as-text", "Cambia il mio menu in vegano");
+await page.click("#as-send");
+await page.waitForSelector(".modal-bg", { state: "detached", timeout: 15000 }); // l'azione apre la sezione Invitati e chiude l'assistente
+await page.waitForTimeout(600);
+const nuovaMenu = (await fetch(BASE + "/api/guests").then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
+check("menu cambiato a voce e sezione Invitati aperta", nuovaMenu.menu === "VEGANO" && (await page.$(".modal-bg")) === null);
+// cruscotto organizzatori
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-dash");
+await page.click("#s-dash");
+await page.waitForSelector("#dash-stats");
+const dashText = await page.textContent(".modal");
+check("cruscotto con contatori e cose da fare", dashText.includes("Confermati") && dashText.includes("Quote uniche") && (await page.$$("#dash-todo .dash-todo")).length >= 1);
+check("menu scelti nel cruscotto", (await page.textContent("#dash-menu")).includes("Vegano"));
+await page.click("#dash-import");
+await page.waitForSelector("#im-text");
+// import: una riga nuova, una che aggiorna Nuova Invitata (telefono), una senza nome
+await page.fill("#im-text", "Nome;Categoria;Email;Telefono;Persone\nImportato Uno;Amici Università;uno@example.org;;3\nNuova Invitata;;nuova@example.org;333 0000000;\n;Famigliari;x@example.org;;");
+await page.click("#im-preview");
+await page.waitForFunction(() => (document.querySelector("#im-result")?.textContent || "").includes("Anteprima"), null, { timeout: 10000 });
+const preview = await page.textContent("#im-result");
+check("anteprima dell'import", preview.includes("1 da creare") && preview.includes("1 da aggiornare") && preview.includes("1 senza nome") && preview.includes("aggiorna phone"), preview);
+check("nessuna scrittura in anteprima", !(await fetch(BASE + "/api/guests").then((r) => r.json())).some((g) => g.fullName === "Importato Uno"));
+const importToast = await clickExpectToast("#im-go");
+check("import eseguito", importToast.includes("1 creati") && importToast.includes("1 aggiornati"), importToast);
+await page.waitForTimeout(800);
+const imported = (await fetch(BASE + "/api/guests", { headers: adminHeaders }).then((r) => r.json()));
+const uno = imported.find((g) => g.fullName === "Importato Uno"), nuovaImp = imported.find((g) => g.fullName === "Nuova Invitata");
+check("invitato creato in attesa con 3 persone e Nuova aggiornata col telefono", uno && uno.rsvpStatus === "PENDING" && uno.guestsCount === 3 && uno.category === "Amici Università" && nuovaImp.phone === "333 0000000");
+check("dopo l'import si apre la lista invitati", (await page.textContent("#screen")).includes("Importato Uno"));
+await shot("11-cruscotto-import");
+
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 
 await browser.close();

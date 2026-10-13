@@ -181,7 +181,7 @@ await page.waitForSelector("[data-target]");
 check("9 neo-specialisti con regalo diretto", (await page.$$("[data-target]")).length === 9);
 check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.textContent("#screen")));
 check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
-check("pulsanti copia IBAN e PayPal/Satispay", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 9);
+check("pulsanti copia IBAN e PayPal, Satispay dove c'è (non per Regina)", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 8 && (await page.$('.gift[data-target="regina"] .satispay')) === null);
 check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
 check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Akilesh Bhunjun"));
 await page.click("#pool-open");

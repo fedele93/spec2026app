@@ -303,11 +303,12 @@ fun InteractiveMapCanvas(
                     // Open in Google Maps Navigation Intent
                     Button(
                         onClick = {
-                            val uri = Uri.parse(
+                            // con il link Google Maps condiviso dagli organizzatori si apre direttamente quello
+                            val uri = if (selectedPoint.mapsUrl.isNotBlank()) Uri.parse(selectedPoint.mapsUrl) else Uri.parse(
                                 "geo:${selectedPoint.latitude},${selectedPoint.longitude}?q=${Uri.encode(selectedPoint.address)}"
                             )
                             val mapIntent = Intent(Intent.ACTION_VIEW, uri)
-                            mapIntent.setPackage("com.google.android.apps.maps")
+                            if (selectedPoint.mapsUrl.isBlank()) mapIntent.setPackage("com.google.android.apps.maps")
                             try {
                                 context.startActivity(mapIntent)
                             } catch (_: Exception) {

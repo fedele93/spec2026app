@@ -41,18 +41,20 @@ object SeedData {
             latitude = 41.1173,
             longitude = 16.8719,
             iconType = "GRADUATION",
-            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (in via di definizione)."
+            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (in via di definizione).",
+            mapsUrl = "https://maps.app.goo.gl/RhZKgXuxfYgg2RgTA"
         ),
         MapPoint(
             id = "bus",
             title = "Partenza Autobus Navetta",
             subtitle = "Punto di Ritrovo Transfer Gratuito",
             timeLabel = "Venerdì 13 - ritrovo da definire",
-            address = "Piazzale Policlinico di Bari (fronte ingresso principale)",
+            address = "Piazza Giulio Cesare, Bari (davanti all'ingresso del Policlinico)",
             latitude = 41.117,
             longitude = 16.8715,
             iconType = "BUS",
-            description = "Navetta riservata 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari e fermate di andata e ritorno saranno confermati prossimamente."
+            description = "Ritrovo in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Navetta riservata 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari di andata e ritorno saranno confermati prossimamente.",
+            mapsUrl = "https://www.google.com/maps/search/?api=1&query=Piazza+Giulio+Cesare,+Bari"
         ),
         MapPoint(
             id = "festa",
@@ -63,7 +65,8 @@ object SeedData {
             latitude = 41.0985,
             longitude = 16.8945,
             iconType = "PARTY",
-            description = "La festa di venerdì 13 novembre si terrà al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari), tra il verde dell'orto botanico e le sale per eventi. Dalle ore 21:30 fino alle 03:00. Dress code: Elegant Chic."
+            description = "La festa di venerdì 13 novembre si terrà al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari), tra il verde dell'orto botanico e le sale per eventi. Dalle ore 21:30 fino alle 03:00. Dress code: Elegant Chic.",
+            mapsUrl = ""
         ),
     )
 
@@ -91,7 +94,7 @@ object SeedData {
         ProgramTimelineEntry(
             time = "Ven 13",
             title = "Ritrovo & Imbarco Autobus Navetta",
-            location = "Piazzale Policlinico di Bari",
+            location = "Piazza Giulio Cesare (Policlinico di Bari)",
             details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orario di partenza da definire.",
             hasMore = true
         ),
@@ -111,15 +114,15 @@ object SeedData {
         ),
     )
 
-    val busScheduleSubtitle: String = "Transfer andata e ritorno dal Policlinico di Bari al Giardino dei Tempi"
+    val busScheduleSubtitle: String = "Transfer andata e ritorno da Piazza Giulio Cesare (Policlinico di Bari) al Giardino dei Tempi"
     val busAndata: BusTripInfo = BusTripInfo(
-        timeLabel = "Ven 13 - da definire", from = "Policlinico di Bari (Piazzale Principale)", to = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", notes = "Venerdì 13 novembre: orario di partenza in via di definizione, sarà confermato con l'orario della festa"
+        timeLabel = "Ven 13 - da definire", from = "Piazza Giulio Cesare (Policlinico di Bari)", to = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", notes = "Venerdì 13 novembre: orario di partenza in via di definizione, sarà confermato con l'orario della festa"
     )
     val busRitorno: BusTripInfo = BusTripInfo(
         timeLabel = "Ven 13 - notte", from = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", to = "Policlinico di Bari / Stazione Centrale", notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
     )
     val busPickupStops: List<String> = listOf(
-        "Policlinico di Bari (Piazzale Principale)",
+        "Piazza Giulio Cesare (Policlinico di Bari)",
         "Policlinico di Bari (Fermata Metro/Navetta)",
         "Stazione Ferroviaria Centrale di Bari",
 
@@ -188,7 +191,7 @@ object SeedData {
         BusBookingEntity(
             passengerName = "Dott.ssa Sofia Valenti",
             seatsCount = 1,
-            pickupStop = "Policlinico di Bari (Piazzale Principale)",
+            pickupStop = "Piazza Giulio Cesare (Policlinico di Bari)",
             returnTripWanted = true,
             contactPhone = "333 4567891",
             notes = "Pronta subito dopo le proclamazioni"
@@ -196,7 +199,7 @@ object SeedData {
         BusBookingEntity(
             passengerName = "Giulia Colombo & Gruppo Amici",
             seatsCount = 3,
-            pickupStop = "Policlinico di Bari (Piazzale Principale)",
+            pickupStop = "Piazza Giulio Cesare (Policlinico di Bari)",
             returnTripWanted = true,
             contactPhone = "340 5566778",
             notes = "Con festoni e regali"
@@ -331,7 +334,7 @@ object SeedData {
             giftDescription = "Contributo dedicato per lo strumento diagnostico avanzato e per l'inizio dell'attività ospedaliera di Fedele.",
             iban = "IT13 U030 6941 5131 0000 0010 092",
             ibanHolder = "Fedele Luisi",
-            satispayUrl = "https://tag.satispay.com/fedeleluisi",
+            satispayUrl = "https://web.satispay.com/download/qrcode/S6Y-CON--6F32BD93-1233-47D0-A362-4EB4C249ACE1?locale=it",
             paypalMeUrl = "https://www.paypal.com/qrcodes/p2pqrc/MBSHEM4F557R8"
         ),
         GiftTargetEntity(
@@ -427,7 +430,7 @@ object SeedData {
             giftDescription = "Contributo per la dotazione diagnostica al letto del paziente e l'aggiornamento in neuro-oncologia di Donato.",
             iban = "IT05 S054 2404 0100 0000 1066 123",
             ibanHolder = "Donato Regina",
-            satispayUrl = "https://tag.satispay.com/donatoregina",
+            satispayUrl = "",
             paypalMeUrl = "https://www.paypal.me/DonatoRegina"
         ),
     )

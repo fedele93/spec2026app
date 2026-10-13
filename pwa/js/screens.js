@@ -162,7 +162,7 @@ function initMap(el, idx) {
   det.innerHTML = `<b style="font-size:14px;">${esc(p.title)}</b><div class="muted">${esc(p.subtitle)} · ${esc(p.timeLabel)}</div>
     <div class="muted" style="margin-top:4px;">📍 ${esc(p.address)}</div><div class="muted" style="margin-top:4px;">${esc(p.description)}</div>
     <div class="btn-row" style="margin-top:8px;">
-      <a class="btn btn-primary" style="text-decoration:none;" target="_blank" rel="noopener" href="${isIos() ? amaps : gmaps}">🧭 Apri nel navigatore</a>
+      <a class="btn btn-primary" style="text-decoration:none;" target="_blank" rel="noopener" href="${esc(p.mapsUrl || (isIos() ? amaps : gmaps))}">🧭 Apri nel navigatore</a>
     </div>`;
   if (_map) { _map.remove(); _map = null; }
   const mapEl = el.querySelector("#map");
@@ -200,7 +200,7 @@ function showNotifications(notifications) {
 function sendPushDialog() {
   const templates = [
     ["🎓 Seduta del 9 Novembre!", 'La seduta di proclamazione è in corso all\'Aula Magna "G. De Benedictis" del Policlinico di Bari.', "Seduta"],
-    ["🚌 Partenza Navetta Imminente", "L'autobus è in sosta al Piazzale Principale del Policlinico di Bari. Partenza tra 15 minuti!", "Navetta"],
+    ["🚌 Partenza Navetta Imminente", "L'autobus è in sosta in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Partenza tra 15 minuti!", "Navetta"],
     ["🥂 Benvenuti alla Festa!", "Venerdì 13 novembre al Giardino dei Tempi: aperitivo di benvenuto aperto! Vi aspettiamo per il primo brindisi insieme.", "Festa"],
     ["🎂 Taglio della Torta & Dj Set", "Tutti attorno alla torta di specializzazione per il momento più atteso della serata!", "Festa"],
     ["📸 Caricate le vostre foto!", "Aprite la sezione Foto dell'app e condividete gli scatti più belli con i neo-specialisti!", "Festa"]

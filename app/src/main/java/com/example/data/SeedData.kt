@@ -38,8 +38,8 @@ object SeedData {
             subtitle = "Discussione Tesi & Brindisi",
             timeLabel = "9 Novembre - ora da definire",
             address = "Aula Magna \"G. De Benedictis\", AOUC Policlinico di Bari, Piazza Giulio Cesare 11, Bari",
-            latitude = 41.1173,
-            longitude = 16.8719,
+            latitude = 41.1122,
+            longitude = 16.8655,
             iconType = "GRADUATION",
             description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (in via di definizione).",
             mapsUrl = "https://maps.app.goo.gl/RhZKgXuxfYgg2RgTA"
@@ -50,8 +50,8 @@ object SeedData {
             subtitle = "Punto di Ritrovo Transfer Gratuito",
             timeLabel = "Venerdì 13 - ritrovo da definire",
             address = "Piazza Giulio Cesare, Bari (davanti all'ingresso del Policlinico)",
-            latitude = 41.117,
-            longitude = 16.8715,
+            latitude = 41.1131,
+            longitude = 16.8663,
             iconType = "BUS",
             description = "Ritrovo in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Navetta riservata 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari di andata e ritorno saranno confermati prossimamente.",
             mapsUrl = "https://www.google.com/maps/search/?api=1&query=Piazza+Giulio+Cesare,+Bari"
@@ -66,7 +66,7 @@ object SeedData {
             longitude = 16.8945,
             iconType = "PARTY",
             description = "La festa di venerdì 13 novembre si terrà al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari), tra il verde dell'orto botanico e le sale per eventi. Dalle ore 21:30 fino alle 03:00. Dress code: Elegant Chic.",
-            mapsUrl = ""
+            mapsUrl = "https://maps.app.goo.gl/zcwjBwscFm3VkhgM6"
         ),
     )
 

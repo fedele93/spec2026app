@@ -8,6 +8,7 @@ import com.example.data.remote.GuestStatusRequest
 import com.example.data.remote.NeuroPartyApi
 import com.example.data.remote.NotificationRequest
 import com.example.data.remote.DashboardDto
+import com.example.data.remote.GraduateMeDto
 import com.example.data.remote.ImportRequest
 import com.example.data.remote.ImportResultDto
 import com.example.data.remote.ImportRowRequest
@@ -109,6 +110,13 @@ class EventRepository(private val db: AppDatabase) {
         val result = runRemote { block(api) }
         applySnapshot(runRemote { api.snapshot() })
         return result
+    }
+
+    // ------------------------------------------------------------------ festeggiato (solo server)
+
+    suspend fun graduateMe(): GraduateMeDto {
+        val api = remote ?: throw RemoteException("L'area festeggiato funziona solo con il server della festa (⚙️ Impostazioni)")
+        return runRemote { api.graduateMe() }
     }
 
     // ------------------------------------------------------------------ organizzatori (solo server)

@@ -241,6 +241,44 @@ data class ImportResultDto(
     val invited: Int = 0, val inviteFailed: Int = 0, val rows: List<ImportRowResultDto> = emptyList()
 )
 
+// ---- Area festeggiato (header X-Graduate-Token) -----------------------------------------
+
+@JsonClass(generateAdapter = true)
+data class GraduateInfoDto(
+    val id: String = "", val name: String = "", val shortName: String = "", val specialization: String = "",
+    val iban: String = "", val ibanHolder: String = "", val satispayUrl: String = "", val paypalMeUrl: String = "", val email: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class GraduateGuestDto(val fullName: String = "", val category: String = "", val guestsCount: Int = 1, val companions: List<String> = emptyList())
+
+@JsonClass(generateAdapter = true)
+data class GraduateGuestsDto(
+    val confirmedGuests: Int = 0, val covers: Int = 0, val pendingGuests: Int = 0, val pendingCovers: Int = 0,
+    val confirmed: List<GraduateGuestDto> = emptyList(), val pending: List<String> = emptyList()
+)
+
+@JsonClass(generateAdapter = true)
+data class GraduateBusDto(val maxSeats: Int = 0, val bookedSeats: Int = 0, val availableSeats: Int = 0, val waitlistSeats: Int = 0, val passengers: Int = 0)
+
+@JsonClass(generateAdapter = true)
+data class GraduateAvatarDto(
+    val id: String = "", val name: String = "", val shortName: String = "", val persona: String = "",
+    val voiceKind: String = "", val enabled: Boolean = false, val ready: Boolean = false, val sampleFilename: String = ""
+)
+
+/** GET /api/graduate/me: chi viene, auguri, coordinate di pagamento, navetta e avatar del festeggiato. */
+@JsonClass(generateAdapter = true)
+data class GraduateMeDto(
+    val graduate: GraduateInfoDto = GraduateInfoDto(),
+    val guests: GraduateGuestsDto = GraduateGuestsDto(),
+    val wishes: List<WishEntity> = emptyList(),
+    val wishesForMe: Int = 0,
+    val bus: GraduateBusDto = GraduateBusDto(),
+    val avatar: GraduateAvatarDto? = null,
+    val assistantConfigured: Boolean = false
+)
+
 // ---- Interfaccia Retrofit -----------------------------------------------------------
 
 interface NeuroPartyApi {
@@ -304,6 +342,10 @@ interface NeuroPartyApi {
     /** Solo cassiere/organizzatori (il cruscotto completo è nella PWA). */
     @PATCH("api/gifts/pool/{id}/status")
     suspend fun setPoolStatus(@Path("id") id: Long, @Body body: PoolStatusRequest): GiftPoolContribution
+
+    /** Area festeggiato (solo con X-Graduate-Token, oppure organizzatori con ?graduate_id=). */
+    @GET("api/graduate/me")
+    suspend fun graduateMe(): GraduateMeDto
 
     /** Cruscotto organizzatori (solo con X-Admin-Token). */
     @GET("api/admin/dashboard")

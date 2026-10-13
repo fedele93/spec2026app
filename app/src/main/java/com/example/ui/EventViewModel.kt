@@ -9,6 +9,7 @@ import com.example.BuildConfig
 import com.example.data.*
 import com.example.data.remote.DashboardDto
 import com.example.data.remote.GiftPoolContribution
+import com.example.data.remote.GraduateMeDto
 import com.example.data.remote.ImportResultDto
 import com.example.data.remote.ImportRowRequest
 import com.example.data.remote.PoolContributionRequest
@@ -76,6 +77,8 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     val serverUrl: String get() = prefs.apiBaseUrl
     val adminToken: String get() = prefs.adminToken
     val isAdmin: Boolean get() = prefs.adminToken.isNotBlank()
+    val graduateToken: String get() = prefs.graduateToken
+    val isGraduate: Boolean get() = prefs.graduateToken.isNotBlank()
 
     val mapPoints: List<MapPoint> = SeedData.mapPoints
 
@@ -205,15 +208,17 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     private fun configureRemote() {
         val url = prefs.apiBaseUrl
         repository.remote = if (url.isBlank()) null
-        else RemoteClient.create(url, prefs.clientId, prefs.adminToken, debugLogging = BuildConfig.DEBUG)
+        else RemoteClient.create(url, prefs.clientId, prefs.adminToken, debugLogging = BuildConfig.DEBUG, graduateToken = prefs.graduateToken)
         _serverStatus.value = ServerStatus(configured = url.isNotBlank(), version = prefs.dataVersion)
     }
 
     /** Salva URL e token, riconnette e scarica subito i dati. */
-    fun updateServerSettings(url: String, token: String) {
+    fun updateServerSettings(url: String, token: String, graduateToken: String = prefs.graduateToken) {
         val changedUrl = url.trim().trimEnd('/') != prefs.apiBaseUrl
         prefs.apiBaseUrl = url
         prefs.adminToken = token
+        prefs.graduateToken = graduateToken
+        _graduateArea.value = null
         if (changedUrl) prefs.resetSyncState()
         configureRemote()
         viewModelScope.launch {
@@ -408,6 +413,32 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Quota unica al cassiere
+    // ------------------------------------------------------------------ festeggiato
+
+    private val _graduateArea = MutableStateFlow<GraduateMeDto?>(null)
+    val graduateArea: StateFlow<GraduateMeDto?> = _graduateArea.asStateFlow()
+
+    /** Carica l'area del festeggiato; con token sbagliato (403) lo rimuove e avvisa. */
+    fun loadGraduateArea() {
+        viewModelScope.launch {
+            try {
+                _graduateArea.value = repository.graduateMe()
+            } catch (e: RemoteException) {
+                _graduateArea.value = null
+                if (e.statusCode == 403) {
+                    prefs.graduateToken = ""
+                    configureRemote()
+                    _uiMessage.emit("Token festeggiato non valido: rimosso")
+                } else {
+                    _uiMessage.emit(e.message ?: "Area festeggiato non disponibile")
+                }
+            } catch (e: Exception) {
+                _graduateArea.value = null
+                _uiMessage.emit(e.message ?: "Area festeggiato non disponibile")
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ organizzatori
 
     private val _dashboard = MutableStateFlow<DashboardDto?>(null)

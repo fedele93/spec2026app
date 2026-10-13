@@ -5,6 +5,27 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-10-13
+
+Fase 5 del piano: assistente sul profilo, cruscotto organizzatori, import invitati.
+
+### Aggiunto
+
+- **Assistente sul profilo** (PWA): chi ha aperto il proprio profilo può chiedere all'avatar del
+  suo menu, dei suoi accompagnatori e della sua navetta, e cambiarli a voce ("cambia il mio menu
+  in vegetariano", "prenota la mia navetta"): le modifiche passano dalle stesse regole del
+  profilo (consenso, date limite, lista d'attesa, email di conferma). Backend: strumenti
+  `get_my_profile`, `update_my_profile`, `book_my_bus`, `cancel_my_bus` con `X-Guest-Token`.
+- **Cruscotto organizzatori** (⚙️ Impostazioni): confermati e coperti, in attesa, senza menu,
+  navetta (prenotati, lista d'attesa, saliti), profili ed email, quote uniche, bacheca, menu
+  scelti, e l'elenco delle **cose da fare** con il pulsante che porta alla sezione o al pannello
+  giusto; scorciatoie per CSV, email e import. Backend: `GET /api/admin/dashboard`.
+- **Import della lista invitati**: incolla da Excel o carica un CSV (intestazione riconosciuta:
+  Nome, Categoria, Email, Telefono, Persone, Stato), anteprima con creati/aggiornati/uguali,
+  abbinamento per email o per nome, invio dei link personali a chi ha l'email. Backend:
+  `POST /api/guests/import` (`rows`, `sendLinks`, `dryRun`), evento webhook `guest.imported`.
+- Service worker v2.9.0; 10 nuovi controlli e2e (145). Piano di miglioramento completato.
+
 ## [1.9.0] - 2026-10-13
 
 Fase 4 del piano: area festeggiato, strumenti dei cassieri, scelta del cassiere su Android.

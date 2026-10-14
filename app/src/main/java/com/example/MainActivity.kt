@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.ui.EventViewModel
+import com.example.ui.components.GuideDialog
+import com.example.ui.components.roleGuideSteps
+import com.example.ui.components.welcomeGuideSteps
 import com.example.ui.screens.*
 import com.example.ui.theme.LaurelGold
 import com.example.ui.theme.MyApplicationTheme
@@ -86,6 +89,17 @@ fun MainEventApp(viewModel: EventViewModel) {
     val unreadCount by viewModel.unreadNotifications.collectAsState()
     val guests by viewModel.allGuests.collectAsState()
     val bookedSeats by viewModel.bookedSeatsCount.collectAsState()
+    val guide by viewModel.guide.collectAsState()
+    val serverStatus by viewModel.serverStatus.collectAsState()
+
+    // Guida alla prima apertura / guida del ruolo appena sbloccato: sopra qualsiasi scheda
+    guide?.let { g ->
+        GuideDialog(
+            steps = if (g.role == null) welcomeGuideSteps(serverStatus.configured) else roleGuideSteps(g.role, g.graduateName),
+            role = g.role,
+            onFinish = { viewModel.closeGuide() }
+        )
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

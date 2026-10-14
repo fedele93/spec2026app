@@ -2,8 +2,12 @@ package com.example.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +34,10 @@ fun ServerSettingsDialog(
     currentToken: String,
     onSave: (url: String, token: String, graduateToken: String) -> Unit,
     onDismiss: () -> Unit,
-    currentGraduateToken: String = ""
+    currentGraduateToken: String = "",
+    activeRoles: List<String> = emptyList(),      // ruoli confermati dal server: pulsanti "Guida <ruolo>"
+    onOpenGuide: (() -> Unit)? = null,            // riapre la guida alla prima apertura
+    onOpenRoleGuide: ((String) -> Unit)? = null
 ) {
     var url by remember { mutableStateOf(currentUrl) }
     var token by remember { mutableStateOf(currentToken) }
@@ -49,6 +56,7 @@ fun ServerSettingsDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -102,6 +110,26 @@ fun ServerSettingsDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (activeRoles.isNotEmpty() && onOpenRoleGuide != null) {
+                    Text(
+                        text = "🔑 Guida del tuo ruolo: le funzioni sbloccate dal tuo token e dove trovarle (si apre da sola la prima volta che il server riconosce il token).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        activeRoles.forEach { role ->
+                            OutlinedButton(
+                                onClick = { onOpenRoleGuide(role) },
+                                modifier = Modifier.testTag("role_guide_$role")
+                            ) { Text("Guida ${GuideRoles.LABELS[role] ?: role}") }
+                        }
+                    }
+                }
+                if (onOpenGuide != null) {
+                    TextButton(onClick = onOpenGuide, modifier = Modifier.testTag("reopen_guide_button")) {
+                        Text("❓ Riapri la guida all'app")
+                    }
+                }
             }
         },
         confirmButton = {

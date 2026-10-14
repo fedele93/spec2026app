@@ -5,6 +5,14 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-10-14
+
+Guida alla prima apertura e guide dei ruoli anche nell'app Android (1.9.0).
+
+### Aggiunto
+- Android: guida alla prima apertura in nove passi (cos'è l'app, come è fatta, programma e mappa, conferma della presenza, navetta, bacheca, regali, token dei ruoli, da dove cominciare); si riapre dal pulsante ? nella tab Programma e da ⚙️.
+- Android: guida del ruolo quando il server riconosce il token salvato in ⚙️ (organizzatore, festeggiato), una volta sola per ruolo; riapribile da ⚙️ → "Guida organizzatore/festeggiato". Un token non riconosciuto viene segnalato nel messaggio di connessione (campo `roles` di `GET /api/state`).
+
 ## [1.13.1] - 2026-10-14
 
 Dati evento: luogo della festa nelle email e fermata unica della navetta.

@@ -15,6 +15,8 @@ import com.example.data.remote.ImportRowRequest
 import com.example.data.remote.PoolContributionRequest
 import com.example.data.remote.RemoteClient
 import com.example.data.remote.RemoteException
+import com.example.data.remote.RolesDto
+import com.example.ui.components.GuideRoles
 import com.example.util.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,8 +47,12 @@ data class ServerStatus(
     val version: Long = -1L,
     val adminEnabled: Boolean = false,
     val canSeeLists: Boolean = true, // elenchi completi di invitati e navetta (serve un token organizzatore o festeggiato)
+    val roles: RolesDto? = null,     // ruoli confermati dal server per i token di questo telefono (null = server vecchio)
     val lastError: String? = null
 )
+
+/** Guida aperta: generale (role = null) oppure di un ruolo (GuideRoles). */
+data class GuideRequest(val role: String? = null, val graduateName: String = "")
 
 class EventViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: EventRepository
@@ -58,6 +64,10 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _serverStatus = MutableStateFlow(ServerStatus())
     val serverStatus: StateFlow<ServerStatus> = _serverStatus.asStateFlow()
+
+    /** Guida aperta (prima apertura o ruolo): mostrata dalla MainActivity sopra ogni scheda. */
+    private val _guide = MutableStateFlow<GuideRequest?>(null)
+    val guide: StateFlow<GuideRequest?> = _guide.asStateFlow()
 
     private var syncJob: Job? = null
 
@@ -71,6 +81,8 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 pollServer(force = true)
             }
+            // guida alla prima apertura; altrimenti le guide dei ruoli attivi non ancora viste
+            if (!prefs.guideSeen) openGuide() else maybeOpenRoleGuides()
         }
         startWishTicker()
         startServerSync()
@@ -83,6 +95,60 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     val isGraduate: Boolean get() = prefs.graduateToken.isNotBlank()
 
     val mapPoints: List<MapPoint> = SeedData.mapPoints
+
+    // ------------------------------------------------------------------ guide (prima apertura, ruoli)
+
+    /** Apre la guida generale (pulsante ? e ⚙️). */
+    fun openGuide() { _guide.value = GuideRequest() }
+
+    /** Apre la guida di un ruolo (⚙️ → Guida organizzatore/festeggiato). */
+    fun openRoleGuide(role: String) {
+        if (role !in GuideRoles.LABELS) return
+        val gid = _serverStatus.value.roles?.graduate
+        viewModelScope.launch {
+            // nome del festeggiato dal suo id (regali in Room: id + nome)
+            val name = if (role == GuideRoles.GRADUATE && gid != null)
+                repository.giftTargets.first().firstOrNull { it.id == gid }?.name?.let(::shortName) ?: "" else ""
+            _guide.value = GuideRequest(role = role, graduateName = name)
+        }
+    }
+
+    /** Chiusura della guida (finita o saltata): la segna come vista e apre la prossima guida di ruolo, se c'è. */
+    fun closeGuide() {
+        val current = _guide.value ?: return
+        if (current.role == null) prefs.guideSeen = true else prefs.markRoleGuideSeen(current.role)
+        _guide.value = null
+        maybeOpenRoleGuides()
+    }
+
+    /** Ruoli attivi su questo telefono, solo se confermati dal server (campo roles di /api/state, online). */
+    fun activeRoles(): List<String> {
+        val st = _serverStatus.value
+        val r = st.roles ?: return emptyList()
+        if (!st.configured || !st.online) return emptyList()
+        return listOfNotNull(GuideRoles.ADMIN.takeIf { r.admin }, GuideRoles.GRADUATE.takeIf { r.graduate != null })
+    }
+
+    /** Token salvati che il server non riconosce (solo se il server riporta i ruoli). */
+    private fun rejectedTokens(): List<String> {
+        val st = _serverStatus.value
+        val r = st.roles ?: return emptyList()
+        if (!st.online) return emptyList()
+        return listOfNotNull(
+            GuideRoles.ADMIN.takeIf { isAdmin && !r.admin },
+            GuideRoles.GRADUATE.takeIf { isGraduate && r.graduate == null }
+        )
+    }
+
+    /** Apre la guida del primo ruolo attivo non ancora spiegato (una alla volta, in catena). */
+    private fun maybeOpenRoleGuides(): Boolean {
+        if (_guide.value != null) return false
+        val role = activeRoles().firstOrNull { !prefs.roleGuideSeen(it) } ?: return false
+        openRoleGuide(role)
+        return true
+    }
+
+    private fun shortName(name: String): String = name.replace(Regex("^Dott\\.(ssa)?\\s*", RegexOption.IGNORE_CASE), "")
 
     private val _selectedTab = MutableStateFlow(0)
     val selectedTab: StateFlow<Int> = _selectedTab.asStateFlow()
@@ -228,7 +294,9 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
                 repository.prepopulateIfNeeded()
                 _uiMessage.emit("Modalità locale attiva")
             } else if (pollServer(force = true)) {
-                _uiMessage.emit("Connesso al server ✓")
+                val rejected = rejectedTokens().joinToString("") { " · token ${GuideRoles.LABELS[it]} non riconosciuto dal server" }
+                _uiMessage.emit("Connesso al server ✓$rejected")
+                maybeOpenRoleGuides() // guida del ruolo appena sbloccato (una volta sola per ruolo)
             }
         }
     }
@@ -265,7 +333,7 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
             }
             _serverStatus.value = ServerStatus(
                 configured = true, online = true, version = state.version, adminEnabled = state.adminEnabled,
-                canSeeLists = state.canSeeLists
+                canSeeLists = state.canSeeLists, roles = state.roles
             )
             true
         } catch (e: Exception) {

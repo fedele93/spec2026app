@@ -32,7 +32,17 @@ data class StateDto(
     val adminEnabled: Boolean = false,
     val treasurerEnabled: Boolean = false,
     val canSeeLists: Boolean = true, // con i token di questo dispositivo il server manda gli elenchi completi
-    val pushSubscriptions: Int = 0
+    val pushSubscriptions: Int = 0,
+    val roles: RolesDto? = null // ruoli sbloccati dai token di questa chiamata (server dalla 1.13 in poi)
+)
+
+/** Quali token inviati sono validi: admin/treasurer booleani, graduate = id del festeggiato o null. */
+@JsonClass(generateAdapter = true)
+data class RolesDto(
+    val admin: Boolean = false,
+    val treasurer: Boolean = false,
+    val treasurerIds: List<String> = emptyList(),
+    val graduate: String? = null
 )
 
 @JsonClass(generateAdapter = true)

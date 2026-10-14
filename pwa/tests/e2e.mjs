@@ -456,7 +456,7 @@ await tab("bus");
 await page.waitForSelector("#bus-profile");
 await page.click("#bus-profile");
 await page.waitForSelector("#pb-save", { timeout: 10000 });
-check("sezione navetta nel profilo con fermate", (await page.$$("#pb-stop option")).length >= 3);
+check("sezione navetta nel profilo con la fermata confermata (Piazza Giulio Cesare)", (await page.$$("#pb-stop option")).length === 1 && (await page.textContent("#pb-stop")).includes("Piazza Giulio Cesare"));
 check("navetta prenotata dal profilo", (await clickExpectToast("#pb-save")).includes("prenotata"));
 await page.waitForSelector("#pb-cancel", { timeout: 10000 });
 check("profilo mostra codice e stato confermata", /NP-[A-Z0-9]{4}/.test(await page.textContent("#pf-bus")) && (await page.textContent("#pf-bus")).includes("confermata"));

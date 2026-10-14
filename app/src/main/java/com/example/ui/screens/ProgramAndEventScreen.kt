@@ -121,6 +121,21 @@ fun ProgramAndEventScreen(
                             }
 
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            // Guida all'app (riapre i passi della prima apertura)
+                            IconButton(
+                                onClick = { viewModel.openGuide() },
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
+                                    .testTag("open_guide_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Help,
+                                    contentDescription = "Guida all'app",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                             // Notification button with badge
                             Box {
                                 IconButton(
@@ -453,7 +468,10 @@ fun ProgramAndEventScreen(
                 viewModel.updateServerSettings(url, token, graduateToken)
                 showServerSettings = false
             },
-            onDismiss = { showServerSettings = false }
+            onDismiss = { showServerSettings = false },
+            activeRoles = viewModel.activeRoles(),
+            onOpenGuide = { showServerSettings = false; viewModel.openGuide() },
+            onOpenRoleGuide = { role -> showServerSettings = false; viewModel.openRoleGuide(role) }
         )
     }
 

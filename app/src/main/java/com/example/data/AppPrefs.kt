@@ -47,6 +47,15 @@ class AppPrefs(context: Context) {
     val serverConfigured: Boolean
         get() = apiBaseUrl.isNotBlank()
 
+    /** Guida alla prima apertura già vista (per la versione corrente: alza GUIDE_VERSION per rimostrarla a tutti). */
+    var guideSeen: Boolean
+        get() = prefs.getInt(KEY_GUIDE_SEEN, 0) == GUIDE_VERSION
+        set(value) = prefs.edit().putInt(KEY_GUIDE_SEEN, if (value) GUIDE_VERSION else 0).apply()
+
+    /** Guida del ruolo (organizzatore, festeggiato) già vista su questo telefono. */
+    fun roleGuideSeen(role: String): Boolean = prefs.getBoolean(KEY_ROLE_GUIDE_SEEN + role, false)
+    fun markRoleGuideSeen(role: String) = prefs.edit().putBoolean(KEY_ROLE_GUIDE_SEEN + role, true).apply()
+
     fun resetSyncState() {
         prefs.edit().remove(KEY_DATA_VERSION).remove(KEY_LAST_SEEN_NOTIFICATION).apply()
     }
@@ -58,5 +67,8 @@ class AppPrefs(context: Context) {
         private const val KEY_GRADUATE_TOKEN = "graduate_token"
         private const val KEY_DATA_VERSION = "data_version"
         private const val KEY_LAST_SEEN_NOTIFICATION = "last_seen_notification_ts"
+        private const val KEY_GUIDE_SEEN = "guide_seen_version"
+        private const val KEY_ROLE_GUIDE_SEEN = "role_guide_seen_" // + ruolo
+        const val GUIDE_VERSION = 1
     }
 }

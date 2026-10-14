@@ -7,7 +7,7 @@ import { openGraduateArea } from "./graduate.js";
 import { openDashboard, openImportDialog } from "./admin.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
 import { openProfile, openMailAdmin, hasProfile, MENU_LABELS } from "./profile.js";
-import { openGuide } from "./guide.js";
+import { openGuide, openRoleGuide, maybeOpenRoleGuides, activeRoles, ROLE_LABELS } from "./guide.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -273,8 +273,16 @@ function fmtDateTime(ts) {
   return new Date(ts).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
+// Token salvati su questo dispositivo che il server non riconosce (solo se il server riporta i ruoli).
+function rejectedTokens() {
+  const r = Status.roles;
+  if (!r || Repo.mode !== "server" || !Status.online) return [];
+  return [isAdmin() && !r.admin && "admin", isTreasurer() && !r.treasurer && "treasurer", isGraduate() && !r.graduate && "graduate"].filter(Boolean);
+}
+
 function settingsDialog() {
   const serverMode = Repo.mode === "server";
+  const roles = activeRoles(); // ruoli confermati dal server (guide dei ruoli)
   openModal(`<h3>⚙️ Impostazioni</h3>
     <div class="card" style="margin-bottom:12px;">
       <b style="font-size:13px;">Stato</b>
@@ -303,7 +311,9 @@ function settingsDialog() {
     ${serverMode && isTreasurer() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📒 Esporta quote uniche per il cassiere</b>
       <div class="muted" style="margin-bottom:8px;">CSV con una riga per quota, una colonna per neo-specialista e i totali: si apre con Excel.</div>
       <button class="btn btn-ghost" id="s-exp-pool">Esporta quote uniche</button></div>` : ""}
-    <div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">❓ Guida all'app</b><div class="muted" style="margin-bottom:8px;">I passi mostrati alla prima apertura: cosa fa ogni scheda e come usarla.</div><button class="btn btn-ghost" id="s-guide">Riapri la guida</button></div>
+    ${roles.length ? `<div class="card" style="margin-bottom:12px;" id="s-role-guides"><b style="font-size:13px;">🔑 Guida del tuo ruolo</b><div class="muted" style="margin-bottom:8px;">Le funzioni sbloccate dal tuo token e dove trovarle: si apre da sola la prima volta che il server riconosce il token.</div>
+      <div class="btn-row">${roles.map((r) => `<button class="btn btn-ghost" data-role-guide="${r}">Guida ${esc(ROLE_LABELS[r])}</button>`).join("")}</div></div>` : ""}
+    <div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">❓ Guida all'app</b><div class="muted" style="margin-bottom:8px;">I passi mostrati alla prima apertura: cosa fa ogni scheda e da dove cominciare.</div><button class="btn btn-ghost" id="s-guide">Riapri la guida</button></div>
     <div class="field"><label>URL del server (avanzato)</label><input id="s-api" value="${esc(localStorage.getItem("np.apiBase") || "")}" placeholder="vuoto = stesso dominio della PWA"></div>
     <div class="btn-row"><button class="btn btn-primary" id="s-save">Salva</button><button class="btn btn-ghost" id="s-test">Prova connessione</button></div>`,
     (bg, close) => {
@@ -311,6 +321,7 @@ function settingsDialog() {
       if (expG) expG.onclick = () => tryAction(() => downloadCsv("guests"), "invitati.csv scaricato");
       if (expB) expB.onclick = () => tryAction(() => downloadCsv("bus"), "navetta.csv scaricato");
       bg.querySelector("#s-guide").onclick = () => { close(); openGuide(); };
+      bg.querySelectorAll("[data-role-guide]").forEach((b) => b.onclick = () => { close(); openRoleGuide(b.dataset.roleGuide); });
       const dash = bg.querySelector("#s-dash");
       if (dash) dash.onclick = () => { close(); openDashboard(); };
       const imp = bg.querySelector("#s-import");
@@ -336,9 +347,10 @@ function settingsDialog() {
         close();
         // i token decidono cosa manda il server (elenchi riservati): si ricarica sempre tutto
         await reconnect(); updateStatusBar();
-        toast("Impostazioni salvate");
+        toast(`Impostazioni salvate${rejectedTokens().map((r) => ` · token ${ROLE_LABELS[r]} non riconosciuto dal server`).join("")}`);
         render();
-        initAssistant();
+        await initAssistant(); // prima della guida del ruolo: così sa se c'è l'assistente (passo avatar)
+        maybeOpenRoleGuides(); // guida del ruolo appena sbloccato (una volta sola per ruolo)
       };
     });
 }
@@ -800,7 +812,7 @@ function shortName(n) { return String(n || "").replace(/^Dott\.(ssa)?\s*/i, "");
 
 // Dialogo della quota unica: importo, ripartizione (parti uguali o personalizzata), metodo, dati per pagare.
 function poolDialog(targets, collector, onDone) {
-  const presets = [50, 100, 150, 200];
+  const presets = [180, 270, 360, 450];
   const methods = (collector.paymentMethods || []).filter((m) => ["IBAN", "PayPal", "Contanti"].includes(m));
   openModal(`<h3>🤝 Quota unica • ${esc(collector.name || "cassiere")}</h3>
     <div class="muted" style="margin-bottom:10px;">Un solo versamento: ${esc(shortName(collector.name) || "il cassiere")} lo ripartisce fra i neo-specialisti secondo le tue indicazioni.</div>
@@ -811,7 +823,7 @@ function poolDialog(targets, collector, onDone) {
       <div class="chips" id="q-modes"><button class="chip active" data-mode="EQUAL">In parti uguali</button><button class="chip" data-mode="CUSTOM">Personalizza</button></div></div>
     <div id="q-equal">
       <div class="field"><label>Importo totale</label>
-        <div class="chips" id="q-presets">${presets.map((p) => `<button class="chip ${p === 100 ? "active" : ""}" data-amt="${p}">${p} €</button>`).join("")}</div>
+        <div class="chips" id="q-presets">${presets.map((p) => `<button class="chip ${p === 270 ? "active" : ""}" data-amt="${p}">${p} €</button>`).join("")}</div>
         <input id="q-amount" type="number" min="1" step="0.01" inputmode="decimal" placeholder="Oppure un altro importo (€)"></div>
       <div class="field"><label>Per chi (togli la spunta per escludere qualcuno, es. te stesso)</label>
         <div class="split-list" id="q-who">${targets.map((t) => `<label class="split-row"><input type="checkbox" data-who="${esc(t.id)}" checked> <span class="grow">${esc(t.name)}</span><span class="muted" data-each="${esc(t.id)}"></span></label>`).join("")}</div></div>
@@ -823,9 +835,9 @@ function poolDialog(targets, collector, onDone) {
     <div class="field"><label>Metodo di pagamento</label><div class="chips" id="q-methods">${methods.map((m, i) => `<button class="chip ${i === 0 ? "active" : ""}" data-m="${m}">${m}</button>`).join("")}</div></div>
     <div class="card" id="q-pay" style="background:var(--bg);"></div>
     <div class="field"><label>Nota per il cassiere (facoltativa)</label><textarea id="q-note" rows="2" placeholder="es. Consegno i contanti sabato"></textarea></div>
-    <button class="btn btn-gold" id="q-save" style="margin-top:10px;">Registra quota (100,00 €)</button>`,
+    <button class="btn btn-gold" id="q-save" style="margin-top:10px;">Registra quota (270,00 €)</button>`,
     (bg, close) => {
-      let mode = "EQUAL", method = methods[0] || "IBAN", amount = 100;
+      let mode = "EQUAL", method = methods[0] || "IBAN", amount = 270;
       const $ = (sel) => bg.querySelector(sel);
       const $$ = (sel) => [...bg.querySelectorAll(sel)];
       const selectedIds = () => $$("[data-who]:checked").map((c) => c.dataset.who);

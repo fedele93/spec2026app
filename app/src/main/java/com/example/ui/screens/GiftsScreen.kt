@@ -414,8 +414,8 @@ fun PoolContributionDialog(
     var note by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf(MODE_EQUAL) }
 
-    val presetAmounts = listOf(50.0, 100.0, 150.0, 200.0)
-    var selectedPreset by remember { mutableStateOf<Double?>(100.0) }
+    val presetAmounts = listOf(180.0, 270.0, 360.0, 450.0)
+    var selectedPreset by remember { mutableStateOf<Double?>(270.0) }
     var customAmount by remember { mutableStateOf("") }
     val equalTotal: Double = selectedPreset ?: (customAmount.replace(',', '.').toDoubleOrNull() ?: 0.0)
 

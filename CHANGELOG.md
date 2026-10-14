@@ -5,6 +5,24 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-10-13
+
+Guida alla prima apertura rinnovata e guide dei ruoli (PWA).
+
+### Aggiunto
+- Guida del ruolo: quando in ⚙️ Impostazioni si salva un token che il server riconosce (organizzatore, cassiere, festeggiato) si apre una volta sola una guida con le funzioni appena sbloccate e dove trovarle; si riapre da Impostazioni → "Guida del tuo ruolo".
+- Il server segnala i ruoli attivi (`roles` in `GET /api/state`): un token sbagliato viene segnalato subito al salvataggio delle impostazioni.
+
+### Cambiato
+- Guida alla prima apertura riscritta: cosa è l'app e come installarla, come è fatta, programma e mappa, profilo e navetta, auguri e foto, regali (regalo diretto e quota unica), assistente, token dei ruoli e "da dove cominciare". Viene riproposta a tutti una volta.
+
+## [1.12.1] - 2026-10-13
+
+Importi rapidi della quota unica (PWA e Android 1.8.2).
+
+### Cambiato
+- I pulsanti rapidi dell'importo della quota unica sono ora 180, 270, 360 e 450 € (multipli dei 9 neo-specialisti: 20, 30, 40 e 50 € a testa); l'importo preselezionato è 270 €.
+
 ## [1.12.0] - 2026-10-13
 
 Privacy degli elenchi e pulizia da organizzatore (PWA e Android 1.8.1).

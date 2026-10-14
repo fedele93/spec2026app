@@ -49,7 +49,7 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
   email di conferma spedite da n8n; dal profilo si prenota anche la **navetta** (conferma con
   codice e file calendario, lista d'attesa automatica); gli organizzatori generano e inviano i
   link dalla lista invitati, fanno il check-in alla partenza e lanciano i promemoria.
-- **Guida alla prima apertura** (PWA): spiega le schede e come usarle; riapribile dal pulsante ?.
+- **Guida alla prima apertura** (PWA): cosa è l'app, come è fatta, cosa fa ogni scheda e da dove cominciare; riapribile dal pulsante ?. **Guide dei ruoli**: quando un token (organizzatore, cassiere, festeggiato) viene riconosciuto dal server si apre una volta la guida delle funzioni sbloccate; si riapre da ⚙️ Impostazioni.
 - **Chi vede cosa**: la lista degli invitati e quella dei passeggeri della navetta sono complete
   solo con un token (organizzatore, festeggiato o cassiere); gli altri vedono i propri record e
   i conteggi. Le cifre delle quote uniche le vede solo il cassiere con il proprio token (il token

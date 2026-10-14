@@ -15,7 +15,7 @@ import org.junit.Test
 /** Guida alla prima apertura, guide dei ruoli e campo roles di /api/state. */
 class GuideStepsTest {
     @Test
-    fun `guida generale: nove passi, schede e da dove cominciare`() {
+    fun `guida generale con nove passi, schede e da dove cominciare`() {
         val steps = welcomeGuideSteps(serverMode = true)
         assertEquals(9, steps.size)
         assertTrue(steps.first().title.contains("Benvenuto"))
@@ -31,7 +31,7 @@ class GuideStepsTest {
     }
 
     @Test
-    fun `guide dei ruoli: organizzatore e festeggiato con il nome`() {
+    fun `guide dei ruoli per organizzatore e festeggiato con il nome`() {
         val admin = roleGuideSteps(GuideRoles.ADMIN)
         assertEquals(5, admin.size)
         assertTrue(admin.first().title.contains("organizzatore"))

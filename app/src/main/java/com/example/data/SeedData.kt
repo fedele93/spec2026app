@@ -119,12 +119,10 @@ object SeedData {
         timeLabel = "Ven 13 - da definire", from = "Piazza Giulio Cesare (Policlinico di Bari)", to = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", notes = "Venerdì 13 novembre: orario di partenza in via di definizione, sarà confermato con l'orario della festa"
     )
     val busRitorno: BusTripInfo = BusTripInfo(
-        timeLabel = "Ven 13 - notte", from = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", to = "Policlinico di Bari / Stazione Centrale", notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
+        timeLabel = "Ven 13 - notte", from = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", to = "Piazza Giulio Cesare (Policlinico di Bari)", notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
     )
     val busPickupStops: List<String> = listOf(
         "Piazza Giulio Cesare (Policlinico di Bari)",
-        "Policlinico di Bari (Fermata Metro/Navetta)",
-        "Stazione Ferroviaria Centrale di Bari",
 
     )
 
@@ -207,7 +205,7 @@ object SeedData {
         BusBookingEntity(
             passengerName = "Specializzandi Neurologia Turno A",
             seatsCount = 6,
-            pickupStop = "Policlinico di Bari (Fermata Metro/Navetta)",
+            pickupStop = "Piazza Giulio Cesare (Policlinico di Bari)",
             returnTripWanted = true,
             contactPhone = "349 1122339",
             notes = "Tutti insieme"

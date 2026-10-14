@@ -5,6 +5,14 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [1.13.1] - 2026-10-14
+
+Dati evento: luogo della festa nelle email e fermata unica della navetta.
+
+### Cambiato
+- Le email citano solo Il Giardino dei Tempi come luogo della festa (nuovo campo `program.partyLocationLabel`; l'intestazione dell'app continua a mostrare anche l'aula della seduta).
+- Navetta: una sola fermata confermata, Piazza Giulio Cesare (Policlinico di Bari); il ritorno è verso la stessa piazza. Dati Android e fixture rigenerati.
+
 ## [1.13.0] - 2026-10-13
 
 Guida alla prima apertura rinnovata e guide dei ruoli (PWA).

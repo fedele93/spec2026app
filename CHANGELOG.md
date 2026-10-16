@@ -5,6 +5,11 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [Non rilasciato]
+
+### Modificato
+- Quote uniche: Akilesh Bhunjun (cassiere `aki`) riceve solo con bonifico (IBAN IT96 E010 0504 0010 0000 0003 247) o PayPal (paypal.me/AkileshBhunjun); niente contanti.
+
 ## [1.14.0] - 2026-10-14
 
 Guida alla prima apertura e guide dei ruoli anche nell'app Android (1.9.0).

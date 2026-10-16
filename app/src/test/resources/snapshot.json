@@ -1,6 +1,6 @@
 {
     "version": 6,
-    "serverTime": 1791952786501,
+    "serverTime": 1792181241123,
     "event": {
         "meta": {
             "maxBusSeats": 54,
@@ -163,14 +163,13 @@
                 "id": "aki",
                 "name": "Dott. Akilesh Bhunjun",
                 "roleTitle": "Cassiere delle quote uniche",
-                "description": "In alternativa puoi versare la tua quota unica ad Akilesh, che la ripartisce allo stesso modo fra i neo-specialisti.",
-                "iban": "IT00 B000 0000 0000 0000 0000 000",
+                "description": "In alternativa puoi versare la tua quota unica ad Akilesh, che la ripartisce allo stesso modo fra i neo-specialisti. Akilesh accetta solo bonifico o PayPal (niente contanti).",
+                "iban": "IT96 E010 0504 0010 0000 0003 247",
                 "ibanHolder": "Akilesh Bhunjun",
-                "paypalMeUrl": "https://paypal.me/akileshbhunjun",
+                "paypalMeUrl": "https://www.paypal.me/AkileshBhunjun",
                 "paymentMethods": [
                     "IBAN",
-                    "PayPal",
-                    "Contanti"
+                    "PayPal"
                 ],
                 "transferReason": "Regalo specializzazione Neurologia 2026"
             }
@@ -189,7 +188,7 @@
             "menu": "",
             "companions": [],
             "hasProfile": false,
-            "updatedAt": 1791952786308,
+            "updatedAt": 1792181240952,
             "ownerClientId": null
         },
         {
@@ -203,7 +202,7 @@
             "menu": "",
             "companions": [],
             "hasProfile": false,
-            "updatedAt": 1791952786308,
+            "updatedAt": 1792181240952,
             "ownerClientId": null
         },
         {
@@ -217,7 +216,7 @@
             "menu": "",
             "companions": [],
             "hasProfile": false,
-            "updatedAt": 1791952786308,
+            "updatedAt": 1792181240952,
             "ownerClientId": null
         },
         {
@@ -231,7 +230,7 @@
             "menu": "",
             "companions": [],
             "hasProfile": false,
-            "updatedAt": 1791952786308,
+            "updatedAt": 1792181240952,
             "ownerClientId": null
         },
         {
@@ -245,7 +244,7 @@
             "menu": "",
             "companions": [],
             "hasProfile": false,
-            "updatedAt": 1791952786308,
+            "updatedAt": 1792181240952,
             "ownerClientId": null
         },
         {
@@ -259,7 +258,7 @@
             "menu": "",
             "companions": [],
             "hasProfile": false,
-            "updatedAt": 1791952786308,
+            "updatedAt": 1792181240952,
             "ownerClientId": null
         },
         {
@@ -273,7 +272,7 @@
             "menu": "",
             "companions": [],
             "hasProfile": false,
-            "updatedAt": 1791952786308,
+            "updatedAt": 1792181240952,
             "ownerClientId": null
         }
     ],
@@ -286,10 +285,10 @@
             "returnTripWanted": true,
             "contactPhone": "347 0001122",
             "notes": "Arriviamo in treno",
-            "bookedAt": 1791952786406,
+            "bookedAt": 1792181241041,
             "guestId": null,
             "status": "CONFIRMED",
-            "code": "NP-NRGE",
+            "code": "NP-522V",
             "checkedInAt": null,
             "ownerClientId": "dev-fixture"
         },
@@ -301,7 +300,7 @@
             "returnTripWanted": true,
             "contactPhone": "333 4567891",
             "notes": "Pronta subito dopo le proclamazioni",
-            "bookedAt": 1791952786304,
+            "bookedAt": 1792181240948,
             "guestId": null,
             "status": "CONFIRMED",
             "code": "",
@@ -316,7 +315,7 @@
             "returnTripWanted": true,
             "contactPhone": "340 5566778",
             "notes": "Con festoni e regali",
-            "bookedAt": 1791952786304,
+            "bookedAt": 1792181240948,
             "guestId": null,
             "status": "CONFIRMED",
             "code": "",
@@ -331,7 +330,7 @@
             "returnTripWanted": true,
             "contactPhone": "349 1122339",
             "notes": "Tutti insieme",
-            "bookedAt": 1791952786304,
+            "bookedAt": 1792181240948,
             "guestId": null,
             "status": "CONFIRMED",
             "code": "",
@@ -347,7 +346,7 @@
             "message": "Auguri a tutti e nove! Ci vediamo al Giardino dei Tempi.",
             "emojiBadge": "\ud83e\udd42",
             "heartCount": 1,
-            "createdAt": 1791952786420
+            "createdAt": 1792181241057
         },
         {
             "id": 10,
@@ -356,7 +355,7 @@
             "message": "Donato, calma nelle urgenze e sorriso nelle guardie: un neurologo con cui tutti vorrebbero lavorare. Auguri!",
             "emojiBadge": "\ud83e\udde0",
             "heartCount": 14,
-            "createdAt": 1791952498301
+            "createdAt": 1792180952945
         },
         {
             "id": 9,
@@ -365,7 +364,7 @@
             "message": "Chiara, la tua determinazione e il tuo sorriso hanno illuminato il reparto. Auguri di cuore, dottoressa!",
             "emojiBadge": "\u2728",
             "heartCount": 22,
-            "createdAt": 1791952174301
+            "createdAt": 1792180628945
         },
         {
             "id": 8,
@@ -374,7 +373,7 @@
             "message": "Francesco, neurologo e amico: una combinazione imbattibile. Venerd\u00ec 13 festa, e poi... si vedr\u00e0!",
             "emojiBadge": "\ud83c\udf93",
             "heartCount": 16,
-            "createdAt": 1791949186301
+            "createdAt": 1792177640945
         },
         {
             "id": 7,
@@ -383,7 +382,7 @@
             "message": "Lorenzo caro, ogni sacrificio di questi anni diventa oggi orgoglio immenso. Continua a curare i tuoi pazienti come hai curato il tuo sogno.",
             "emojiBadge": "\u2764\ufe0f",
             "heartCount": 27,
-            "createdAt": 1791945586301
+            "createdAt": 1792174040945
         },
         {
             "id": 6,
@@ -392,7 +391,7 @@
             "message": "Giorgia, ce l'hai fatta! Da oggi neurologa a tutti gli effetti: orgogliose di te e del percorso condiviso.",
             "emojiBadge": "\ud83c\udf89",
             "heartCount": 20,
-            "createdAt": 1791941986301
+            "createdAt": 1792170440945
         },
         {
             "id": 5,
@@ -401,7 +400,7 @@
             "message": "Dalila, la tua sensibilit\u00e0 clinica e la cura dei pazienti sono state un esempio per tutti. Auguri di vera specialista!",
             "emojiBadge": "\u2b50",
             "heartCount": 12,
-            "createdAt": 1791938386301
+            "createdAt": 1792166840945
         },
         {
             "id": 4,
@@ -410,7 +409,7 @@
             "message": "Adesso sei ufficialmente un 'Brain Master'! Venerd\u00ec 13 si brinda senza sosta alla tua salute!",
             "emojiBadge": "\ud83e\udd42",
             "heartCount": 15,
-            "createdAt": 1791934786301
+            "createdAt": 1792163240945
         },
         {
             "id": 3,
@@ -419,7 +418,7 @@
             "message": "Sebastiano, vedere coronato il tuo sogno di diventare neurologo ci riempie di orgoglio e gioia immensa. Ti vogliamo bene!",
             "emojiBadge": "\u2764\ufe0f",
             "heartCount": 31,
-            "createdAt": 1791931186301
+            "createdAt": 1792159640945
         },
         {
             "id": 2,
@@ -428,7 +427,7 @@
             "message": "Grande Fedele! Tra turni di notte interminabili ed EEG complessi sei arrivato al traguardo pi\u00f9 bello. Fieri di te!",
             "emojiBadge": "\u26a1",
             "heartCount": 18,
-            "createdAt": 1791927586301
+            "createdAt": 1792156040945
         },
         {
             "id": 1,
@@ -437,7 +436,7 @@
             "message": "Congratulazioni di cuore ai nostri nuovi specialisti! Avete dimostrato dedizione, rigore scientifico e grande umanit\u00e0. Buona strada in Neurologia!",
             "emojiBadge": "\ud83e\udde0",
             "heartCount": 24,
-            "createdAt": 1791923986301
+            "createdAt": 1792152440945
         }
     ],
     "photos": [
@@ -446,9 +445,9 @@
             "authorName": "Staff Organizzazione",
             "caption": "Sopralluogo al Giardino dei Tempi: la sala \u00e8 pronta!",
             "imageResId": 0,
-            "imageUri": "https://festa.example.org/uploads/d4803315d8614240b10133317d4ac610.jpg",
+            "imageUri": "https://festa.example.org/uploads/95d3d354547342509c963236f83eae87.jpg",
             "likesCount": 1,
-            "createdAt": 1791952786456
+            "createdAt": 1792181241086
         },
         {
             "id": 3,
@@ -457,7 +456,7 @@
             "imageResId": 3,
             "imageUri": "",
             "likesCount": 35,
-            "createdAt": 1791941986301
+            "createdAt": 1792170440945
         },
         {
             "id": 2,
@@ -466,7 +465,7 @@
             "imageResId": 2,
             "imageUri": "",
             "likesCount": 42,
-            "createdAt": 1791931186301
+            "createdAt": 1792159640945
         },
         {
             "id": 1,
@@ -475,7 +474,7 @@
             "imageResId": 1,
             "imageUri": "",
             "likesCount": 28,
-            "createdAt": 1791920386301
+            "createdAt": 1792148840945
         }
     ],
     "giftTargets": [
@@ -603,7 +602,7 @@
             "title": "\ud83d\udccd Festa al Giardino dei Tempi",
             "message": "Confermata la sede della festa di venerd\u00ec 13 novembre: Il Giardino dei Tempi - Orto Botanico, Via Giovanni Amendola 247, Bari.",
             "category": "Festa",
-            "timestamp": 1791952786491,
+            "timestamp": 1792181241115,
             "scheduledAt": null,
             "isRead": false
         },
@@ -612,7 +611,7 @@
             "title": "\ud83d\ude8c Prenotazione Bus Navetta Aperta",
             "message": "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico di Bari al Giardino dei Tempi. Riserva il tuo posto!",
             "category": "Navetta",
-            "timestamp": 1791949186302,
+            "timestamp": 1792177640946,
             "scheduledAt": null,
             "isRead": false
         },
@@ -621,7 +620,7 @@
             "title": "\ud83c\udf89 Festa di Venerd\u00ec 13 Novembre",
             "message": "La festa di specializzazione si terr\u00e0 venerd\u00ec 13 novembre al Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, Bari), dalle 21:30 alle 03:00. Vi aspettiamo!",
             "category": "Festa",
-            "timestamp": 1791945586302,
+            "timestamp": 1792174040946,
             "scheduledAt": null,
             "isRead": false
         },
@@ -630,7 +629,7 @@
             "title": "\ud83d\udccd Seduta del 9 Novembre all'Aula Magna",
             "message": "La seduta di proclamazione si terr\u00e0 il 9 novembre presso l'Aula Magna \"G. De Benedictis\" del Policlinico di Bari (AOUC Policlinico di Bari). Ora da definirsi.",
             "category": "Seduta",
-            "timestamp": 1791941986302,
+            "timestamp": 1792170440946,
             "scheduledAt": null,
             "isRead": false
         },
@@ -639,7 +638,7 @@
             "title": "\ud83c\udf93 Benvenuti all'evento di Specializzazione!",
             "message": "L'app ufficiale per la Specializzazione in Neurologia a Bari \u00e8 attiva. Controlla il programma, prenota il bus e conferma il tuo RSVP!",
             "category": "Organizzazione",
-            "timestamp": 1791934786302,
+            "timestamp": 1792163240946,
             "scheduledAt": null,
             "isRead": false
         }

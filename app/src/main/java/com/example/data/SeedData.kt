@@ -366,10 +366,10 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Martello Riflessi Digitale & Corso RM Funzionale",
             giftDescription = "Contributo per la dotazione ambulatoriale e l'aggiornamento in neuroimaging funzionale di Dalila.",
-            iban = "IT55 A030 6909 6061 0000 1112 223",
+            iban = "IT89 Y020 0804 0240 0043 0727 126",
             ibanHolder = "Dalila Totaro",
-            satispayUrl = "https://tag.satispay.com/dalilatotaro",
-            paypalMeUrl = "https://paypal.me/dalilatotaro"
+            satispayUrl = "",
+            paypalMeUrl = ""
         ),
         GiftTargetEntity(
             id = "ruta",

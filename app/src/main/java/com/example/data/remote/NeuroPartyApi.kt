@@ -32,6 +32,7 @@ data class StateDto(
     val adminEnabled: Boolean = false,
     val treasurerEnabled: Boolean = false,
     val canSeeLists: Boolean = true, // con i token di questo dispositivo il server manda gli elenchi completi
+    val canSeeMemories: Boolean = true, // foto e auguri: solo invitati registrati (X-Guest-Token) e ruoli
     val pushSubscriptions: Int = 0,
     val roles: RolesDto? = null // ruoli sbloccati dai token di questa chiamata (server dalla 1.13 in poi)
 )
@@ -55,6 +56,7 @@ data class SnapshotDto(
     val version: Long,
     val serverTime: Long,
     val event: SnapshotEventDto? = null,
+    val canSeeMemories: Boolean = true, // false = foto e auguri non inviati (serve il profilo invitato o un ruolo)
     val guests: List<GuestEntity> = emptyList(),
     val busBookings: List<BusBookingEntity> = emptyList(),
     val wishes: List<WishEntity> = emptyList(),
@@ -149,6 +151,20 @@ data class WishRequest(
     val message: String,
     val emojiBadge: String
 )
+
+/** Richiesta del link personale via email (POST /api/profile/request-link). */
+@JsonClass(generateAdapter = true)
+data class ProfileLinkRequest(val email: String, val fullName: String = "")
+
+@JsonClass(generateAdapter = true)
+data class ProfileLinkResponse(val queued: Boolean = false, val created: Boolean = false, val message: String = "")
+
+/** Il proprio profilo (GET /api/profile con X-Guest-Token): qui serve solo il nome. */
+@JsonClass(generateAdapter = true)
+data class ProfileDto(val guest: ProfileGuestDto)
+
+@JsonClass(generateAdapter = true)
+data class ProfileGuestDto(val id: Long = 0, val fullName: String = "")
 
 @JsonClass(generateAdapter = true)
 data class PoolAllocationRequest(val graduateId: String, val amount: Double)
@@ -319,6 +335,14 @@ interface NeuroPartyApi {
 
     @DELETE("api/bus/bookings/{id}")
     suspend fun deleteBooking(@Path("id") id: Long): Response<Unit>
+
+    /** Manda all'email il link personale (crea l'invitato se c'è anche il nome). */
+    @POST("api/profile/request-link")
+    suspend fun requestProfileLink(@Body body: ProfileLinkRequest): ProfileLinkResponse
+
+    /** Il proprio profilo (header X-Guest-Token); 401 se il link non vale più. */
+    @GET("api/profile")
+    suspend fun profile(): ProfileDto
 
     @POST("api/wishes")
     suspend fun addWish(@Body body: WishRequest): WishEntity

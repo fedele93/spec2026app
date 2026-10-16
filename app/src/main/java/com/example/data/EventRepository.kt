@@ -13,6 +13,8 @@ import com.example.data.remote.ImportRequest
 import com.example.data.remote.ImportResultDto
 import com.example.data.remote.ImportRowRequest
 import com.example.data.remote.PoolContributionRequest
+import com.example.data.remote.ProfileLinkRequest
+import com.example.data.remote.ProfileLinkResponse
 import com.example.data.remote.RemoteClient
 import com.example.data.remote.RemoteException
 import com.example.data.remote.SnapshotDto
@@ -110,6 +112,20 @@ class EventRepository(private val db: AppDatabase) {
         val result = runRemote { block(api) }
         applySnapshot(runRemote { api.snapshot() })
         return result
+    }
+
+    // ------------------------------------------------------------------ profilo invitato (solo server)
+
+    /** Chiede al server di mandare il link personale all'email indicata. */
+    suspend fun requestProfileLink(email: String, fullName: String): ProfileLinkResponse {
+        val api = remote ?: throw RemoteException("Il profilo funziona solo con il server della festa (⚙️ Impostazioni)")
+        return runRemote { api.requestProfileLink(ProfileLinkRequest(email.trim(), fullName.trim())) }
+    }
+
+    /** Nome del profilo collegato al token in uso (X-Guest-Token); RemoteException 401 se il link non vale. */
+    suspend fun profileName(): String {
+        val api = remote ?: throw RemoteException("Il profilo funziona solo con il server della festa (⚙️ Impostazioni)")
+        return runRemote { api.profile() }.guest.fullName
     }
 
     // ------------------------------------------------------------------ festeggiato (solo server)

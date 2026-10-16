@@ -42,13 +42,14 @@ def build_snapshot(backend_dir: str) -> dict:
     )
     admin = {"X-Admin-Token": "fixture-token"}
     dev = {"X-Client-Id": "dev-fixture"}
+    staff = {**dev, **admin}  # auguri e foto: solo invitati registrati e ruoli
     with TestClient(create_app(settings)) as c:
         c.post("/api/bus/bookings", json={"passengerName": "Famiglia Regina", "seatsCount": 3, "pickupStop": "Piazza Giulio Cesare (Policlinico di Bari)", "returnTripWanted": True, "contactPhone": "347 0001122", "notes": "Arriviamo in treno"}, headers=dev)
-        c.post("/api/wishes", json={"authorName": "Un amico", "message": "Auguri a tutti e nove! Ci vediamo al Giardino dei Tempi.", "targetGraduate": "Tutti i Laureandi", "emojiBadge": "🥂"}, headers=dev)
+        c.post("/api/wishes", json={"authorName": "Un amico", "message": "Auguri a tutti e nove! Ci vediamo al Giardino dei Tempi.", "targetGraduate": "Tutti i Laureandi", "emojiBadge": "🥂"}, headers=staff)
         img = Image.new("RGB", (800, 600), (30, 60, 120))
         buf = io.BytesIO()
         img.save(buf, "JPEG")
-        c.post("/api/photos", files={"file": ("festa.jpg", buf.getvalue(), "image/jpeg")}, data={"authorName": "Staff Organizzazione", "caption": "Sopralluogo al Giardino dei Tempi: la sala è pronta!"}, headers=dev)
+        c.post("/api/photos", files={"file": ("festa.jpg", buf.getvalue(), "image/jpeg")}, data={"authorName": "Staff Organizzazione", "caption": "Sopralluogo al Giardino dei Tempi: la sala è pronta!"}, headers=staff)
         # la quota unica non compare nello snapshot (è riservata al cassiere), ma verifica che l'API accetti la richiesta
         c.post("/api/gifts/pool", json={"donorName": "Amici di Donato", "totalAmount": 80, "paymentMethod": "PayPal", "graduateIds": ["regina"], "note": "Per il nuovo ecografo!"}, headers=dev)
         c.post("/api/notifications", json={"title": "📍 Festa al Giardino dei Tempi", "message": "Confermata la sede della festa di venerdì 13 novembre: Il Giardino dei Tempi - Orto Botanico, Via Giovanni Amendola 247, Bari.", "category": "Festa"}, headers=admin)

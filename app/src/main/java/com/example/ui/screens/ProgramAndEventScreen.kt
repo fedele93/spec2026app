@@ -471,7 +471,9 @@ fun ProgramAndEventScreen(
             onDismiss = { showServerSettings = false },
             activeRoles = viewModel.activeRoles(),
             onOpenGuide = { showServerSettings = false; viewModel.openGuide() },
-            onOpenRoleGuide = { role -> showServerSettings = false; viewModel.openRoleGuide(role) }
+            onOpenRoleGuide = { role -> showServerSettings = false; viewModel.openRoleGuide(role) },
+            guestName = if (viewModel.hasGuestProfile) viewModel.guestName else null,
+            onDisconnectGuest = { showServerSettings = false; viewModel.disconnectGuestProfile() }
         )
     }
 

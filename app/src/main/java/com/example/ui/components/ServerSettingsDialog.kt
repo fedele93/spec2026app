@@ -37,7 +37,9 @@ fun ServerSettingsDialog(
     currentGraduateToken: String = "",
     activeRoles: List<String> = emptyList(),      // ruoli confermati dal server: pulsanti "Guida <ruolo>"
     onOpenGuide: (() -> Unit)? = null,            // riapre la guida alla prima apertura
-    onOpenRoleGuide: ((String) -> Unit)? = null
+    onOpenRoleGuide: ((String) -> Unit)? = null,
+    guestName: String? = null,                    // profilo invitato collegato (foto e auguri), null = nessuno
+    onDisconnectGuest: (() -> Unit)? = null
 ) {
     var url by remember { mutableStateOf(currentUrl) }
     var token by remember { mutableStateOf(currentToken) }
@@ -110,6 +112,17 @@ fun ServerSettingsDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (guestName != null && onDisconnectGuest != null) {
+                    Text(
+                        text = "👤 Profilo invitato collegato" + (if (guestName.isNotBlank()) ": $guestName" else "") +
+                            ". Con il profilo vedi e pubblichi foto e auguri.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedButton(onClick = onDisconnectGuest, modifier = Modifier.testTag("disconnect_guest_button")) {
+                        Text("Scollega il profilo da questo telefono")
+                    }
+                }
                 if (activeRoles.isNotEmpty() && onOpenRoleGuide != null) {
                     Text(
                         text = "🔑 Guida del tuo ruolo: le funzioni sbloccate dal tuo token e dove trovarle (si apre da sola la prima volta che il server riconosce il token).",

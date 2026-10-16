@@ -47,6 +47,7 @@ data class ServerStatus(
     val version: Long = -1L,
     val adminEnabled: Boolean = false,
     val canSeeLists: Boolean = true, // elenchi completi di invitati e navetta (serve un token organizzatore o festeggiato)
+    val canSeeMemories: Boolean = true, // foto e auguri: solo con il profilo invitato (link personale) o un token di ruolo
     val roles: RolesDto? = null,     // ruoli confermati dal server per i token di questo telefono (null = server vecchio)
     val lastError: String? = null
 )
@@ -93,6 +94,9 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     val isAdmin: Boolean get() = prefs.adminToken.isNotBlank()
     val graduateToken: String get() = prefs.graduateToken
     val isGraduate: Boolean get() = prefs.graduateToken.isNotBlank()
+    /** Profilo invitato collegato a questo telefono (link personale ricevuto via email). */
+    val hasGuestProfile: Boolean get() = prefs.guestToken.isNotBlank()
+    val guestName: String get() = prefs.guestName
 
     val mapPoints: List<MapPoint> = SeedData.mapPoints
 
@@ -276,8 +280,74 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     private fun configureRemote() {
         val url = prefs.apiBaseUrl
         repository.remote = if (url.isBlank()) null
-        else RemoteClient.create(url, prefs.clientId, prefs.adminToken, debugLogging = BuildConfig.DEBUG, graduateToken = prefs.graduateToken)
-        _serverStatus.value = ServerStatus(configured = url.isNotBlank(), version = prefs.dataVersion)
+        else RemoteClient.create(
+            url, prefs.clientId, prefs.adminToken, debugLogging = BuildConfig.DEBUG,
+            graduateToken = prefs.graduateToken, guestToken = prefs.guestToken
+        )
+        // i permessi restano quelli noti finché il server non risponde (niente schermate che lampeggiano)
+        val old = _serverStatus.value
+        _serverStatus.value = ServerStatus(
+            configured = url.isNotBlank(), version = prefs.dataVersion,
+            canSeeLists = old.canSeeLists, canSeeMemories = old.canSeeMemories
+        )
+    }
+
+    // ------------------------------------------------------------------ profilo invitato
+
+    /** Collega il profilo invitato dal link personale incollato (o dal solo codice): sblocca foto e auguri. */
+    fun connectGuestProfile(linkOrToken: String) {
+        viewModelScope.launch {
+            val token = GuestLink.extractToken(linkOrToken)
+            if (token == null) {
+                _uiMessage.emit("Incolla il link personale ricevuto via email (contiene \"#profilo=\")")
+                return@launch
+            }
+            if (repository.remote == null) {
+                _uiMessage.emit("Serve il server della festa: impostalo in ⚙️")
+                return@launch
+            }
+            val previous = prefs.guestToken
+            prefs.guestToken = token
+            configureRemote()
+            try {
+                prefs.guestName = repository.profileName()
+            } catch (e: RemoteException) {
+                prefs.guestToken = previous
+                configureRemote()
+                _uiMessage.emit(
+                    if (e.statusCode == 401) "Link non valido o scaduto: fatti mandare un nuovo link con la tua email"
+                    else e.message ?: "Operazione non riuscita"
+                )
+                return@launch
+            }
+            if (pollServer(force = true)) _uiMessage.emit("Ciao ${prefs.guestName}! Foto e auguri sbloccati ✓")
+        }
+    }
+
+    /** Scollega il profilo da questo telefono (il link ricevuto continua a valere altrove). */
+    fun disconnectGuestProfile() {
+        prefs.guestToken = ""
+        prefs.guestName = ""
+        configureRemote()
+        viewModelScope.launch {
+            pollServer(force = true)
+            _uiMessage.emit("Profilo scollegato da questo telefono")
+        }
+    }
+
+    /** Chiede al server di mandare il link personale all'email (con il nome se non si è ancora in lista). */
+    fun requestProfileLink(email: String, fullName: String) {
+        viewModelScope.launch {
+            if (!email.contains("@")) {
+                _uiMessage.emit("Inserisci un'email valida")
+                return@launch
+            }
+            try {
+                _uiMessage.emit(repository.requestProfileLink(email, fullName).message)
+            } catch (e: Exception) {
+                _uiMessage.emit(RemoteClient.toRemoteException(e).message ?: "Operazione non riuscita")
+            }
+        }
     }
 
     /** Salva URL e token, riconnette e scarica subito i dati. */
@@ -326,14 +396,17 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         return try {
             val state = api.state()
             val changed = state.version != prefs.dataVersion
-            if (changed || force) {
+            // token cambiati o non più validi: cambia cosa manda il server anche a versione uguale
+            val old = _serverStatus.value
+            val accessChanged = state.canSeeLists != old.canSeeLists || state.canSeeMemories != old.canSeeMemories
+            if (changed || force || accessChanged) {
                 repository.syncFromServer()
                 prefs.dataVersion = state.version
                 showUnseenNotifications(state.serverTime)
             }
             _serverStatus.value = ServerStatus(
                 configured = true, online = true, version = state.version, adminEnabled = state.adminEnabled,
-                canSeeLists = state.canSeeLists, roles = state.roles
+                canSeeLists = state.canSeeLists, canSeeMemories = state.canSeeMemories, roles = state.roles
             )
             true
         } catch (e: Exception) {

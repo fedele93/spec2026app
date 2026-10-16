@@ -102,7 +102,7 @@ async function init() {
   await initAssistant(); // prima della guida: così la guida sa se c'è l'assistente
   maybeOpenGuide({ fromLink }); // guida alla prima apertura
   // link personale incollato con l'app già aperta (cambia solo il frammento: nessun ricaricamento)
-  window.addEventListener("hashchange", async () => { if (await initProfileFromHash()) { goto("rsvp"); openProfile(); } });
+  window.addEventListener("hashchange", async () => { if (await initProfileFromHash()) { await Repo.pollState(); goto("rsvp"); openProfile(); } });
 
   // ridisegna quando i dati cambiano in seguito a una scrittura (se nessun modale è aperto)
   onDataChange(() => { if (!isModalOpen()) render(); });

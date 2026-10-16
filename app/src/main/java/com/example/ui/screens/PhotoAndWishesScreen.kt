@@ -28,6 +28,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -52,6 +57,13 @@ fun PhotoAndWishesScreen(
     viewModel: EventViewModel,
     modifier: Modifier = Modifier
 ) {
+    // foto e auguri: solo per gli invitati registrati (link personale) e per chi ha un token di ruolo
+    val serverStatus by viewModel.serverStatus.collectAsState()
+    if (serverStatus.configured && !serverStatus.canSeeMemories) {
+        MemoriesLockedScreen(viewModel, modifier)
+        return
+    }
+    val signedAs = viewModel.guestName.takeIf { serverStatus.configured && viewModel.hasGuestProfile }
     val wishes by viewModel.wishes.collectAsState()
     val tickerIndex by viewModel.tickerIndex.collectAsState()
     val photos by viewModel.photos.collectAsState()
@@ -222,6 +234,7 @@ fun PhotoAndWishesScreen(
 
     if (showPostWishDialog) {
         PostWishDialog(
+            signedAs = signedAs,
             onDismiss = { showPostWishDialog = false },
             onPost = { author, target, text, emoji ->
                 viewModel.postWish(author, target, text, emoji)
@@ -232,6 +245,7 @@ fun PhotoAndWishesScreen(
 
     if (showUploadPhotoDialog && pickedImageUri != null) {
         UploadPhotoDialog(
+            signedAs = signedAs,
             imageUri = pickedImageUri.toString(),
             onDismiss = {
                 showUploadPhotoDialog = false
@@ -497,7 +511,8 @@ fun PhotoGridItem(
 @Composable
 fun PostWishDialog(
     onDismiss: () -> Unit,
-    onPost: (author: String, target: String, text: String, emoji: String) -> Unit
+    onPost: (author: String, target: String, text: String, emoji: String) -> Unit,
+    signedAs: String? = null // profilo invitato collegato: il server firma col suo nome
 ) {
     var author by remember { mutableStateOf("") }
     var target by remember { mutableStateOf("Tutti i Laureandi") }
@@ -523,15 +538,19 @@ fun PostWishDialog(
                     .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedTextField(
-                    value = author,
-                    onValueChange = { author = it },
-                    label = { Text("Il tuo Nome *") },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("wish_author_input")
-                )
+                if (signedAs != null) {
+                    SignedAsNote(signedAs)
+                } else {
+                    OutlinedTextField(
+                        value = author,
+                        onValueChange = { author = it },
+                        label = { Text("Il tuo Nome *") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("wish_author_input")
+                    )
+                }
 
                 Text("Destinatario:", style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -600,7 +619,8 @@ fun PostWishDialog(
 fun UploadPhotoDialog(
     imageUri: String,
     onDismiss: () -> Unit,
-    onUpload: (author: String, caption: String) -> Unit
+    onUpload: (author: String, caption: String) -> Unit,
+    signedAs: String? = null // profilo invitato collegato: il server firma col suo nome
 ) {
     var author by remember { mutableStateOf("") }
     var caption by remember { mutableStateOf("") }
@@ -635,13 +655,17 @@ fun UploadPhotoDialog(
                     )
                 }
 
-                OutlinedTextField(
-                    value = author,
-                    onValueChange = { author = it },
-                    label = { Text("Nome di chi pubblica") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (signedAs != null) {
+                    SignedAsNote(signedAs)
+                } else {
+                    OutlinedTextField(
+                        value = author,
+                        onValueChange = { author = it },
+                        label = { Text("Nome di chi pubblica") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 OutlinedTextField(
                     value = caption,
@@ -754,5 +778,126 @@ fun PhotoPreviewDialog(
                 }
             }
         }
+    }
+}
+
+/** Con il profilo invitato collegato non si sceglie il nome: il server firma con quello del profilo. */
+@Composable
+private fun SignedAsNote(name: String) {
+    Text(
+        text = if (name.isNotBlank()) "Pubblicherai come $name (il nome del tuo profilo)." else "Pubblicherai con il nome del tuo profilo.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.testTag("signed_as_note")
+    )
+}
+
+/**
+ * Foto e auguri sono riservati agli invitati registrati e ai ruoli (organizzatori, festeggiati, cassieri).
+ * Qui l'invitato si fa mandare il link personale via email e lo incolla per collegare il profilo.
+ */
+@Composable
+fun MemoriesLockedScreen(viewModel: EventViewModel, modifier: Modifier = Modifier) {
+    var email by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var link by remember { mutableStateOf("") }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+            .testTag("memories_locked"),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Bacheca Auguri & Momenti",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("🔒", fontSize = 40.sp)
+                Text(
+                    text = "Auguri e foto sono riservati agli invitati registrati",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "Per vederli e pubblicarne di tuoi collega il tuo profilo con il link personale che ti abbiamo mandato via email. Vale anche se hai risposto che non vieni.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                if (viewModel.hasGuestProfile) {
+                    Text(
+                        text = "Il link collegato a questo telefono non vale più (forse ne hai chiesto uno nuovo): incolla quello più recente.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("1. Hai già il link?", fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Nell'email tieni premuto il pulsante o il link, scegli \"Copia indirizzo\" e incollalo qui.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = link,
+                    onValueChange = { link = it },
+                    label = { Text("Link personale (…#profilo=…)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("guest_link_input")
+                )
+                Button(
+                    onClick = { viewModel.connectGuestProfile(link) },
+                    enabled = link.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth().testTag("connect_guest_button")
+                ) { Text("Collega il mio profilo") }
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("2. Non lo trovi? Fattelo mandare", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("La tua email") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth().testTag("guest_email_input")
+                )
+                OutlinedTextField(
+                    value = fullName,
+                    onValueChange = { fullName = it },
+                    label = { Text("Nome e cognome (solo se non sei in lista)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedButton(
+                    onClick = { viewModel.requestProfileLink(email, fullName) },
+                    enabled = email.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth().testTag("request_link_button")
+                ) { Text("📧 Inviami il link") }
+            }
+        }
+
+        Text(
+            text = "Sei organizzatore o festeggiato? Inserisci il tuo token in ⚙️ (scheda Programma).",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

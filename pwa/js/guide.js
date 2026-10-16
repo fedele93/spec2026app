@@ -34,7 +34,9 @@ function steps({ serverMode, assistant }) {
   } else {
     s.push({ icon: "👥", title: "Invitati e navetta", text: "In Invitati confermi la presenza e il numero di persone; in Navetta prenoti i posti sul pullman scegliendo la fermata.", tip: "In questa modalità i dati restano solo su questo dispositivo." });
   }
-  s.push({ icon: "🎉", title: "Auguri e foto", text: "In Auguri lasci un messaggio ai neo-specialisti, a tutti o a uno in particolare, e condividi le foto della giornata. Cuori e like sono per tutti.", tip: "Le foto vengono ridimensionate in automatico: puoi caricarle direttamente dal telefono." });
+  s.push({ icon: "🎉", title: "Auguri e foto", text: serverMode
+    ? "In Auguri lasci un messaggio ai neo-specialisti, a tutti o a uno in particolare, e condividi le foto della giornata. Auguri e foto li vede solo chi è registrato: apri il link personale ricevuto via email (vale anche se non vieni) e firmi col tuo nome."
+    : "In Auguri lasci un messaggio ai neo-specialisti, a tutti o a uno in particolare, e condividi le foto della giornata.", tip: "Le foto vengono ridimensionate in automatico: puoi caricarle direttamente dal telefono." });
   s.push({ icon: "🎁", title: "Regali", text: "In Regali ci sono due strade. Regalo diretto: ogni neo-specialista ha IBAN, PayPal e, dove c'è, Satispay; copi e versi, senza registrare nulla. Quota unica: un solo versamento a uno dei cassieri, che lo ripartisce fra i neo-specialisti come indichi tu (in parti uguali o personalizzato).", tip: "Nessuna cifra raccolta viene mostrata: ognuno decide liberamente. Se lasci l'email, il cassiere ti conferma quando la quota è arrivata." });
   if (assistant) {
     s.push({ icon: "🎙️", title: "Chiedi a un festeggiato", text: "Il pulsante Chiedi in basso a sinistra apre l'assistente vocale: scegli un neo-specialista, tieni premuto per parlare (o scrivi) e ti risponde con la sua voce. Sa orari e luoghi, i posti sulla navetta, può confermare la tua presenza o prenotarti la navetta; con il profilo aperto cambia a voce anche menu e accompagnatori.", tip: "Prima di ogni azione ti chiede conferma." });

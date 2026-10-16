@@ -6,7 +6,7 @@ import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, get
 import { openGraduateArea } from "./graduate.js";
 import { openDashboard, openImportDialog } from "./admin.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
-import { openProfile, openMailAdmin, hasProfile, MENU_LABELS } from "./profile.js";
+import { openProfile, openMailAdmin, hasProfile, requestLinkDialog, MENU_LABELS } from "./profile.js";
 import { openGuide, openRoleGuide, maybeOpenRoleGuides, activeRoles, ROLE_LABELS } from "./guide.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
@@ -642,7 +642,23 @@ function busDialog(onDone) {
 }
 
 // ============================ AUGURI & FOTO ============================
+// Foto e auguri sono riservati agli invitati registrati (link personale via email) e ai ruoli.
+function memoriesLocked(el) {
+  el.innerHTML = `
+    <h2 class="section">Bacheca Auguri & Momenti</h2>
+    <div class="card" id="memories-locked" style="text-align:center;">
+      <div style="font-size:40px;">🔒</div>
+      <b>Auguri e foto sono riservati agli invitati registrati</b>
+      <div class="muted" style="margin:8px 0 12px;">Per vederli e pubblicarne di tuoi apri il link personale che ti abbiamo mandato via email. Non lo trovi? Fattene mandare uno nuovo: vale anche se hai risposto che non vieni.</div>
+      <div class="btn-row"><button class="btn btn-primary" id="ml-link">📧 Ricevi il link personale</button></div>
+      <div class="muted" style="margin-top:10px;">Sei organizzatore, festeggiato o cassiere? Inserisci il tuo token in <button class="btn btn-ghost" id="ml-settings" style="width:auto;padding:4px 10px;">⚙️ Impostazioni</button></div>
+    </div>`;
+  el.querySelector("#ml-link").onclick = () => (hasProfile() ? openProfile() : requestLinkDialog());
+  el.querySelector("#ml-settings").onclick = () => settingsDialog();
+}
+
 export async function wishes(el) {
+  if (Repo.mode === "server" && !Status.canSeeMemories) { memoriesLocked(el); return; }
   const list = await Repo.allWishes();
   const photos = await Repo.allPhotos();
   const wSorted = [...list].sort((a, b) => b.createdAt - a.createdAt);
@@ -689,11 +705,14 @@ export async function wishes(el) {
   });
 }
 
+// in modalità server, con il profilo aperto il server firma auguri e foto col nome del profilo
+const signedByProfile = () => Repo.mode === "server" && hasProfile();
+
 function wishDialog(onDone) {
   const grads = ["Tutti i Laureandi", ...GRADUATES];
   const emojis = ["🎓", "🧠", "🥂", "❤️", "⚡", "⭐", "🎉", "✨"];
   openModal(`<h3>✍️ Invia un Augurio ai Laureandi</h3>
-    <div class="field"><label>Il tuo nome *</label><input id="w-author"></div>
+    ${signedByProfile() ? `<div class="muted" style="margin-bottom:10px;">Firmerai con il nome del tuo profilo.</div>` : `<div class="field"><label>Il tuo nome *</label><input id="w-author"></div>`}
     <div class="field"><label>Destinatario</label><div class="chips" id="w-targets">${grads.map((g, i) => `<button class="chip ${i === 0 ? "active" : ""}" data-tg="${esc(g)}">${esc(g)}</button>`).join("")}</div></div>
     <div class="field"><label>Scegli un'emoji celebrativa</label><div class="chips" id="w-emojis">${emojis.map((e, i) => `<button class="chip ${i === 0 ? "active" : ""}" data-em="${e}">${e}</button>`).join("")}</div></div>
     <div class="field"><label>Messaggio di congratulazioni *</label><textarea id="w-msg" rows="4" placeholder="Scrivi il tuo messaggio di auguri..."></textarea></div>
@@ -707,7 +726,7 @@ function wishDialog(onDone) {
         bg.querySelectorAll("#w-emojis .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active"); emoji = c.dataset.em;
       });
       bg.querySelector("#w-send").onclick = async () => {
-        const author = bg.querySelector("#w-author").value.trim() || "Amico/a";
+        const author = bg.querySelector("#w-author")?.value.trim() || "Amico/a"; // con il profilo il server usa il suo nome
         const msg = bg.querySelector("#w-msg").value.trim();
         if (!msg) { toast("Scrivi un messaggio"); return; }
         const ok = await tryAction(() => Repo.addWish({ authorName: author, targetGraduate: target, message: msg, emojiBadge: emoji }), "Augurio pubblicato ✓");
@@ -720,7 +739,7 @@ function photoDialog(onDone) {
   openModal(`<h3>📷 Condividi uno Scatto</h3>
     <div class="field"><label>Immagine *</label><input id="ph-file" type="file" accept="image/*"></div>
     <div id="ph-preview" style="margin-bottom:10px;"></div>
-    <div class="field"><label>Nome di chi pubblica</label><input id="ph-author"></div>
+    ${signedByProfile() ? `<div class="muted" style="margin-bottom:10px;">Pubblicherai con il nome del tuo profilo.</div>` : `<div class="field"><label>Nome di chi pubblica</label><input id="ph-author"></div>`}
     <div class="field"><label>Didascalia / Momento della festa</label><input id="ph-caption" placeholder="es. Ultimo turno insieme!"></div>
     <button class="btn btn-primary" id="ph-save" style="margin-top:10px;">Condividi in Galleria</button>`,
     (bg, close) => {
@@ -737,7 +756,7 @@ function photoDialog(onDone) {
         const btn = bg.querySelector("#ph-save"); btn.disabled = true; btn.textContent = "Caricamento…";
         const ok = await tryAction(() => Repo.addPhoto({
           file,
-          authorName: bg.querySelector("#ph-author").value.trim() || "Invitato",
+          authorName: bg.querySelector("#ph-author")?.value.trim() || "Invitato",
           caption: bg.querySelector("#ph-caption").value.trim()
         }), "Foto pubblicata ✓");
         btn.disabled = false; btn.textContent = "Condividi in Galleria";

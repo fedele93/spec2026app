@@ -81,7 +81,8 @@ fun welcomeGuideSteps(serverMode: Boolean): List<GuideStep> {
         ),
         GuideStep(
             "🎉", "Bacheca: auguri e foto",
-            "In Bacheca lasci un augurio ai neo-specialisti, a tutti o a uno in particolare, con un'emoji, e carichi le foto della giornata dalla galleria o dalla fotocamera. I cuori e i like sono per tutti.",
+            "In Bacheca lasci un augurio ai neo-specialisti, a tutti o a uno in particolare, con un'emoji, e carichi le foto della giornata dalla galleria o dalla fotocamera." +
+                if (serverMode) " Auguri e foto li vede solo chi è registrato: collega il tuo profilo con il link personale ricevuto via email (vale anche se non vieni) e firmi col tuo nome." else " I cuori e i like sono per tutti.",
             "Le foto vengono ridimensionate in automatico prima dell'invio."
         ),
         GuideStep(

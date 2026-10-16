@@ -31,6 +31,9 @@ cassiere e notifiche. Senza backend entrambe funzionano in **modalità locale/de
 - **Navetta bus**: prenotazione e gestione dei posti sulla navetta.
 - **Bacheca auguri**: ticker/banner con gli auguri degli ospiti.
 - **Galleria foto**: visualizzazione foto (caricamento tramite Coil).
+- **Auguri e foto riservati**: con il server li vedono e pubblicano solo gli invitati registrati
+  (link personale via email, anche chi non viene) e chi ha un token di organizzatore, festeggiato o
+  cassiere. Sull'app Android il profilo si collega incollando il link nella Bacheca.
 - **Regali**: nessuna cifra raccolta visibile. Ogni neo-specialista ha la sua card con IBAN da
   copiare e link PayPal/Satispay (regalo diretto, senza registrazione); chi preferisce un solo
   versamento registra una **quota unica** a uno dei cassieri (Dott. Paolo Roberto o Dott. Akilesh Bhunjun) scegliendo se dividerla

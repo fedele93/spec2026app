@@ -5,6 +5,15 @@ Tutti i cambiamenti notevoli del progetto NeuroParty saranno documentati in ques
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e il
 progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.html).
 
+## [Non rilasciato]
+
+### Modificato
+- Festeggiati: accesso all'area 🎓 con il link via email (⚙️ → "Sono un festeggiato"): il link `#festeggiato=<token>` apre l'area nella PWA; nell'app Android si incolla nel campo del token. Serve l'email del festeggiato nel `.env` del server (`GRADUATE_EMAIL_<ID>`).
+- Auguri e foto riservati agli invitati registrati (link personale ricevuto via email, anche per chi ha risposto "non vengo") e a organizzatori, festeggiati e cassieri. Gli altri vedono una schermata "Accedi" con la richiesta del link; gli invitati registrati firmano col nome del profilo. Richiede il backend con `canSeeMemories` in `/api/state` e `/api/snapshot`.
+- Android: profilo invitato collegabile incollando il link personale nella Bacheca (o facendoselo mandare via email); in ⚙️ si vede il profilo collegato e lo si scollega. Le versioni precedenti dell'app non mostrano più auguri e foto: va installata la nuova.
+- Regali: Dalila Totaro riceve con bonifico (IBAN IT89 Y020 0804 0240 0043 0727 126); PayPal paypal.me/dalilatotaro1996; tolto il link Satispay di prova.
+- Quote uniche: Akilesh Bhunjun (cassiere `aki`) riceve solo con bonifico (IBAN IT96 E010 0504 0010 0000 0003 247) o PayPal (paypal.me/AkileshBhunjun); niente contanti.
+
 ## [1.14.0] - 2026-10-14
 
 Guida alla prima apertura e guide dei ruoli anche nell'app Android (1.9.0).

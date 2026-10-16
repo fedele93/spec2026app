@@ -1,9 +1,10 @@
 // App shell: routing tab, init, service worker, polling aggiornamenti dal server
-import { Repo, Status, initData, onDataChange } from "./data.js";
+import { Repo, Status, initData, onDataChange, reconnect } from "./data.js";
 import { resyncPushSubscription } from "./notify.js";
 import { initAssistant } from "./assistant.js";
 import { initProfileFromHash, openProfile } from "./profile.js";
 import { maybeOpenGuide } from "./guide.js";
+import { initGraduateFromHash, openGraduateArea } from "./graduate.js";
 import * as Screens from "./screens.js";
 
 let currentTab = "program";
@@ -96,13 +97,18 @@ async function init() {
   }
 
   const fromLink = await initProfileFromHash(); // link personale dall'email (#profilo=<token>)
+  const fromGraduateLink = initGraduateFromHash(); // link del festeggiato dall'email (#festeggiato=<token>)
   await initData();
   await render();
   if (fromLink) { goto("rsvp"); openProfile(); }
+  else if (fromGraduateLink) openGraduateArea();
   await initAssistant(); // prima della guida: così la guida sa se c'è l'assistente
-  maybeOpenGuide({ fromLink }); // guida alla prima apertura
+  maybeOpenGuide({ fromLink: fromLink || fromGraduateLink }); // guida alla prima apertura
   // link personale incollato con l'app già aperta (cambia solo il frammento: nessun ricaricamento)
-  window.addEventListener("hashchange", async () => { if (await initProfileFromHash()) { goto("rsvp"); openProfile(); } });
+  window.addEventListener("hashchange", async () => {
+    if (await initProfileFromHash()) { await Repo.pollState(); goto("rsvp"); openProfile(); }
+    else if (initGraduateFromHash()) { await reconnect(); await render(); openGraduateArea(); }
+  });
 
   // ridisegna quando i dati cambiano in seguito a una scrittura (se nessun modale è aperto)
   onDataChange(() => { if (!isModalOpen()) render(); });

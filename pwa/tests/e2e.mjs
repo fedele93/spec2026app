@@ -157,18 +157,32 @@ await page.waitForTimeout(500);
 check("posti liberi diminuiti di 2", (await page.textContent(".pill")).includes(`${summary.availableSeats - 2} liberi`));
 await shot("03-navetta");
 
-console.log("5) Auguri & Foto");
+console.log("5) Auguri & Foto (solo registrati e ruoli)");
+await tab("wishes");
+await page.waitForSelector("#memories-locked");
+check("senza registrazione auguri e foto sono bloccati", (await page.$$(".wish")).length === 0 && (await page.textContent("#memories-locked")).includes("link personale"));
+check("API auguri e foto rifiutate senza registrazione (401)", (await fetch(BASE + "/api/wishes")).status === 401 && (await fetch(BASE + "/api/photos")).status === 401);
+await page.click("#ml-link");
+await page.waitForSelector("#pl-send");
+check("il pulsante apre la richiesta del link personale", true);
+await page.click(".modal .close");
+// invitato registrato (ha risposto "non vengo": vale lo stesso) con il link generato dagli organizzatori
+const e2eAdmin = { "X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json", "X-Client-Id": "e2e-memorie" };
+const ospite = await fetch(BASE + "/api/guests", { method: "POST", headers: e2eAdmin, body: JSON.stringify({ fullName: "Ospite Registrato", rsvpStatus: "DECLINED", guestsCount: 0 }) }).then((r) => r.json());
+const ospiteLink = await fetch(BASE + `/api/guests/${ospite.id}/link`, { headers: e2eAdmin }).then((r) => r.json());
+await page.evaluate((t) => localStorage.setItem("np.guestToken", t), ospiteLink.link.split("#profilo=")[1]);
+await page.reload({ waitUntil: "networkidle" });
 await tab("wishes");
 await page.waitForSelector("#add-wish");
 const wishesBefore = (await page.$$(".wish")).length;
 check("auguri caricati dal server", wishesBefore >= 9);
 await page.click("#add-wish");
-await page.fill("#w-author", "Playwright");
+check("con il profilo si firma col nome del profilo", (await page.$("#w-author")) === null && (await page.textContent(".modal")).includes("nome del tuo profilo"));
 await page.click('#w-targets .chip[data-tg="Fedele Luisi"]');
 await page.fill("#w-msg", "Auguri automatici!");
 check("augurio pubblicato", (await clickExpectToast("#w-send")).includes("pubblicato"));
 await page.waitForTimeout(500);
-check("nuovo augurio per primo", (await page.textContent(".wish")).includes("Auguri automatici") && (await page.$$(".wish")).length === wishesBefore + 1);
+check("nuovo augurio per primo, firmato dal profilo", (await page.textContent(".wish")).includes("Auguri automatici") && (await page.textContent(".wish")).includes("Ospite Registrato") && (await page.$$(".wish")).length === wishesBefore + 1);
 const firstHeart = page.locator(".wish [data-heart]").first();
 const before = Number((await firstHeart.textContent()).replace(/\D/g, ""));
 await firstHeart.click();
@@ -176,14 +190,21 @@ await page.waitForTimeout(600);
 check("cuore incrementato", Number((await page.locator(".wish [data-heart]").first().textContent()).replace(/\D/g, "")) === before + 1);
 await page.click("#add-photo");
 await page.setInputFiles("#ph-file", { name: "test.png", mimeType: "image/png", buffer: tinyPng });
-await page.fill("#ph-author", "Bot");
 await page.fill("#ph-caption", "Foto di prova");
 const photoToast = await clickExpectToast("#ph-save");
 check("foto caricata sul server", photoToast.includes("pubblicata"), photoToast);
 await page.waitForTimeout(600);
 const img = await page.$(".photo img.thumb");
 check("thumbnail servita da /uploads/", img !== null && (await img.getAttribute("src")).includes("/uploads/"));
+check("foto firmata dal profilo", (await page.textContent(".photo")).includes("di Ospite Registrato"));
 await shot("04-auguri-foto");
+// fine prova: l'invitato esce (record cancellato) e la bacheca torna bloccata; le sezioni seguenti partono senza profilo
+await fetch(BASE + `/api/guests/${ospite.id}`, { method: "DELETE", headers: e2eAdmin });
+await page.evaluate(() => localStorage.removeItem("np.guestToken"));
+await page.reload({ waitUntil: "networkidle" });
+await tab("wishes");
+await page.waitForSelector("#memories-locked");
+check("senza profilo la bacheca torna bloccata", (await page.$$(".photo")).length === 0);
 
 console.log("6) Regali");
 await tab("gifts");
@@ -191,7 +212,7 @@ await page.waitForSelector("[data-target]");
 check("9 neo-specialisti con regalo diretto", (await page.$$("[data-target]")).length === 9);
 check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.textContent("#screen")));
 check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
-check("pulsanti copia IBAN e PayPal, Satispay dove c'è (non per Regina)", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 8 && (await page.$('.gift[data-target="regina"] .satispay')) === null);
+check("pulsanti copia IBAN e PayPal, Satispay dove c'è (non per Regina e Totaro)", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 7 && (await page.$('.gift[data-target="regina"] .satispay')) === null && (await page.$('.gift[data-target="totaro"] .satispay')) === null);
 check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
 check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Akilesh Bhunjun"));
 await page.click("#pool-open");
@@ -328,7 +349,7 @@ await page.waitForSelector("#book-bus");
 check("prenotazione persistita dopo reload", (await page.textContent("#screen")).includes("Gruppo troppo grande"));
 
 console.log("9) Polling: una modifica fatta via API compare senza ricaricare");
-const res = await fetch(BASE + "/api/wishes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ authorName: "API", message: "Arrivato dal server" }) });
+const res = await fetch(BASE + "/api/wishes", { method: "POST", headers: { "Content-Type": "application/json", ...adminHeaders }, body: JSON.stringify({ authorName: "API", message: "Arrivato dal server" }) });
 check("POST /api/wishes ok", res.status === 201);
 await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
 await page.waitForTimeout(1200);
@@ -616,6 +637,26 @@ check("cronologia svuotata", (await clickExpectToast("#ntf-clear")).includes("sv
 await page.waitForTimeout(600);
 check("nessuna notifica pubblica dopo lo svuotamento", (await fetch(BASE + "/api/notifications").then((r) => r.json())).length === 0);
 await shot("12-pulizia");
+
+console.log("17) Festeggiato: link personale via email (#festeggiato=<token>)");
+await page.evaluate(() => localStorage.removeItem("np.graduateToken"));
+await page.goto(BASE + "/", { waitUntil: "networkidle" });
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-grad-link");
+await page.click("#s-grad-link");
+await page.waitForSelector("#gl-send");
+await page.fill("#gl-email", "fedele@example.org");
+await page.click("#gl-send");
+await page.waitForFunction(() => (document.querySelector("#gl-msg")?.textContent || "").length > 0, null, { timeout: 10000 });
+check("richiesta del link festeggiato: senza n8n il server lo dice", (await page.textContent("#gl-msg")).includes("organizzatori"));
+await page.click(".modal .close");
+check("API request-link del festeggiato risponde senza rivelare l'email", (await fetch(BASE + "/api/graduate/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "chiunque@example.org" }) })).status === 202);
+// il link dell'email (qui con il token del .env, che vale allo stesso modo) apre direttamente l'area
+await page.goto(BASE + "/#festeggiato=" + GRADUATE_TOKEN, { waitUntil: "networkidle" });
+await page.waitForSelector("#grad-stats", { timeout: 10000 });
+check("il link #festeggiato= salva il token e apre l'area", (await page.evaluate(() => localStorage.getItem("np.graduateToken"))) === GRADUATE_TOKEN && !(await page.evaluate(() => location.hash)).includes("festeggiato"));
+await page.click(".modal .close");
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

@@ -140,6 +140,7 @@ export const api = {
   setPoolNote: (id, treasurerNote) => request(`/api/gifts/pool/${id}`, { method: "PATCH", json: { treasurerNote } }),
   mailRemindPool: (days = 7) => request(`/api/mail/reminders/pool?days=${days}`, { method: "POST", timeoutMs: 60000 }),
   graduateMe: () => request("/api/graduate/me"),
+  graduateRequestLink: (body) => request("/api/graduate/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
   adminDashboard: () => request("/api/admin/dashboard"),
   importGuests: (rows, { sendLinks = false, dryRun = false } = {}) => request("/api/guests/import", { method: "POST", json: { rows, sendLinks, dryRun }, timeoutMs: 120000 }),
 

@@ -95,6 +95,7 @@ export const Status = {
   adminEnabled: false, // il server ha un ADMIN_TOKEN configurato
   treasurerEnabled: false, // il server ha un TREASURER_TOKEN[_<ID>] per il cruscotto delle quote uniche
   canSeeLists: true,       // con i token di questo dispositivo il server mostra gli elenchi completi di invitati e navetta
+  canSeeMemories: true,    // foto e auguri: solo invitati registrati (link personale) e ruoli; false = schermata "Accedi"
   roles: null,             // ruoli sbloccati dai token di questo dispositivo {admin, treasurer, treasurerIds, graduate}; null = server senza il campo
   pushSubscriptions: 0,
   lastError: ""
@@ -115,6 +116,8 @@ async function refreshSnapshot() {
     snapshot = snap;
     Status.online = true;
     Status.version = snap.version;
+    Status.canSeeLists = snap.canSeeLists !== false;
+    Status.canSeeMemories = snap.canSeeMemories !== false;
     applyEvent(snap.event);
     writeCache(snap);
     return snap;
@@ -146,10 +149,13 @@ const ServerRepo = {
       Status.online = true;
       Status.adminEnabled = !!s.adminEnabled;
       Status.treasurerEnabled = !!s.treasurerEnabled;
+      // token cambiati (profilo aperto o chiuso, ruolo inserito): cambia cosa manda il server anche a versione uguale
+      const accessChanged = (s.canSeeLists !== false) !== Status.canSeeLists || (s.canSeeMemories !== false) !== Status.canSeeMemories;
       Status.canSeeLists = s.canSeeLists !== false;
+      Status.canSeeMemories = s.canSeeMemories !== false;
       Status.roles = s.roles || null;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
-      if (s.version !== Status.version) {
+      if (s.version !== Status.version || accessChanged) {
         await refreshSnapshot();
         notify();
         return true;
@@ -355,6 +361,7 @@ export async function initData() {
       Status.adminEnabled = !!s.adminEnabled;
       Status.treasurerEnabled = !!s.treasurerEnabled;
       Status.canSeeLists = s.canSeeLists !== false;
+      Status.canSeeMemories = s.canSeeMemories !== false;
       Status.roles = s.roles || null;
       Status.pushSubscriptions = s.pushSubscriptions ?? 0;
       impl = ServerRepo;

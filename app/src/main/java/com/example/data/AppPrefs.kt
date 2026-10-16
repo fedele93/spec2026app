@@ -34,6 +34,17 @@ class AppPrefs(context: Context) {
         get() = prefs.getString(KEY_GRADUATE_TOKEN, "") ?: ""
         set(value) = prefs.edit().putString(KEY_GRADUATE_TOKEN, value.trim()).apply()
 
+    /** Token del profilo invitato (header X-Guest-Token): dal link personale ricevuto via email.
+     *  Serve per vedere e pubblicare foto e auguri. */
+    var guestToken: String
+        get() = prefs.getString(KEY_GUEST_TOKEN, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_GUEST_TOKEN, value.trim()).apply()
+
+    /** Nome del profilo invitato collegato (solo per mostrarlo: lo conferma il server). */
+    var guestName: String
+        get() = prefs.getString(KEY_GUEST_NAME, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_GUEST_NAME, value.trim()).apply()
+
     /** Ultima versione dei dati scaricata dal server (per il polling). */
     var dataVersion: Long
         get() = prefs.getLong(KEY_DATA_VERSION, -1L)
@@ -65,6 +76,8 @@ class AppPrefs(context: Context) {
         private const val KEY_API_URL = "api_base_url"
         private const val KEY_ADMIN_TOKEN = "admin_token"
         private const val KEY_GRADUATE_TOKEN = "graduate_token"
+        private const val KEY_GUEST_TOKEN = "guest_token"
+        private const val KEY_GUEST_NAME = "guest_name"
         private const val KEY_DATA_VERSION = "data_version"
         private const val KEY_LAST_SEEN_NOTIFICATION = "last_seen_notification_ts"
         private const val KEY_GUIDE_SEEN = "guide_seen_version"

@@ -56,5 +56,8 @@ class GuideStepsTest {
         val old = adapter.fromJson("""{"version":3,"serverTime":1}""")
         assertNull(old!!.roles)
         assertTrue(old.canSeeLists)
+        assertTrue(old.canSeeMemories) // server vecchio: foto e auguri come prima
+        val locked = adapter.fromJson("""{"version":3,"serverTime":1,"canSeeLists":false,"canSeeMemories":false}""")
+        assertFalse(locked!!.canSeeMemories)
     }
 }

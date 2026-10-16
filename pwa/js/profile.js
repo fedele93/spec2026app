@@ -36,7 +36,7 @@ export async function openProfile() {
 
 const fmtDeadline = (iso) => { try { return new Date(iso + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }); } catch { return iso; } };
 
-function requestLinkDialog() {
+export function requestLinkDialog() {
   openModal(`<h3>👤 Il mio profilo</h3>
     <div class="muted" style="margin-bottom:10px;">Con il profilo confermi la partecipazione, indichi chi viene con te e il menu di ciascuno, e ricevi le conferme via email. Niente password: ti mandiamo un link personale.</div>
     <div class="field"><label>La tua email *</label><input id="pl-email" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></div>
@@ -157,7 +157,7 @@ function profileDialog(g, data = {}) {
       $("#pf-logout").onclick = async () => {
         if (!confirm("Uscire dal profilo su questo dispositivo? Il link ricevuto non varrà più: potrai chiederne uno nuovo con la tua email.")) return;
         try { await api.profileLogout(); } catch { /* token già non valido */ }
-        setGuestToken(""); close(); render(); toast("Sei uscito dal profilo");
+        setGuestToken(""); close(); await Repo.pollState(); render(); toast("Sei uscito dal profilo");
       };
     });
 }

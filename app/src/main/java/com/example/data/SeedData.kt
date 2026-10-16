@@ -366,10 +366,10 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Martello Riflessi Digitale & Corso RM Funzionale",
             giftDescription = "Contributo per la dotazione ambulatoriale e l'aggiornamento in neuroimaging funzionale di Dalila.",
-            iban = "IT55 A030 6909 6061 0000 1112 223",
+            iban = "IT89 Y020 0804 0240 0043 0727 126",
             ibanHolder = "Dalila Totaro",
-            satispayUrl = "https://tag.satispay.com/dalilatotaro",
-            paypalMeUrl = "https://paypal.me/dalilatotaro"
+            satispayUrl = "",
+            paypalMeUrl = "https://www.paypal.me/dalilatotaro1996"
         ),
         GiftTargetEntity(
             id = "ruta",
@@ -451,11 +451,11 @@ object SeedData {
             sortOrder = 1,
             name = "Dott. Akilesh Bhunjun",
             roleTitle = "Cassiere delle quote uniche",
-            description = "In alternativa puoi versare la tua quota unica ad Akilesh, che la ripartisce allo stesso modo fra i neo-specialisti.",
-            iban = "IT00 B000 0000 0000 0000 0000 000",
+            description = "In alternativa puoi versare la tua quota unica ad Akilesh, che la ripartisce allo stesso modo fra i neo-specialisti. Akilesh accetta solo bonifico o PayPal (niente contanti).",
+            iban = "IT96 E010 0504 0010 0000 0003 247",
             ibanHolder = "Akilesh Bhunjun",
-            paypalMeUrl = "https://paypal.me/akileshbhunjun",
-            paymentMethodsCsv = "IBAN,PayPal,Contanti",
+            paypalMeUrl = "https://www.paypal.me/AkileshBhunjun",
+            paymentMethodsCsv = "IBAN,PayPal",
             transferReason = "Regalo specializzazione Neurologia 2026"
         )
     )

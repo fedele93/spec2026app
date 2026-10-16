@@ -29,6 +29,7 @@ class SnapshotParsingTest {
         assertEquals(7, snap.guests.size)
         assertEquals(9, snap.giftTargets.size)
         assertTrue(snap.wishes.size >= 10)
+        assertTrue(snap.canSeeMemories) // il fixture è la vista dell'organizzatore: foto e auguri inclusi
         assertTrue(snap.notifications.size >= 4)
 
         val guest = snap.guests.first { it.fullName == "Dott. Luca Gatti" }

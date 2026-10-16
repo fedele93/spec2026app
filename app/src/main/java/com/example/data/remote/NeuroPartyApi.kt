@@ -340,6 +340,10 @@ interface NeuroPartyApi {
     @POST("api/profile/request-link")
     suspend fun requestProfileLink(@Body body: ProfileLinkRequest): ProfileLinkResponse
 
+    /** Manda al festeggiato il link della sua area, se l'email è la sua (la risposta non lo rivela). */
+    @POST("api/graduate/request-link")
+    suspend fun requestGraduateLink(@Body body: ProfileLinkRequest): ProfileLinkResponse
+
     /** Il proprio profilo (header X-Guest-Token); 401 se il link non vale più. */
     @GET("api/profile")
     suspend fun profile(): ProfileDto

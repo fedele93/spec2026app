@@ -369,7 +369,7 @@ object SeedData {
             iban = "IT89 Y020 0804 0240 0043 0727 126",
             ibanHolder = "Dalila Totaro",
             satispayUrl = "",
-            paypalMeUrl = ""
+            paypalMeUrl = "https://www.paypal.me/dalilatotaro1996"
         ),
         GiftTargetEntity(
             id = "ruta",

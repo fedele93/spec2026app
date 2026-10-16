@@ -1,4 +1,5 @@
-// Area del festeggiato (token GRADUATE_TOKEN_<ID> in ⚙️ Impostazioni, header X-Graduate-Token):
+// Area del festeggiato (token GRADUATE_TOKEN_<ID> in ⚙️ Impostazioni, oppure il link personale
+// https://<app>/#festeggiato=<token> mandato alla sua email; header X-Graduate-Token):
 // chi ha confermato, gli auguri per lui, le sue coordinate di pagamento come le vedono gli invitati,
 // il suo avatar dell'assistente. Nessuna cifra delle quote uniche: quelle restano ai cassieri.
 import { api, setGraduateToken } from "./api.js";
@@ -8,6 +9,38 @@ import { openAssistantAdmin } from "./assistant.js";
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const shortName = (n) => String(n || "").replace(/^Dott\.(ssa)?\s*/i, "");
 const stat = (title, value, sub, color) => `<div class="card" style="flex:1;padding:12px;margin:0;"><div class="muted" style="font-size:11px;">${title}</div><div style="font-size:24px;font-weight:800;color:${color};">${value}</div><div class="muted" style="font-size:11px;">${sub}</div></div>`;
+
+// Link personale del festeggiato aperto dall'email: salva il token (come quello in ⚙️) e pulisce l'indirizzo.
+export function initGraduateFromHash() {
+  const m = /[#&]festeggiato=([A-Za-z0-9_-]{10,})/.exec(location.hash || "");
+  if (!m) return false;
+  setGraduateToken(m[1]);
+  try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignora */ }
+  return true;
+}
+
+// Il festeggiato scrive la sua email e riceve il link che apre la sua area (niente token da copiare).
+export function requestGraduateLinkDialog() {
+  openModal(`<h3>🎓 Sei un festeggiato?</h3>
+    <div class="muted" style="margin-bottom:10px;">Scrivi la tua email: se è quella registrata dagli organizzatori ti mandiamo il link che apre la tua area (chi viene, auguri per te, coordinate per i regali, il tuo avatar).</div>
+    <div class="field"><label>La tua email *</label><input id="gl-email" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></div>
+    <button class="btn btn-primary" id="gl-send">Inviami il link</button>
+    <div class="muted as-hint" id="gl-msg" style="margin-top:10px;"></div>
+    <div class="muted as-hint">Apri il link dall'email su questo telefono: l'area si apre da sola.</div>`,
+    (bg) => {
+      bg.querySelector("#gl-send").onclick = async () => {
+        const email = bg.querySelector("#gl-email").value.trim();
+        if (!email.includes("@")) { toast("Inserisci un'email valida"); return; }
+        const btn = bg.querySelector("#gl-send"); btn.disabled = true;
+        try {
+          const r = await api.graduateRequestLink({ email });
+          bg.querySelector("#gl-msg").textContent = r.message;
+          if (r.queued) toast("Controlla la posta");
+        } catch (e) { toast(e.message); }
+        finally { btn.disabled = false; }
+      };
+    });
+}
 
 export async function openGraduateArea() {
   let me;

@@ -16,6 +16,14 @@ class GuestLinkTest {
     }
 
     @Test
+    fun graduateTokenFromLinkOrPlainToken() {
+        val token = "Zz9_-AbCdEf0123456789abcdefghij"
+        assertEquals(token, GuestLink.graduateTokenFrom("https://festa.example.org/#festeggiato=$token"))
+        assertEquals("grad-luisi", GuestLink.graduateTokenFrom("  grad-luisi "))
+        assertEquals("", GuestLink.graduateTokenFrom(""))
+    }
+
+    @Test
     fun rejectsTextThatIsNotALink() {
         assertNull(GuestLink.extractToken(""))
         assertNull(GuestLink.extractToken("https://festa.example.org/"))

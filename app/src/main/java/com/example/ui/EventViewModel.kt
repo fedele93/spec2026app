@@ -335,6 +335,21 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Festeggiato: chiede il link della propria area all'email registrata dagli organizzatori. */
+    fun requestGraduateLink(email: String) {
+        viewModelScope.launch {
+            if (!email.contains("@")) {
+                _uiMessage.emit("Inserisci un'email valida")
+                return@launch
+            }
+            try {
+                _uiMessage.emit(repository.requestGraduateLink(email).message)
+            } catch (e: Exception) {
+                _uiMessage.emit(RemoteClient.toRemoteException(e).message ?: "Operazione non riuscita")
+            }
+        }
+    }
+
     /** Chiede al server di mandare il link personale all'email (con il nome se non si è ancora in lista). */
     fun requestProfileLink(email: String, fullName: String) {
         viewModelScope.launch {
@@ -355,7 +370,7 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
         val changedUrl = url.trim().trimEnd('/') != prefs.apiBaseUrl
         prefs.apiBaseUrl = url
         prefs.adminToken = token
-        prefs.graduateToken = graduateToken
+        prefs.graduateToken = GuestLink.graduateTokenFrom(graduateToken) // accetta anche il link ricevuto via email
         _graduateArea.value = null
         if (changedUrl) prefs.resetSyncState()
         configureRemote()

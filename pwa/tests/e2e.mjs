@@ -212,7 +212,7 @@ await page.waitForSelector("[data-target]");
 check("9 neo-specialisti con regalo diretto", (await page.$$("[data-target]")).length === 9);
 check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.textContent("#screen")));
 check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
-check("pulsanti copia IBAN, PayPal e Satispay dove ci sono (Totaro solo IBAN, Regina senza Satispay)", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 8 && (await page.$$(".gift .satispay")).length === 7 && (await page.$('.gift[data-target="regina"] .satispay')) === null && (await page.$('.gift[data-target="totaro"] .paypal')) === null);
+check("pulsanti copia IBAN e PayPal, Satispay dove c'è (non per Regina e Totaro)", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 9 && (await page.$$(".gift .satispay")).length === 7 && (await page.$('.gift[data-target="regina"] .satispay')) === null && (await page.$('.gift[data-target="totaro"] .satispay')) === null);
 check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
 check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Akilesh Bhunjun"));
 await page.click("#pool-open");
@@ -637,6 +637,26 @@ check("cronologia svuotata", (await clickExpectToast("#ntf-clear")).includes("sv
 await page.waitForTimeout(600);
 check("nessuna notifica pubblica dopo lo svuotamento", (await fetch(BASE + "/api/notifications").then((r) => r.json())).length === 0);
 await shot("12-pulizia");
+
+console.log("17) Festeggiato: link personale via email (#festeggiato=<token>)");
+await page.evaluate(() => localStorage.removeItem("np.graduateToken"));
+await page.goto(BASE + "/", { waitUntil: "networkidle" });
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-grad-link");
+await page.click("#s-grad-link");
+await page.waitForSelector("#gl-send");
+await page.fill("#gl-email", "fedele@example.org");
+await page.click("#gl-send");
+await page.waitForFunction(() => (document.querySelector("#gl-msg")?.textContent || "").length > 0, null, { timeout: 10000 });
+check("richiesta del link festeggiato: senza n8n il server lo dice", (await page.textContent("#gl-msg")).includes("organizzatori"));
+await page.click(".modal .close");
+check("API request-link del festeggiato risponde senza rivelare l'email", (await fetch(BASE + "/api/graduate/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "chiunque@example.org" }) })).status === 202);
+// il link dell'email (qui con il token del .env, che vale allo stesso modo) apre direttamente l'area
+await page.goto(BASE + "/#festeggiato=" + GRADUATE_TOKEN, { waitUntil: "networkidle" });
+await page.waitForSelector("#grad-stats", { timeout: 10000 });
+check("il link #festeggiato= salva il token e apre l'area", (await page.evaluate(() => localStorage.getItem("np.graduateToken"))) === GRADUATE_TOKEN && !(await page.evaluate(() => location.hash)).includes("festeggiato"));
+await page.click(".modal .close");
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

@@ -39,11 +39,13 @@ fun ServerSettingsDialog(
     onOpenGuide: (() -> Unit)? = null,            // riapre la guida alla prima apertura
     onOpenRoleGuide: ((String) -> Unit)? = null,
     guestName: String? = null,                    // profilo invitato collegato (foto e auguri), null = nessuno
-    onDisconnectGuest: (() -> Unit)? = null
+    onDisconnectGuest: (() -> Unit)? = null,
+    onRequestGraduateLink: ((String) -> Unit)? = null // festeggiato: link della propria area via email
 ) {
     var url by remember { mutableStateOf(currentUrl) }
     var token by remember { mutableStateOf(currentToken) }
     var graduateToken by remember { mutableStateOf(currentGraduateToken) }
+    var graduateEmail by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -100,7 +102,7 @@ fun ServerSettingsDialog(
                 OutlinedTextField(
                     value = graduateToken,
                     onValueChange = { graduateToken = it },
-                    label = { Text("Token festeggiato (solo neo-specialisti)") },
+                    label = { Text("Token o link festeggiato (solo neo-specialisti)") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier
@@ -108,10 +110,26 @@ fun ServerSettingsDialog(
                         .testTag("graduate_token_input")
                 )
                 Text(
-                    text = "Con il tuo token personale compare la card 🎓 Area festeggiato: chi viene, gli auguri per te, le tue coordinate di pagamento.",
+                    text = "Con il tuo token personale compare la card 🎓 Area festeggiato: chi viene, gli auguri per te, le tue coordinate di pagamento. Va bene anche il link ricevuto via email (…#festeggiato=…): incollalo qui.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (onRequestGraduateLink != null && status.configured) {
+                    OutlinedTextField(
+                        value = graduateEmail,
+                        onValueChange = { graduateEmail = it },
+                        label = { Text("Sei un festeggiato? La tua email") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("graduate_email_input")
+                    )
+                    OutlinedButton(
+                        onClick = { onRequestGraduateLink(graduateEmail.trim()) },
+                        enabled = graduateEmail.isNotBlank(),
+                        modifier = Modifier.testTag("request_graduate_link_button")
+                    ) { Text("📧 Mandami il link della mia area") }
+                }
                 if (guestName != null && onDisconnectGuest != null) {
                     Text(
                         text = "👤 Profilo invitato collegato" + (if (guestName.isNotBlank()) ": $guestName" else "") +

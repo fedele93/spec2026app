@@ -122,6 +122,12 @@ class EventRepository(private val db: AppDatabase) {
         return runRemote { api.requestProfileLink(ProfileLinkRequest(email.trim(), fullName.trim())) }
     }
 
+    /** Chiede al server di mandare al festeggiato il link della sua area (#festeggiato=<token>). */
+    suspend fun requestGraduateLink(email: String): ProfileLinkResponse {
+        val api = remote ?: throw RemoteException("Serve il server della festa (⚙️ Impostazioni)")
+        return runRemote { api.requestGraduateLink(ProfileLinkRequest(email.trim())) }
+    }
+
     /** Nome del profilo collegato al token in uso (X-Guest-Token); RemoteException 401 se il link non vale. */
     suspend fun profileName(): String {
         val api = remote ?: throw RemoteException("Il profilo funziona solo con il server della festa (⚙️ Impostazioni)")

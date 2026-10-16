@@ -473,7 +473,8 @@ fun ProgramAndEventScreen(
             onOpenGuide = { showServerSettings = false; viewModel.openGuide() },
             onOpenRoleGuide = { role -> showServerSettings = false; viewModel.openRoleGuide(role) },
             guestName = if (viewModel.hasGuestProfile) viewModel.guestName else null,
-            onDisconnectGuest = { showServerSettings = false; viewModel.disconnectGuestProfile() }
+            onDisconnectGuest = { showServerSettings = false; viewModel.disconnectGuestProfile() },
+            onRequestGraduateLink = { email -> viewModel.requestGraduateLink(email) }
         )
     }
 

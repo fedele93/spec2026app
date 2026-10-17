@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.example.data.SeedData
 import com.example.data.SharedPhotoEntity
@@ -67,6 +69,8 @@ fun PhotoAndWishesScreen(
     val wishes by viewModel.wishes.collectAsState()
     val tickerIndex by viewModel.tickerIndex.collectAsState()
     val photos by viewModel.photos.collectAsState()
+    val photosHasMore by viewModel.photosHasMore.collectAsState()
+    val loadingOlderPhotos by viewModel.loadingOlderPhotos.collectAsState()
 
     var selectedSubTab by remember { mutableStateOf(0) } // 0 = Auguri, 1 = Galleria Foto
     var showPostWishDialog by remember { mutableStateOf(false) }
@@ -226,6 +230,16 @@ fun PhotoAndWishesScreen(
                             onClick = { selectedPhotoForPreview = photo },
                             onDelete = if (viewModel.isAdmin) ({ photoToDelete = photo }) else null
                         )
+                    }
+                    if (photosHasMore) {
+                        // le foto più vecchie si scaricano solo se richieste: la galleria resta leggera
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            OutlinedButton(
+                                onClick = { viewModel.loadOlderPhotos() },
+                                enabled = !loadingOlderPhotos,
+                                modifier = Modifier.fillMaxWidth().testTag("more_photos_button")
+                            ) { Text(if (loadingOlderPhotos) "Caricamento…" else "⬇️ Mostra foto precedenti") }
+                        }
                     }
                 }
             }
@@ -417,7 +431,7 @@ fun PhotoGridItem(
                 }
                 if (photo.imageUri.isNotBlank()) {
                     AsyncImage(
-                        model = photo.imageUri,
+                        model = photo.thumbUri.ifBlank { photo.imageUri }, // miniatura leggera; la foto intera solo ingrandendo
                         contentDescription = photo.caption,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -698,18 +712,21 @@ fun PhotoPreviewDialog(
     onDismiss: () -> Unit,
     onLike: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    // Foto ingrandita: un tocco sulla foto la chiude (torna alla galleria), come un secondo clic.
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().padding(12.dp)
         ) {
             Column {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(260.dp)
+                        .heightIn(min = 260.dp, max = 560.dp)
                         .background(Color.Black)
+                        .clickable { onDismiss() }
+                        .testTag("photo_preview_image")
                 ) {
                     if (photo.imageUri.isNotBlank()) {
                         AsyncImage(

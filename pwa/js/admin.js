@@ -42,7 +42,17 @@ export async function openDashboard() {
       <button class="btn btn-ghost" id="dash-exp-guests" style="width:auto;">📄 CSV invitati</button>
       <button class="btn btn-ghost" id="dash-exp-bus" style="width:auto;">📄 CSV navetta</button>
       <button class="btn btn-ghost" id="dash-exp-pool" style="width:auto;">📄 CSV quote</button>
-    </div>`,
+    </div>
+    <details class="card" id="dash-invites"><summary><b>🎟️ Inviti a festeggiati e cassieri</b></summary>
+      <div class="muted" style="margin:6px 0;">Manda a ciascuno il link personale (festeggiati: area 🎓; cassieri: cruscotto delle quote) con le istruzioni dettagliate per usare l'app. Le email vengono dal <span class="mono">.env</span> del server (<span class="mono">GRADUATE_EMAIL_&lt;ID&gt;</span>, <span class="mono">TREASURER_EMAIL_&lt;ID&gt;</span>); ai cassieri serve anche <span class="mono">TREASURER_TOKEN_&lt;ID&gt;</span>.</div>
+      <div id="inv-list" class="muted">Caricamento…</div>
+      <label class="as-check" style="margin-top:8px;"><input type="checkbox" id="inv-test" checked> Aggiungi le istruzioni per la fase di prova (segnalare i bug; i dati di prova verranno cancellati)</label>
+      <button class="btn btn-primary" id="inv-send" style="margin-top:8px;" disabled>Invia gli inviti</button>
+    </details>
+    <details class="card" id="dash-reset"><summary><b>🧹 Fine della fase di prova</b></summary>
+      <div class="muted" style="margin:6px 0;">Cancella invitati e profili, navetta, auguri, foto, quote uniche, notifiche ed email in coda. Restano la configurazione dell'evento, IBAN e link dei regali, gli accessi dei festeggiati, gli avatar e le iscrizioni alle notifiche. Non si può annullare: fai prima un backup (<span class="mono">scripts/backup.sh</span>).</div>
+      <button class="btn btn-ghost" id="reset-go" style="color:#991B1B;">Azzera i dati di prova…</button>
+    </details>`,
     (bg, close) => {
       const act = (action, section) => {
         close();
@@ -57,7 +67,42 @@ export async function openDashboard() {
       bg.querySelector("#dash-exp-guests").onclick = () => downloadCsv("guests").then(() => toast("invitati.csv scaricato")).catch((e) => toast(e.message));
       bg.querySelector("#dash-exp-bus").onclick = () => downloadCsv("bus").then(() => toast("navetta.csv scaricato")).catch((e) => toast(e.message));
       bg.querySelector("#dash-exp-pool").onclick = () => downloadCsv("gift-pool").then(() => toast("quote-uniche.csv scaricato")).catch((e) => toast(e.message));
+      initInvites(bg);
+      bg.querySelector("#reset-go").onclick = async () => {
+        const word = prompt("Questo cancella TUTTI i dati raccolti (invitati, navetta, auguri, foto, quote). Per confermare scrivi AZZERA");
+        if (!word) return;
+        try {
+          const r = await api.adminResetTestData(word);
+          const n = r.deleted;
+          toast(`Dati di prova cancellati: ${n.guests} invitati, ${n.busBookings} prenotazioni, ${n.wishes} auguri, ${n.photos} foto, ${n.poolContributions} quote`);
+          close(); await Repo.pollState();
+        } catch (e) { toast(e.message); }
+      };
     });
+}
+
+const INVITE_STATUS = { READY: "pronto", QUEUED: "in invio", DELIVERED: "inviato", FAILED: "non inviato", NO_EMAIL: "manca l'email", NO_TOKEN: "manca il token", MAIL_DISABLED: "email non attive (n8n)" };
+
+// Elenco di chi riceverebbe l'invito (anteprima, nessuna email) e invio con conferma.
+async function initInvites(bg) {
+  const list = bg.querySelector("#inv-list"), send = bg.querySelector("#inv-send");
+  const row = (r) => `<div class="row"><div class="grow"><div class="name" style="font-size:13px;">${r.role === "graduate" ? "🎓" : "👛"} ${esc(r.name)}</div>
+      <div class="cat">${esc(r.email || "—")}</div></div><span class="pill ${["READY", "QUEUED", "DELIVERED"].includes(r.status) ? "pill-conf" : "pill-pend"}">${esc(INVITE_STATUS[r.status] || r.status)}</span></div>`;
+  let preview;
+  try { preview = await api.adminInvites({ dryRun: true }); }
+  catch (e) { list.textContent = e.message; return; }
+  list.innerHTML = preview.invites.map(row).join("") + (preview.mailEnabled ? "" : `<div class="muted as-hint">Le email non sono attive (N8N_WEBHOOK_URL): gli inviti non possono partire.</div>`);
+  send.disabled = !preview.mailEnabled || !preview.ready;
+  send.textContent = `Invia gli inviti (${preview.ready})`;
+  send.onclick = async () => {
+    if (!confirm(`Mandare l'invito con il link personale a ${preview.ready} persone?`)) return;
+    send.disabled = true;
+    try {
+      const r = await api.adminInvites({ dryRun: false, testPhase: bg.querySelector("#inv-test").checked });
+      list.innerHTML = r.invites.map(row).join("");
+      toast(`Inviti mandati: ${r.ready}`);
+    } catch (e) { toast(e.message); send.disabled = false; }
+  };
 }
 
 // ------------------------------------------------------------------ import invitati

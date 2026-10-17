@@ -210,12 +210,37 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     private val _tickerIndex = MutableStateFlow(0)
     val tickerIndex: StateFlow<Int> = _tickerIndex.asStateFlow()
 
-    // Photos
-    val photos = repository.allPhotos.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        emptyList()
-    )
+    // Photos: le più recenti arrivano con lo snapshot (Room); le più vecchie solo se l'utente le chiede,
+    // e restano in memoria (non nel database) finché l'app è aperta.
+    private val _olderPhotos = MutableStateFlow<List<SharedPhotoEntity>>(emptyList())
+    private val _olderPhotosHasMore = MutableStateFlow<Boolean?>(null) // null = decide lo snapshot
+    private val _snapshotPhotosHasMore = MutableStateFlow(false)
+    private val _loadingOlderPhotos = MutableStateFlow(false)
+    val loadingOlderPhotos: StateFlow<Boolean> = _loadingOlderPhotos.asStateFlow()
+
+    val photos: StateFlow<List<SharedPhotoEntity>> = combine(repository.allPhotos, _olderPhotos) { recent, older ->
+        (recent + older).distinctBy { it.id }.sortedWith(compareByDescending<SharedPhotoEntity> { it.createdAt }.thenByDescending { it.id })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val photosHasMore: StateFlow<Boolean> = combine(_olderPhotosHasMore, _snapshotPhotosHasMore) { older, snap -> older ?: snap }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    /** "Mostra foto precedenti": la pagina successiva, a partire dalla foto più vecchia già in elenco. */
+    fun loadOlderPhotos() {
+        if (_loadingOlderPhotos.value) return
+        viewModelScope.launch {
+            _loadingOlderPhotos.value = true
+            try {
+                val page = repository.olderPhotos(photos.value.lastOrNull())
+                _olderPhotos.value = (_olderPhotos.value + page.photos).distinctBy { it.id }
+                _olderPhotosHasMore.value = page.hasMore
+            } catch (e: Exception) {
+                _uiMessage.emit(RemoteClient.toRemoteException(e).message ?: "Foto non disponibili")
+            } finally {
+                _loadingOlderPhotos.value = false
+            }
+        }
+    }
 
     // Gifts
     val giftTargets = repository.giftTargets.stateIn(
@@ -415,7 +440,9 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
             val old = _serverStatus.value
             val accessChanged = state.canSeeLists != old.canSeeLists || state.canSeeMemories != old.canSeeMemories
             if (changed || force || accessChanged) {
-                repository.syncFromServer()
+                val snap = repository.syncFromServer()
+                _snapshotPhotosHasMore.value = snap.photosHasMore
+                if (!snap.canSeeMemories) { _olderPhotos.value = emptyList(); _olderPhotosHasMore.value = null }
                 prefs.dataVersion = state.version
                 showUnseenNotifications(state.serverTime)
             }
@@ -544,6 +571,7 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deletePhoto(photoId: Long) {
+        _olderPhotos.value = _olderPhotos.value.filterNot { it.id == photoId }
         runAction("Foto eliminata") { repository.deletePhoto(photoId) }
     }
 

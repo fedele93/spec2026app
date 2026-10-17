@@ -2,7 +2,7 @@
 // https://<app>/#festeggiato=<token> mandato alla sua email; header X-Graduate-Token):
 // chi ha confermato, gli auguri per lui, le sue coordinate di pagamento come le vedono gli invitati,
 // il suo avatar dell'assistente. Nessuna cifra delle quote uniche: quelle restano ai cassieri.
-import { api, setGraduateToken } from "./api.js";
+import { api, setGraduateToken, setTreasurerToken } from "./api.js";
 import { toast, openModal, fmtTime, render } from "./app.js";
 import { openAssistantAdmin } from "./assistant.js";
 
@@ -15,6 +15,15 @@ export function initGraduateFromHash() {
   const m = /[#&]festeggiato=([A-Za-z0-9_-]{10,})/.exec(location.hash || "");
   if (!m) return false;
   setGraduateToken(m[1]);
+  try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignora */ }
+  return true;
+}
+
+// Link del cassiere mandato dagli organizzatori (#cassiere=<TREASURER_TOKEN_<ID>>): salva il token come in ⚙️.
+export function initTreasurerFromHash() {
+  const m = /[#&]cassiere=([A-Za-z0-9_-]{4,})/.exec(location.hash || "");
+  if (!m) return false;
+  setTreasurerToken(m[1]);
   try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignora */ }
   return true;
 }

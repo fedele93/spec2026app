@@ -7,7 +7,14 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Galleria foto dalla più recente, con miniature leggere (la foto intera solo ingrandendo) e caricamento a pagine: lo snapshot porta le 24 più recenti, il pulsante "Mostra foto precedenti" scarica le altre a ritroso (`/api/photos/page`). Tocco per ingrandire, secondo tocco per chiudere (PWA e Android; Android: database locale alla versione 6).
+- Assistente vocale: come fare un regalo a ciascun neo-specialista, lettura degli ultimi auguri (solo registrati), invio del link personale via email, riepilogo per il festeggiato che parla; il prompt sa cosa può fare chi parla.
+- Cruscotto organizzatori: inviti con link e istruzioni dettagliate a festeggiati e cassieri (anche per la fase di prova) e azzeramento dei dati di prova. Link del cassiere `#cassiere=<token>`.
+- Documenti: `docs/guida-festeggiati.md`, `docs/guida-cassieri.md`, `docs/piano-di-test.md`.
+
 ### Modificato
+- Guide di ogni utenza (invitato, festeggiato, cassiere, organizzatore) aggiornate alle nuove funzioni, nella PWA e nell'app Android.
 - Regali: Francesco Cusmai riceve con bonifico (IBAN IT49 O010 3041 3400 0000 1593 702) e PayPal via email: nuovo campo `paypalEmail` per chi non ha un link paypal.me (l'app mostra l'email e la copia). Android: database locale alla versione 5.
 - Regali: IBAN reali di Sebastiano Carlone (IT17 W076 0104 2000 0106 3223 976) e Lorenzo Parrulli (IT75 E053 8541 5020 0000 1672 967); PayPal di Roberto Prezioso (paypal.me/RobertoPrezioso96).
 - Regali: nuovo metodo BANCOMAT Pay (numero di telefono da copiare, poi si paga dall'app della propria banca); per ora solo Fedele Luisi. Android: database locale alla versione 4 (si riscarica dal server).

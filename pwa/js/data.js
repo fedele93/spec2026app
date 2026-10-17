@@ -109,6 +109,15 @@ function notify() { listeners.forEach((fn) => { try { fn(); } catch (e) { consol
 //  Repository "server"
 // ======================================================================================
 let snapshot = null; // ultimo snapshot noto (server o cache)
+// Foto più vecchie caricate a richiesta ("Mostra foto precedenti"): lo snapshot porta solo le più recenti.
+let olderPhotos = [];
+let olderHasMore = null; // null = decide lo snapshot (photosHasMore)
+const newestFirst = (a, b) => (b.createdAt - a.createdAt) || (b.id - a.id);
+function mergePhotos(...lists) {
+  const byId = new Map();
+  lists.flat().forEach((p) => { if (!byId.has(p.id)) byId.set(p.id, p); });
+  return [...byId.values()].sort(newestFirst);
+}
 
 async function refreshSnapshot() {
   try {
@@ -186,10 +195,23 @@ const ServerRepo = {
   addWish: (w) => write(() => api.addWish(w)),
   heartWish: (id) => write(() => api.heartWish(id)),
   deleteWish: (id) => write(() => api.deleteWish(id)),
-  deletePhoto: (id) => write(() => api.deletePhoto(id)),
+  deletePhoto: (id) => { olderPhotos = olderPhotos.filter((p) => p.id !== id); return write(() => api.deletePhoto(id)); },
   clearNotifications: () => write(() => api.clearNotifications()),
 
-  allPhotos: async () => (snapshot ?? await refreshSnapshot()).photos,
+  // galleria: prima pagina dallo snapshot + le pagine più vecchie chieste dall'utente, dalla più recente
+  allPhotos: async () => {
+    const snap = snapshot ?? await refreshSnapshot();
+    return mergePhotos(snap.photos || [], (snap.canSeeMemories === false) ? [] : olderPhotos);
+  },
+  photosTotal: () => snapshot?.photosTotal ?? (snapshot?.photos || []).length,
+  photosHasMore: () => (olderHasMore ?? !!snapshot?.photosHasMore),
+  loadOlderPhotos: async () => {
+    const shown = await ServerRepo.allPhotos();
+    const page = await api.photosPage(shown[shown.length - 1]);
+    olderPhotos = mergePhotos(olderPhotos, page.photos || []);
+    olderHasMore = !!page.hasMore;
+    return page.photos?.length || 0;
+  },
   addPhoto: ({ file, authorName, caption }) => write(() => api.uploadPhoto(file, authorName, caption)),
   likePhoto: (id) => write(() => api.likePhoto(id)),
 
@@ -275,7 +297,10 @@ const LocalRepo = {
   deletePhoto: (id) => del("photos", id).then(notify),
   clearNotifications: async () => { for (const n of await getAll("notifications")) await del("notifications", n.id); notify(); return { deleted: 0 }; },
 
-  allPhotos: () => getAll("photos"),
+  allPhotos: async () => (await getAll("photos")).sort(newestFirst),
+  photosTotal: () => null,
+  photosHasMore: () => false, // in modalità locale le foto sono poche e tutte sul dispositivo
+  loadOlderPhotos: async () => 0,
   addPhoto: async ({ file, authorName, caption }) => {
     let imageUri = "";
     if (file) {

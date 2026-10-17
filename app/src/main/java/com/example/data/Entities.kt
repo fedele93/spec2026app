@@ -59,7 +59,8 @@ data class SharedPhotoEntity(
     val imageResId: Int = 0, // se drawable
     val imageUri: String = "", // se da photo picker / camera
     val likesCount: Int = 0,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val thumbUri: String = "" // miniatura leggera dal server (galleria); vuota = si usa imageUri
 )
 
 @Entity(tableName = "gift_targets")

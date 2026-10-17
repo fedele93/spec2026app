@@ -118,6 +118,8 @@ export const api = {
   heartWish: (id) => request(`/api/wishes/${id}/heart`, { method: "POST" }),
 
   photos: () => request("/api/photos"),
+  // a ritroso: le foto più vecchie dell'ultima già mostrata (createdAt + id)
+  photosPage: (before, limit = 24) => request(`/api/photos/page?limit=${limit}` + (before ? `&beforeTs=${before.createdAt}&beforeId=${before.id}` : "")),
   uploadPhoto: (file, authorName, caption) => {
     const fd = new FormData();
     fd.append("file", file);
@@ -142,6 +144,8 @@ export const api = {
   graduateMe: () => request("/api/graduate/me"),
   graduateRequestLink: (body) => request("/api/graduate/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
   adminDashboard: () => request("/api/admin/dashboard"),
+  adminInvites: (body) => request("/api/admin/invites", { method: "POST", json: body, timeoutMs: 60000 }),
+  adminResetTestData: (confirm) => request("/api/admin/reset-test-data", { method: "POST", json: { confirm }, timeoutMs: 60000 }),
   importGuests: (rows, { sendLinks = false, dryRun = false } = {}) => request("/api/guests/import", { method: "POST", json: { rows, sendLinks, dryRun }, timeoutMs: 120000 }),
 
   notifications: (since = 0) => request(`/api/notifications${since ? `?since=${since}` : ""}`),

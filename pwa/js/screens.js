@@ -681,15 +681,25 @@ export async function wishes(el) {
           <span>${isAdmin() ? `<button class="icon-btn" data-wish-del="${w.id}" title="Elimina augurio (organizzatore)">🗑️</button> ` : ""}<button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-heart="${w.id}">❤️ ${w.heartCount}</button></span></div>
       </div>`).join("")}
 
-    <h2 class="section">Galleria Foto (${photos.length})</h2>
+    <h2 class="section">Galleria Foto (${Repo.photosTotal() ?? photos.length})</h2>
+    <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Dalla più recente. Tocca una foto per ingrandirla, toccala di nuovo per chiuderla.</div>
     ${photos.length === 0 ? '<div class="empty">Nessuna foto condivisa ancora.</div>' : photos.map((p) => `
-      <div class="photo">
-        ${p.imageUri ? `<img class="thumb" src="${esc(p.imageUri)}" alt="${esc(p.caption)}" loading="lazy">` : `<div class="placeholder">🎓 Neurologia 2026</div>`}
+      <div class="photo" data-photo="${p.id}">
+        ${p.imageUri ? `<img class="thumb" src="${esc(p.thumbUri || p.imageUri)}" data-full="${esc(p.imageUri)}" alt="${esc(p.caption)}" loading="lazy" decoding="async" width="480" height="160">` : `<div class="placeholder">🎓 Neurologia 2026</div>`}
         <div class="name" style="font-weight:700;font-size:13px;">${esc(p.caption)}</div>
         <div class="cat">di ${esc(p.authorName)} · ${fmtTime(p.createdAt)}</div>
         <div style="margin-top:6px;display:flex;align-items:center;gap:8px;"><button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-like="${p.id}">❤️ ${p.likesCount}</button>${isAdmin() ? `<button class="icon-btn" data-photo-del="${p.id}" title="Elimina foto (organizzatore)">🗑️</button>` : ""}</div>
       </div>`).join("")}
+    ${Repo.photosHasMore() ? `<button class="btn btn-ghost" id="more-photos" style="margin-bottom:12px;">⬇️ Mostra foto precedenti</button>` : ""}
   `;
+  const more = el.querySelector("#more-photos");
+  if (more) more.onclick = async () => {
+    more.disabled = true; more.textContent = "Caricamento…";
+    const y = window.scrollY;
+    if (await tryAction(() => Repo.loadOlderPhotos())) { await wishes(el); window.scrollTo(0, y); } // resta dove eri
+    else { more.disabled = false; more.textContent = "⬇️ Mostra foto precedenti"; }
+  };
+  el.querySelectorAll(".photo img.thumb").forEach((img) => img.onclick = () => openLightbox(img.dataset.full || img.src, img.alt));
   el.querySelector("#add-wish").onclick = () => wishDialog(() => wishes(el));
   el.querySelector("#add-photo").onclick = () => photoDialog(() => wishes(el));
   el.querySelectorAll("[data-heart]").forEach((b) => b.onclick = async () => {
@@ -710,6 +720,19 @@ export async function wishes(el) {
 
 // in modalità server, con il profilo aperto il server firma auguri e foto col nome del profilo
 const signedByProfile = () => Repo.mode === "server" && hasProfile();
+
+// Foto ingrandita: un tocco la apre a schermo intero (versione completa), un altro tocco (o Esc) la chiude.
+function openLightbox(src, caption) {
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.setAttribute("role", "dialog");
+  box.innerHTML = `<img src="${esc(src)}" alt="${esc(caption || "")}">${caption ? `<div class="lb-caption">${esc(caption)}</div>` : ""}`;
+  const close = () => { box.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  box.onclick = close;
+  document.addEventListener("keydown", onKey);
+  document.body.appendChild(box);
+}
 
 function wishDialog(onDone) {
   const grads = ["Tutti i Laureandi", ...GRADUATES];

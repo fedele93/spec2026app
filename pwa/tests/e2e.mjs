@@ -197,6 +197,28 @@ await page.waitForTimeout(600);
 const img = await page.$(".photo img.thumb");
 check("thumbnail servita da /uploads/", img !== null && (await img.getAttribute("src")).includes("/uploads/"));
 check("foto firmata dal profilo", (await page.textContent(".photo")).includes("di Ospite Registrato"));
+check("galleria dalla più recente: la foto appena caricata è la prima", (await page.textContent(".photo")).includes("Foto di prova"));
+await page.click(".photo img.thumb");
+await page.waitForSelector(".lightbox img");
+check("tocco sulla foto: si ingrandisce con la versione intera", (await page.getAttribute(".lightbox img", "src")).includes("/uploads/") && !(await page.getAttribute(".lightbox img", "src")).includes("_t.jpg"));
+await page.click(".lightbox");
+check("secondo tocco: torna normale", (await page.$(".lightbox")) === null);
+check("in galleria la miniatura leggera, non la foto intera", (await page.getAttribute(".photo img.thumb", "src")).includes("_t.jpg"));
+// tante foto: lo snapshot ne porta 24, le altre si caricano a ritroso
+for (let i = 0; i < 24; i++) {
+  const fd = new FormData();
+  fd.append("file", new Blob([tinyPng], { type: "image/png" }), `extra${i}.png`);
+  fd.append("caption", `Extra ${i}`);
+  await fetch(BASE + "/api/photos", { method: "POST", headers: { "X-Admin-Token": ADMIN_TOKEN }, body: fd });
+}
+await page.reload({ waitUntil: "networkidle" });
+await tab("wishes");
+await page.waitForSelector("#more-photos");
+const firstPage = (await page.$$(".photo")).length;
+check("prima pagina: 24 foto e il pulsante per le precedenti", firstPage === 24 && (await page.textContent(".photo")).includes("Extra 23"));
+await page.click("#more-photos");
+await page.waitForFunction((n) => document.querySelectorAll(".photo").length > n, firstPage, { timeout: 10000 });
+check("foto precedenti caricate in fondo, senza doppioni, fino alla più vecchia", (await page.$("#more-photos")) === null && (await page.$$(".photo")).length === 24 + 4 && (await page.$$eval(".photo", (els) => new Set(els.map((e) => e.dataset.photo)).size)) === 28);
 await shot("04-auguri-foto");
 // fine prova: l'invitato esce (record cancellato) e la bacheca torna bloccata; le sezioni seguenti partono senza profilo
 await fetch(BASE + `/api/guests/${ospite.id}`, { method: "DELETE", headers: e2eAdmin });
@@ -629,9 +651,12 @@ check("cestini visibili all'organizzatore su auguri e foto", (await page.$$("[da
 check("augurio eliminato", (await clickExpectToast(".wish [data-wish-del]")).includes("eliminato"));
 await page.waitForTimeout(600);
 check("un augurio in meno", (await page.$$(".wish")).length === wishCount - 1);
+const galleryTotal = async () => Number(((await page.textContent("#screen")).match(/Galleria Foto \((\d+)\)/) || [])[1]);
+const photosBefore = await galleryTotal();
+const deletedId = await page.getAttribute(".photo", "data-photo");
 check("foto eliminata", (await clickExpectToast(".photo [data-photo-del]")).includes("eliminata"));
 await page.waitForTimeout(600);
-check("una foto in meno", (await page.$$(".photo")).length === photoCount - 1);
+check("una foto in meno", (await galleryTotal()) === photosBefore - 1 && (await page.$(`.photo[data-photo="${deletedId}"]`)) === null);
 await tab("program");
 await page.click("#ntf-show");
 await page.waitForSelector("#ntf-clear");
@@ -659,6 +684,29 @@ await page.goto(BASE + "/#festeggiato=" + GRADUATE_TOKEN, { waitUntil: "networki
 await page.waitForSelector("#grad-stats", { timeout: 10000 });
 check("il link #festeggiato= salva il token e apre l'area", (await page.evaluate(() => localStorage.getItem("np.graduateToken"))) === GRADUATE_TOKEN && !(await page.evaluate(() => location.hash)).includes("festeggiato"));
 await page.click(".modal .close");
+
+console.log("18) Cassiere dal link (#cassiere=), inviti dal cruscotto e azzeramento dei dati di prova");
+await page.evaluate(() => { localStorage.removeItem("np.treasurerToken"); localStorage.removeItem("np.graduateToken"); });
+await page.goto(BASE + "/#cassiere=" + TREASURER_TOKEN, { waitUntil: "networkidle" });
+await page.waitForTimeout(800);
+check("il link #cassiere= salva il token e apre Regali", (await page.evaluate(() => localStorage.getItem("np.treasurerToken"))) === TREASURER_TOKEN && !(await page.evaluate(() => location.hash)).includes("cassiere") && (await page.$('.tab[data-tab="gifts"].active')) !== null);
+if (await page.$(".modal .close")) await page.click(".modal .close"); // guida del ruolo
+await tab("program");
+await page.click("#settings");
+await page.waitForSelector("#s-dash");
+await page.click("#s-dash");
+await page.waitForSelector("#dash-invites");
+await page.click("#dash-invites summary");
+await page.waitForFunction(() => !document.querySelector("#inv-list")?.textContent.includes("Caricamento"), null, { timeout: 10000 });
+const invText = await page.textContent("#inv-list");
+check("anteprima inviti: festeggiati e cassieri con lo stato (senza n8n non partono)", invText.includes("Fedele Luisi") && invText.includes("Akilesh") && invText.includes("manca") && (await page.$eval("#inv-send", (b) => b.disabled)));
+await page.click("#dash-reset summary");
+promptAnswer = "AZZERA";
+check("azzeramento dei dati di prova dal cruscotto", (await clickExpectToast("#reset-go")).includes("Dati di prova cancellati"));
+promptAnswer = undefined;
+await page.waitForTimeout(800);
+const afterReset = await fetch(BASE + "/api/snapshot", { headers: adminHeaders }).then((r) => r.json());
+check("dopo l'azzeramento: niente invitati, auguri, foto; regali intatti", afterReset.guests.length === 0 && afterReset.wishes.length === 0 && afterReset.photos.length === 0 && afterReset.giftTargets.length === 9);
 
 check("nessun errore JavaScript in console", consoleErrors.length === 0, consoleErrors.join(" | "));
 

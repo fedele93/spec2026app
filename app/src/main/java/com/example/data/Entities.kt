@@ -77,7 +77,8 @@ data class GiftTargetEntity(
     val ibanHolder: String,
     val satispayUrl: String,
     val paypalMeUrl: String,
-    val bancomatPay: String = "" // numero di telefono BANCOMAT Pay (vuoto = non lo usa)
+    val bancomatPay: String = "", // numero di telefono BANCOMAT Pay (vuoto = non lo usa)
+    val paypalEmail: String = "" // PayPal senza link paypal.me: l'email a cui inviare
 )
 
 /** Cassiere delle quote uniche (lista "giftCollectors" di event-data.json / snapshot.event).

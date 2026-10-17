@@ -19,7 +19,7 @@ import androidx.room.RoomDatabase
     // v3: più cassieri (tabella gift_collectors con id testuale).
     // Il DB è una cache dello snapshot del server (o dei dati demo): in caso di cambio schema
     // viene ricreato da zero e ripopolato.
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

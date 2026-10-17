@@ -145,6 +145,9 @@ fun GiftsScreen(
             GiftTargetCard(
                 target = target,
                 onCopyIban = { copyToClipboard(context, "IBAN", target.iban, "IBAN di ${shortName(target.name)} copiato!") },
+                onCopyPaypalEmail = {
+                    copyToClipboard(context, "PayPal", target.paypalEmail, "Email PayPal di ${shortName(target.name)} copiata: in PayPal scegli \"Invia\" e incollala")
+                },
                 onCopyBancomatPay = {
                     copyToClipboard(context, "BANCOMAT Pay", target.bancomatPay, "Numero BANCOMAT Pay di ${shortName(target.name)} copiato: incollalo nell'app della tua banca")
                 },
@@ -323,7 +326,8 @@ fun GiftTargetCard(
     target: GiftTargetEntity,
     onCopyIban: () -> Unit,
     onOpenUrl: (String) -> Unit,
-    onCopyBancomatPay: () -> Unit = {}
+    onCopyBancomatPay: () -> Unit = {},
+    onCopyPaypalEmail: () -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -395,6 +399,17 @@ fun GiftTargetCard(
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
                     ) { Text("Satispay", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
                 }
+            }
+            if (target.paypalMeUrl.isBlank() && target.paypalEmail.isNotBlank()) {
+                // PayPal senza link paypal.me: si copia l'email e in PayPal si sceglie "Invia"
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onCopyPaypalEmail,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("copy_paypal_email_${target.id}"),
+                    shape = RoundedCornerShape(10.dp)
+                ) { Text("PayPal: ${target.paypalEmail} (copia)", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
             }
             if (target.bancomatPay.isNotBlank()) {
                 // BANCOMAT Pay non ha un link da aprire: si copia il numero e si paga dall'app della propria banca

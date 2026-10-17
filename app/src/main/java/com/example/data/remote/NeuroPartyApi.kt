@@ -277,7 +277,8 @@ data class ImportResultDto(
 data class GraduateInfoDto(
     val id: String = "", val name: String = "", val shortName: String = "", val specialization: String = "",
     val iban: String = "", val ibanHolder: String = "", val satispayUrl: String = "", val paypalMeUrl: String = "", val email: String? = null,
-    val bancomatPay: String = ""
+    val bancomatPay: String = "",
+    val paypalEmail: String = ""
 )
 
 @JsonClass(generateAdapter = true)

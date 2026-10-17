@@ -8,6 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Aggiunto
+- Link personale dei cassieri generato dal server (come quello dei festeggiati), rigenerabile dal cruscotto con "Rigenera i link": i token nel `.env` non servono più ma restano validi.
 - Galleria foto dalla più recente, con miniature leggere (la foto intera solo ingrandendo) e caricamento a pagine: lo snapshot porta le 24 più recenti, il pulsante "Mostra foto precedenti" scarica le altre a ritroso (`/api/photos/page`). Tocco per ingrandire, secondo tocco per chiudere (PWA e Android; Android: database locale alla versione 6).
 - Assistente vocale: come fare un regalo a ciascun neo-specialista, lettura degli ultimi auguri (solo registrati), invio del link personale via email, riepilogo per il festeggiato che parla; il prompt sa cosa può fare chi parla.
 - Cruscotto organizzatori: inviti con link e istruzioni dettagliate a festeggiati e cassieri (anche per la fase di prova) e azzeramento dei dati di prova. Link del cassiere `#cassiere=<token>`.

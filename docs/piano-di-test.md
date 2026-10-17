@@ -5,7 +5,7 @@ trovare i bug e poi azzerare tutto.
 
 ## 0. Preparazione (organizzatore, sul server)
 1. Nel `.env` del backend:
-   - `ADMIN_TOKEN`, `TREASURER_TOKEN_ROBERTO`, `TREASURER_TOKEN_AKI` (genera ognuno con `openssl rand -hex 24`);
+   - `ADMIN_TOKEN` (genera con `openssl rand -hex 24`); i cassieri non hanno bisogno di token nel `.env`: il loro link lo genera il cruscotto;
    - `GRADUATE_EMAIL_<ID>` per i nove festeggiati e `TREASURER_EMAIL_ROBERTO`, `TREASURER_EMAIL_AKI`;
    - `N8N_WEBHOOK_URL` attivo (senza n8n le email non partono);
    - `GIFT_SYNC_UPDATE_TEXTS=true` per allineare IBAN e link al JSON, `SEED_DEMO_DATA=false`.

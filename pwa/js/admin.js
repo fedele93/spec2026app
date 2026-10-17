@@ -44,9 +44,10 @@ export async function openDashboard() {
       <button class="btn btn-ghost" id="dash-exp-pool" style="width:auto;">📄 CSV quote</button>
     </div>
     <details class="card" id="dash-invites"><summary><b>🎟️ Inviti a festeggiati e cassieri</b></summary>
-      <div class="muted" style="margin:6px 0;">Manda a ciascuno il link personale (festeggiati: area 🎓; cassieri: cruscotto delle quote) con le istruzioni dettagliate per usare l'app. Le email vengono dal <span class="mono">.env</span> del server (<span class="mono">GRADUATE_EMAIL_&lt;ID&gt;</span>, <span class="mono">TREASURER_EMAIL_&lt;ID&gt;</span>); ai cassieri serve anche <span class="mono">TREASURER_TOKEN_&lt;ID&gt;</span>.</div>
+      <div class="muted" style="margin:6px 0;">Manda a ciascuno il link personale (festeggiati: area 🎓; cassieri: cruscotto delle quote) con le istruzioni dettagliate per usare l'app. Le email vengono dal <span class="mono">.env</span> del server (<span class="mono">GRADUATE_EMAIL_&lt;ID&gt;</span>, <span class="mono">TREASURER_EMAIL_&lt;ID&gt;</span>); i link sono generati dal server e restano gli stessi a ogni invio.</div>
       <div id="inv-list" class="muted">Caricamento…</div>
       <label class="as-check" style="margin-top:8px;"><input type="checkbox" id="inv-test" checked> Aggiungi le istruzioni per la fase di prova (segnalare i bug; i dati di prova verranno cancellati)</label>
+      <label class="as-check"><input type="checkbox" id="inv-rotate"> Rigenera i link prima di inviarli (quelli già in giro smettono di valere: usalo se un'email è finita alla persona sbagliata)</label>
       <button class="btn btn-primary" id="inv-send" style="margin-top:8px;" disabled>Invia gli inviti</button>
     </details>
     <details class="card" id="dash-reset"><summary><b>🧹 Fine della fase di prova</b></summary>
@@ -81,7 +82,7 @@ export async function openDashboard() {
     });
 }
 
-const INVITE_STATUS = { READY: "pronto", QUEUED: "in invio", DELIVERED: "inviato", FAILED: "non inviato", NO_EMAIL: "manca l'email", NO_TOKEN: "manca il token", MAIL_DISABLED: "email non attive (n8n)" };
+const INVITE_STATUS = { READY: "pronto", QUEUED: "in invio", DELIVERED: "inviato", FAILED: "non inviato", NO_EMAIL: "manca l'email", MAIL_DISABLED: "email non attive (n8n)" };
 
 // Elenco di chi riceverebbe l'invito (anteprima, nessuna email) e invio con conferma.
 async function initInvites(bg) {
@@ -98,7 +99,9 @@ async function initInvites(bg) {
     if (!confirm(`Mandare l'invito con il link personale a ${preview.ready} persone?`)) return;
     send.disabled = true;
     try {
-      const r = await api.adminInvites({ dryRun: false, testPhase: bg.querySelector("#inv-test").checked });
+      const rotate = bg.querySelector("#inv-rotate").checked;
+      if (rotate && !confirm("Rigenerare i link? Chi ha già aperto il vecchio link dovrà aprire quello nuovo.")) { send.disabled = false; return; }
+      const r = await api.adminInvites({ dryRun: false, testPhase: bg.querySelector("#inv-test").checked, rotate });
       list.innerHTML = r.invites.map(row).join("");
       toast(`Inviti mandati: ${r.ready}`);
     } catch (e) { toast(e.message); send.disabled = false; }

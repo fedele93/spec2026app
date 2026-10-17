@@ -8,6 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Modificato
+- Regali: Chiara Esposto riceve con bonifico (IBAN IT46 E030 6978 4941 0000 0001 908). Satispay solo per Fedele Luisi: tolti i link di prova degli altri.
 - Regali: Giorgia Ruta riceve con bonifico (IBAN IT04 G030 6904 0131 0000 0005 259); tolti i link Satispay e PayPal di prova.
 - Regali: Roberto Spiridione Prezioso riceve con bonifico (IBAN IT83 H030 6964 7161 0000 0060 343); tolti i link Satispay e PayPal di prova, il PayPal arriva appena c'è il link.
 - Festeggiati: accesso all'area 🎓 con il link via email (⚙️ → "Sono un festeggiato"): il link `#festeggiato=<token>` apre l'area nella PWA; nell'app Android si incolla nel campo del token. Serve l'email del festeggiato nel `.env` del server (`GRADUATE_EMAIL_<ID>`).

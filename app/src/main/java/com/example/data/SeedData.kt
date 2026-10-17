@@ -344,7 +344,7 @@ object SeedData {
             giftDescription = "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Sebastiano.",
             iban = "IT12 Y030 6909 6061 0000 4567 890",
             ibanHolder = "Sebastiano Carlone",
-            satispayUrl = "https://tag.satispay.com/sebastianocarlone",
+            satispayUrl = "",
             paypalMeUrl = "https://paypal.me/sebastianocarlone"
         ),
         GiftTargetEntity(
@@ -392,7 +392,7 @@ object SeedData {
             giftDescription = "Regalo per la formazione sui disturbi del movimento e l'attività di ricerca clinica di Lorenzo.",
             iban = "IT77 C030 6909 6061 0000 5556 667",
             ibanHolder = "Lorenzo Parrulli",
-            satispayUrl = "https://tag.satispay.com/lorenzoparrulli",
+            satispayUrl = "",
             paypalMeUrl = "https://paypal.me/lorenzoparrulli"
         ),
         GiftTargetEntity(
@@ -404,7 +404,7 @@ object SeedData {
             giftDescription = "Contributo per la dotazione di neuroriabilitazione e l'attività ambulatoriale di Francesco.",
             iban = "IT88 D030 6909 6061 0000 7778 889",
             ibanHolder = "Francesco Cusmai",
-            satispayUrl = "https://tag.satispay.com/francescocusmai",
+            satispayUrl = "",
             paypalMeUrl = "https://paypal.me/francescocusmai"
         ),
         GiftTargetEntity(
@@ -414,10 +414,10 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Tablet Clinico & Corso Neuropsicologia",
             giftDescription = "Regalo per la valutazione neuropsicologica dei pazienti e l'aggiornamento sulle demenze di Chiara.",
-            iban = "IT33 E030 6909 6061 0000 9990 011",
+            iban = "IT46 E030 6978 4941 0000 0001 908",
             ibanHolder = "Chiara Esposto",
-            satispayUrl = "https://tag.satispay.com/chiaraesposto",
-            paypalMeUrl = "https://paypal.me/chiaraesposto"
+            satispayUrl = "",
+            paypalMeUrl = ""
         ),
         GiftTargetEntity(
             id = "regina",

@@ -343,7 +343,7 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Oftalmoscopio Professionale & Borsa Medico in Cuoio",
             giftDescription = "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Sebastiano.",
-            iban = "IT12 Y030 6909 6061 0000 4567 890",
+            iban = "IT17 W076 0104 2000 0106 3223 976",
             ibanHolder = "Sebastiano Carlone",
             satispayUrl = "",
             paypalMeUrl = "",
@@ -359,7 +359,7 @@ object SeedData {
             iban = "IT83 H030 6964 7161 0000 0060 343",
             ibanHolder = "Roberto Spiridione Prezioso",
             satispayUrl = "",
-            paypalMeUrl = "",
+            paypalMeUrl = "https://www.paypal.me/RobertoPrezioso96",
             bancomatPay = ""
         ),
         GiftTargetEntity(
@@ -395,7 +395,7 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Corso Tourette & Dispositivo Wearable Monitoring",
             giftDescription = "Regalo per la formazione sui disturbi del movimento e l'attività di ricerca clinica di Lorenzo.",
-            iban = "IT77 C030 6909 6061 0000 5556 667",
+            iban = "IT75 E053 8541 5020 0000 1672 967",
             ibanHolder = "Lorenzo Parrulli",
             satispayUrl = "",
             paypalMeUrl = "",

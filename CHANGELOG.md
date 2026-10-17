@@ -8,6 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Modificato
+- Regali: IBAN reali di Sebastiano Carlone (IT17 W076 0104 2000 0106 3223 976) e Lorenzo Parrulli (IT75 E053 8541 5020 0000 1672 967); PayPal di Roberto Prezioso (paypal.me/RobertoPrezioso96).
 - Regali: nuovo metodo BANCOMAT Pay (numero di telefono da copiare, poi si paga dall'app della propria banca); per ora solo Fedele Luisi. Android: database locale alla versione 4 (si riscarica dal server).
 - Regali: tolti i link PayPal di prova di Carlone, Parrulli e Cusmai (in attesa di quelli veri).
 - Regali: Chiara Esposto riceve con bonifico (IBAN IT46 E030 6978 4941 0000 0001 908). Satispay solo per Fedele Luisi: tolti i link di prova degli altri.

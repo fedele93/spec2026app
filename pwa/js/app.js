@@ -2,9 +2,17 @@
 import { Repo, Status, initData, onDataChange, reconnect } from "./data.js";
 import { resyncPushSubscription } from "./notify.js";
 import { initAssistant } from "./assistant.js";
-import { initProfileFromHash, openProfile } from "./profile.js";
+import { openProfile } from "./profile.js";
 import { maybeOpenGuide, maybeOpenRoleGuides } from "./guide.js";
-import { initGraduateFromHash, initTreasurerFromHash, openGraduateArea } from "./graduate.js";
+import { openGraduateArea } from "./graduate.js";
+import { consumeHashLink } from "./api.js";
+
+// Cosa aprire dopo aver salvato il token di un link personale (#profilo=, #festeggiato=, #cassiere=)
+const LINK_ACTIONS = {
+  profilo: () => { goto("rsvp"); openProfile(); },
+  festeggiato: () => openGraduateArea(),
+  cassiere: () => goto("gifts"),
+};
 import * as Screens from "./screens.js";
 
 let currentTab = "program";
@@ -14,6 +22,7 @@ const screenEl = () => document.getElementById("screen");
 async function render() {
   const el = screenEl();
   el.scrollTop = 0;
+  el.onclick = null; // i listener delegati di una schermata non devono sopravvivere al cambio di scheda
   try {
     if (currentTab === "program") await Screens.program(el, goto);
     else if (currentTab === "rsvp") await Screens.rsvp(el, goto);
@@ -96,23 +105,22 @@ async function init() {
     catch (e) { console.warn("SW registration failed", e); }
   }
 
-  const fromLink = await initProfileFromHash(); // link personale dall'email (#profilo=<token>)
-  const fromGraduateLink = initGraduateFromHash(); // link del festeggiato dall'email (#festeggiato=<token>)
-  const fromTreasurerLink = initTreasurerFromHash(); // link del cassiere dall'email (#cassiere=<token>)
+  const link = consumeHashLink(); // link personale dall'email: il token è già salvato, initData lo usa
   await initData();
   await render();
-  if (fromLink) { goto("rsvp"); openProfile(); }
-  else if (fromGraduateLink) openGraduateArea();
-  else if (fromTreasurerLink) goto("gifts");
+  if (link) LINK_ACTIONS[link]();
   await initAssistant(); // prima della guida: così la guida sa se c'è l'assistente
-  // dal link del cassiere: niente guida generale, subito quella del ruolo
-  if (fromTreasurerLink) maybeOpenRoleGuides();
-  else maybeOpenGuide({ fromLink: fromLink || fromGraduateLink }); // guida alla prima apertura
+  // da un link di ruolo niente guida generale, subito quella del ruolo; dal link del profilo nessuna guida
+  if (link === "cassiere") maybeOpenRoleGuides();
+  else maybeOpenGuide({ fromLink: !!link }); // guida alla prima apertura
   // link personale incollato con l'app già aperta (cambia solo il frammento: nessun ricaricamento)
   window.addEventListener("hashchange", async () => {
-    if (await initProfileFromHash()) { await Repo.pollState(); goto("rsvp"); openProfile(); }
-    else if (initGraduateFromHash()) { await reconnect(); await render(); openGraduateArea(); }
-    else if (initTreasurerFromHash()) { await reconnect(); goto("gifts"); maybeOpenRoleGuides(); }
+    const key = consumeHashLink();
+    if (!key) return;
+    await reconnect(); // il token cambia cosa manda il server: si ricarica tutto
+    await render();
+    LINK_ACTIONS[key]();
+    if (key !== "profilo") maybeOpenRoleGuides();
   });
 
   // ridisegna quando i dati cambiano in seguito a una scrittura (se nessun modale è aperto)

@@ -660,6 +660,15 @@ function memoriesLocked(el) {
   el.querySelector("#ml-settings").onclick = () => settingsDialog();
 }
 
+// Una card della galleria (usata al primo disegno e per le pagine caricate dopo)
+const photoCard = (p) => `
+      <div class="photo" data-photo="${p.id}">
+        ${p.imageUri ? `<img class="thumb" src="${esc(p.thumbUri || p.imageUri)}" data-full="${esc(p.imageUri)}" alt="${esc(p.caption)}" loading="lazy" decoding="async" width="480" height="160">` : `<div class="placeholder">🎓 Neurologia 2026</div>`}
+        <div class="name" style="font-weight:700;font-size:13px;">${esc(p.caption)}</div>
+        <div class="cat">di ${esc(p.authorName)} · ${fmtTime(p.createdAt)}</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;"><button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-like="${p.id}">❤️ ${p.likesCount}</button>${isAdmin() ? `<button class="icon-btn" data-photo-del="${p.id}" title="Elimina foto (organizzatore)">🗑️</button>` : ""}</div>
+      </div>`;
+
 export async function wishes(el) {
   if (Repo.mode === "server" && !Status.canSeeMemories) { memoriesLocked(el); return; }
   const list = await Repo.allWishes();
@@ -683,39 +692,39 @@ export async function wishes(el) {
 
     <h2 class="section">Galleria Foto (${Repo.photosTotal() ?? photos.length})</h2>
     <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Dalla più recente. Tocca una foto per ingrandirla, toccala di nuovo per chiuderla.</div>
-    ${photos.length === 0 ? '<div class="empty">Nessuna foto condivisa ancora.</div>' : photos.map((p) => `
-      <div class="photo" data-photo="${p.id}">
-        ${p.imageUri ? `<img class="thumb" src="${esc(p.thumbUri || p.imageUri)}" data-full="${esc(p.imageUri)}" alt="${esc(p.caption)}" loading="lazy" decoding="async" width="480" height="160">` : `<div class="placeholder">🎓 Neurologia 2026</div>`}
-        <div class="name" style="font-weight:700;font-size:13px;">${esc(p.caption)}</div>
-        <div class="cat">di ${esc(p.authorName)} · ${fmtTime(p.createdAt)}</div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;"><button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-like="${p.id}">❤️ ${p.likesCount}</button>${isAdmin() ? `<button class="icon-btn" data-photo-del="${p.id}" title="Elimina foto (organizzatore)">🗑️</button>` : ""}</div>
-      </div>`).join("")}
+    ${photos.length === 0 ? '<div class="empty">Nessuna foto condivisa ancora.</div>' : photos.map(photoCard).join("")}
     ${Repo.photosHasMore() ? `<button class="btn btn-ghost" id="more-photos" style="margin-bottom:12px;">⬇️ Mostra foto precedenti</button>` : ""}
   `;
   const more = el.querySelector("#more-photos");
   if (more) more.onclick = async () => {
+    // si aggiungono solo le card nuove, in fondo: niente ridisegno della bacheca né salti di scroll
     more.disabled = true; more.textContent = "Caricamento…";
-    const y = window.scrollY;
-    if (await tryAction(() => Repo.loadOlderPhotos())) { await wishes(el); window.scrollTo(0, y); } // resta dove eri
-    else { more.disabled = false; more.textContent = "⬇️ Mostra foto precedenti"; }
+    let fresh = [];
+    if (await tryAction(async () => { fresh = await Repo.loadOlderPhotos(); })) {
+      more.insertAdjacentHTML("beforebegin", fresh.map(photoCard).join(""));
+      if (!Repo.photosHasMore()) more.remove();
+    }
+    if (more.isConnected) { more.disabled = false; more.textContent = "⬇️ Mostra foto precedenti"; }
   };
-  el.querySelectorAll(".photo img.thumb").forEach((img) => img.onclick = () => openLightbox(img.dataset.full || img.src, img.alt));
   el.querySelector("#add-wish").onclick = () => wishDialog(() => wishes(el));
   el.querySelector("#add-photo").onclick = () => photoDialog(() => wishes(el));
-  el.querySelectorAll("[data-heart]").forEach((b) => b.onclick = async () => {
-    if (await tryAction(() => Repo.heartWish(Number(b.dataset.heart)))) wishes(el);
-  });
-  el.querySelectorAll("[data-like]").forEach((b) => b.onclick = async () => {
-    if (await tryAction(() => Repo.likePhoto(Number(b.dataset.like)))) wishes(el);
-  });
-  el.querySelectorAll("[data-wish-del]").forEach((b) => b.onclick = async () => {
-    if (!confirm("Eliminare questo augurio per tutti?")) return;
-    if (await tryAction(() => Repo.deleteWish(Number(b.dataset.wishDel)), "Augurio eliminato")) wishes(el);
-  });
-  el.querySelectorAll("[data-photo-del]").forEach((b) => b.onclick = async () => {
-    if (!confirm("Eliminare questa foto per tutti?")) return;
-    if (await tryAction(() => Repo.deletePhoto(Number(b.dataset.photoDel)), "Foto eliminata")) wishes(el);
-  });
+  // un solo listener per cuori, like, cestini e ingrandimento: vale anche per le card aggiunte dopo
+  el.onclick = async (e) => {
+    const t = e.target.closest("img.thumb, [data-heart], [data-like], [data-wish-del], [data-photo-del]");
+    if (!t || !el.contains(t)) return;
+    if (t.matches("img.thumb")) { openLightbox(t.dataset.full || t.src, t.alt); return; }
+    if (t.dataset.heart) { if (await tryAction(() => Repo.heartWish(Number(t.dataset.heart)))) wishes(el); return; }
+    if (t.dataset.like) { if (await tryAction(() => Repo.likePhoto(Number(t.dataset.like)))) wishes(el); return; }
+    if (t.dataset.wishDel) {
+      if (!confirm("Eliminare questo augurio per tutti?")) return;
+      if (await tryAction(() => Repo.deleteWish(Number(t.dataset.wishDel)), "Augurio eliminato")) wishes(el);
+      return;
+    }
+    if (t.dataset.photoDel) {
+      if (!confirm("Eliminare questa foto per tutti?")) return;
+      if (await tryAction(() => Repo.deletePhoto(Number(t.dataset.photoDel)), "Foto eliminata")) wishes(el);
+    }
+  };
 }
 
 // in modalità server, con il profilo aperto il server firma auguri e foto col nome del profilo
@@ -724,7 +733,7 @@ const signedByProfile = () => Repo.mode === "server" && hasProfile();
 // Foto ingrandita: un tocco la apre a schermo intero (versione completa), un altro tocco (o Esc) la chiude.
 function openLightbox(src, caption) {
   const box = document.createElement("div");
-  box.className = "lightbox";
+  box.className = "modal-bg lightbox"; // "modal-bg": così isModalOpen() la vede e la pagina non si ridisegna sotto
   box.setAttribute("role", "dialog");
   box.innerHTML = `<img src="${esc(src)}" alt="${esc(caption || "")}">${caption ? `<div class="lb-caption">${esc(caption)}</div>` : ""}`;
   const close = () => { box.remove(); document.removeEventListener("keydown", onKey); };

@@ -48,6 +48,23 @@ export function isTreasurer() { return !!getTreasurerToken(); }
 // Festeggiato: GRADUATE_TOKEN_<ID> sul server apre l'area 🎓 (chi viene, auguri, coordinate, il proprio avatar)
 export function getGraduateToken() { return ls(LS_GRADUATE); }
 export function setGraduateToken(token) { lsSet(LS_GRADUATE, (token || "").trim()); }
+
+// Link personali ricevuti via email: https://<app>/#<chiave>=<token>. Una tabella sola per tutti i ruoli:
+// la chiave dice quale token salvare (i token dei cassieri vengono dal .env e possono essere corti).
+const HASH_LINKS = {
+  profilo: { set: setGuestToken, minLen: 10 },
+  festeggiato: { set: setGraduateToken, minLen: 10 },
+  cassiere: { set: setTreasurerToken, minLen: 4 },
+};
+/** Se l'URL contiene un link personale lo consuma: salva il token, pulisce l'indirizzo e ritorna la chiave
+ *  ("profilo", "festeggiato", "cassiere"); altrimenti null. */
+export function consumeHashLink() {
+  const m = /[#&](profilo|festeggiato|cassiere)=([A-Za-z0-9_-]+)/.exec(location.hash || "");
+  if (!m || m[2].length < HASH_LINKS[m[1]].minLen) return null;
+  HASH_LINKS[m[1]].set(m[2]);
+  try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignora */ }
+  return m[1];
+}
 export function isGraduate() { return !!getGraduateToken(); }
 
 export class ApiError extends Error {

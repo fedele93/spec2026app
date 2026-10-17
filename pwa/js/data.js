@@ -109,14 +109,15 @@ function notify() { listeners.forEach((fn) => { try { fn(); } catch (e) { consol
 //  Repository "server"
 // ======================================================================================
 let snapshot = null; // ultimo snapshot noto (server o cache)
-// Foto più vecchie caricate a richiesta ("Mostra foto precedenti"): lo snapshot porta solo le più recenti.
-let olderPhotos = [];
-let olderHasMore = null; // null = decide lo snapshot (photosHasMore)
+// Foto più vecchie caricate a richiesta ("Mostra foto precedenti"): lo snapshot porta solo le più recenti,
+// le pagine successive arrivano già in ordine e più vecchie di tutto ciò che c'è nello snapshot.
+// hasMore null = lo dice lo snapshot (photosHasMore) finché non si è chiesta nessuna pagina.
+let older = { photos: [], hasMore: null };
 const newestFirst = (a, b) => (b.createdAt - a.createdAt) || (b.id - a.id);
-function mergePhotos(...lists) {
-  const byId = new Map();
-  lists.flat().forEach((p) => { if (!byId.has(p.id)) byId.set(p.id, p); });
-  return [...byId.values()].sort(newestFirst);
+// snapshot + pagine vecchie, senza doppioni (dopo una cancellazione lo snapshot può scorrere su una foto già caricata)
+function galleryPhotos(snap) {
+  const seen = new Set((snap.photos || []).map((p) => p.id));
+  return (snap.photos || []).concat(older.photos.filter((p) => !seen.has(p.id)));
 }
 
 async function refreshSnapshot() {
@@ -127,6 +128,7 @@ async function refreshSnapshot() {
     Status.version = snap.version;
     Status.canSeeLists = snap.canSeeLists !== false;
     Status.canSeeMemories = snap.canSeeMemories !== false;
+    if (!Status.canSeeMemories) older = { photos: [], hasMore: null }; // bacheca chiusa: via anche le pagine caricate
     applyEvent(snap.event);
     writeCache(snap);
     return snap;
@@ -195,22 +197,21 @@ const ServerRepo = {
   addWish: (w) => write(() => api.addWish(w)),
   heartWish: (id) => write(() => api.heartWish(id)),
   deleteWish: (id) => write(() => api.deleteWish(id)),
-  deletePhoto: (id) => { olderPhotos = olderPhotos.filter((p) => p.id !== id); return write(() => api.deletePhoto(id)); },
+  deletePhoto: (id) => { older.photos = older.photos.filter((p) => p.id !== id); return write(() => api.deletePhoto(id)); },
   clearNotifications: () => write(() => api.clearNotifications()),
 
   // galleria: prima pagina dallo snapshot + le pagine più vecchie chieste dall'utente, dalla più recente
-  allPhotos: async () => {
-    const snap = snapshot ?? await refreshSnapshot();
-    return mergePhotos(snap.photos || [], (snap.canSeeMemories === false) ? [] : olderPhotos);
-  },
+  allPhotos: async () => galleryPhotos(snapshot ?? await refreshSnapshot()),
   photosTotal: () => snapshot?.photosTotal ?? (snapshot?.photos || []).length,
-  photosHasMore: () => (olderHasMore ?? !!snapshot?.photosHasMore),
+  photosHasMore: () => (older.hasMore ?? !!snapshot?.photosHasMore),
+  /** Carica la pagina successiva (a ritroso dall'ultima foto mostrata) e ritorna le foto nuove. */
   loadOlderPhotos: async () => {
-    const shown = await ServerRepo.allPhotos();
+    const shown = galleryPhotos(snapshot ?? await refreshSnapshot());
     const page = await api.photosPage(shown[shown.length - 1]);
-    olderPhotos = mergePhotos(olderPhotos, page.photos || []);
-    olderHasMore = !!page.hasMore;
-    return page.photos?.length || 0;
+    const seen = new Set(shown.map((p) => p.id));
+    const fresh = (page.photos || []).filter((p) => !seen.has(p.id));
+    older = { photos: older.photos.concat(fresh), hasMore: !!page.hasMore };
+    return fresh;
   },
   addPhoto: ({ file, authorName, caption }) => write(() => api.uploadPhoto(file, authorName, caption)),
   likePhoto: (id) => write(() => api.likePhoto(id)),
@@ -300,7 +301,7 @@ const LocalRepo = {
   allPhotos: async () => (await getAll("photos")).sort(newestFirst),
   photosTotal: () => null,
   photosHasMore: () => false, // in modalità locale le foto sono poche e tutte sul dispositivo
-  loadOlderPhotos: async () => 0,
+  loadOlderPhotos: async () => [],
   addPhoto: async ({ file, authorName, caption }) => {
     let imageUri = "";
     if (file) {

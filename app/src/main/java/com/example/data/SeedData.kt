@@ -345,7 +345,7 @@ object SeedData {
             iban = "IT12 Y030 6909 6061 0000 4567 890",
             ibanHolder = "Sebastiano Carlone",
             satispayUrl = "",
-            paypalMeUrl = "https://paypal.me/sebastianocarlone"
+            paypalMeUrl = ""
         ),
         GiftTargetEntity(
             id = "prezioso",
@@ -393,7 +393,7 @@ object SeedData {
             iban = "IT77 C030 6909 6061 0000 5556 667",
             ibanHolder = "Lorenzo Parrulli",
             satispayUrl = "",
-            paypalMeUrl = "https://paypal.me/lorenzoparrulli"
+            paypalMeUrl = ""
         ),
         GiftTargetEntity(
             id = "cusmai",
@@ -405,7 +405,7 @@ object SeedData {
             iban = "IT88 D030 6909 6061 0000 7778 889",
             ibanHolder = "Francesco Cusmai",
             satispayUrl = "",
-            paypalMeUrl = "https://paypal.me/francescocusmai"
+            paypalMeUrl = ""
         ),
         GiftTargetEntity(
             id = "esposto",

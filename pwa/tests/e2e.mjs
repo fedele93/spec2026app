@@ -212,7 +212,7 @@ await page.waitForSelector("[data-target]");
 check("9 neo-specialisti con regalo diretto", (await page.$$("[data-target]")).length === 9);
 check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.textContent("#screen")));
 check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
-check("pulsanti copia IBAN e PayPal dove c'è; Satispay solo per Luisi (niente PayPal per Prezioso, Ruta, Esposto)", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 6 && (await page.$$(".gift .satispay")).length === 1 && (await page.$('.gift[data-target="luisi"] .satispay')) !== null && (await page.$('.gift[data-target="prezioso"] .paypal')) === null && (await page.$('.gift[data-target="ruta"] .paypal')) === null && (await page.$('.gift[data-target="esposto"] .paypal')) === null);
+check("pulsanti copia IBAN per tutti; PayPal solo per Luisi, Totaro e Regina; Satispay solo per Luisi", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 3 && (await page.$$(".gift .satispay")).length === 1 && (await page.$('.gift[data-target="luisi"] .satispay')) !== null && (await page.$('.gift[data-target="totaro"] .paypal')) !== null && (await page.$('.gift[data-target="carlone"] .paypal')) === null);
 check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
 check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Akilesh Bhunjun"));
 await page.click("#pool-open");

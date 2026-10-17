@@ -333,7 +333,8 @@ object SeedData {
             iban = "IT13 U030 6941 5131 0000 0010 092",
             ibanHolder = "Fedele Luisi",
             satispayUrl = "https://web.satispay.com/download/qrcode/S6Y-CON--6F32BD93-1233-47D0-A362-4EB4C249ACE1?locale=it",
-            paypalMeUrl = "https://www.paypal.com/qrcodes/p2pqrc/MBSHEM4F557R8"
+            paypalMeUrl = "https://www.paypal.com/qrcodes/p2pqrc/MBSHEM4F557R8",
+            bancomatPay = "3469556702"
         ),
         GiftTargetEntity(
             id = "carlone",
@@ -344,8 +345,9 @@ object SeedData {
             giftDescription = "Regalo personalizzato per le visite ambulatoriali e il master in patologie neurodegenerative di Sebastiano.",
             iban = "IT12 Y030 6909 6061 0000 4567 890",
             ibanHolder = "Sebastiano Carlone",
-            satispayUrl = "https://tag.satispay.com/sebastianocarlone",
-            paypalMeUrl = "https://paypal.me/sebastianocarlone"
+            satispayUrl = "",
+            paypalMeUrl = "",
+            bancomatPay = ""
         ),
         GiftTargetEntity(
             id = "prezioso",
@@ -354,10 +356,11 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Corso Neurosonologia Doppler & Attrezzatura Studio",
             giftDescription = "Regalo dedicato per la certificazione in ecocolordoppler transcranico e dotazione clinica di Roberto.",
-            iban = "IT99 Z030 6909 6061 0000 3210 987",
+            iban = "IT83 H030 6964 7161 0000 0060 343",
             ibanHolder = "Roberto Spiridione Prezioso",
-            satispayUrl = "https://tag.satispay.com/robertoprezioso",
-            paypalMeUrl = "https://paypal.me/robertoprezioso"
+            satispayUrl = "",
+            paypalMeUrl = "",
+            bancomatPay = ""
         ),
         GiftTargetEntity(
             id = "totaro",
@@ -369,7 +372,8 @@ object SeedData {
             iban = "IT89 Y020 0804 0240 0043 0727 126",
             ibanHolder = "Dalila Totaro",
             satispayUrl = "",
-            paypalMeUrl = "https://www.paypal.me/dalilatotaro1996"
+            paypalMeUrl = "https://www.paypal.me/dalilatotaro1996",
+            bancomatPay = ""
         ),
         GiftTargetEntity(
             id = "ruta",
@@ -378,10 +382,11 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Elettromiografo Portatile & Stage Neurofisiologia",
             giftDescription = "Regalo per l'avvio dell'attività in elettrofisiologia clinica e lo studio delle neuropatie di Giorgia.",
-            iban = "IT66 B030 6909 6061 0000 3334 445",
+            iban = "IT04 G030 6904 0131 0000 0005 259",
             ibanHolder = "Giorgia Ruta",
-            satispayUrl = "https://tag.satispay.com/gorgiaruta",
-            paypalMeUrl = "https://paypal.me/giorgiaruta"
+            satispayUrl = "",
+            paypalMeUrl = "",
+            bancomatPay = ""
         ),
         GiftTargetEntity(
             id = "parrulli",
@@ -392,8 +397,9 @@ object SeedData {
             giftDescription = "Regalo per la formazione sui disturbi del movimento e l'attività di ricerca clinica di Lorenzo.",
             iban = "IT77 C030 6909 6061 0000 5556 667",
             ibanHolder = "Lorenzo Parrulli",
-            satispayUrl = "https://tag.satispay.com/lorenzoparrulli",
-            paypalMeUrl = "https://paypal.me/lorenzoparrulli"
+            satispayUrl = "",
+            paypalMeUrl = "",
+            bancomatPay = ""
         ),
         GiftTargetEntity(
             id = "cusmai",
@@ -404,8 +410,9 @@ object SeedData {
             giftDescription = "Contributo per la dotazione di neuroriabilitazione e l'attività ambulatoriale di Francesco.",
             iban = "IT88 D030 6909 6061 0000 7778 889",
             ibanHolder = "Francesco Cusmai",
-            satispayUrl = "https://tag.satispay.com/francescocusmai",
-            paypalMeUrl = "https://paypal.me/francescocusmai"
+            satispayUrl = "",
+            paypalMeUrl = "",
+            bancomatPay = ""
         ),
         GiftTargetEntity(
             id = "esposto",
@@ -414,10 +421,11 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Tablet Clinico & Corso Neuropsicologia",
             giftDescription = "Regalo per la valutazione neuropsicologica dei pazienti e l'aggiornamento sulle demenze di Chiara.",
-            iban = "IT33 E030 6909 6061 0000 9990 011",
+            iban = "IT46 E030 6978 4941 0000 0001 908",
             ibanHolder = "Chiara Esposto",
-            satispayUrl = "https://tag.satispay.com/chiaraesposto",
-            paypalMeUrl = "https://paypal.me/chiaraesposto"
+            satispayUrl = "",
+            paypalMeUrl = "",
+            bancomatPay = ""
         ),
         GiftTargetEntity(
             id = "regina",
@@ -429,7 +437,8 @@ object SeedData {
             iban = "IT05 S054 2404 0100 0000 1066 123",
             ibanHolder = "Donato Regina",
             satispayUrl = "",
-            paypalMeUrl = "https://www.paypal.me/DonatoRegina"
+            paypalMeUrl = "https://www.paypal.me/DonatoRegina",
+            bancomatPay = ""
         ),
     )
 

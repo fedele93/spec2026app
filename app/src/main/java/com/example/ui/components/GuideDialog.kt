@@ -87,7 +87,7 @@ fun welcomeGuideSteps(serverMode: Boolean): List<GuideStep> {
         ),
         GuideStep(
             "🎁", "Regali",
-            "In Regali ci sono due strade. Regalo diretto: ogni neo-specialista ha IBAN, PayPal e, dove c'è, Satispay; copi e versi, senza registrare nulla. Quota unica: un solo versamento a uno dei cassieri, che lo ripartisce fra i neo-specialisti come indichi tu (in parti uguali o personalizzato).",
+            "In Regali ci sono due strade. Regalo diretto: ogni neo-specialista ha l'IBAN e, dove ci sono, PayPal, Satispay o il numero BANCOMAT Pay; copi e versi, senza registrare nulla. Quota unica: un solo versamento a uno dei cassieri, che lo ripartisce fra i neo-specialisti come indichi tu (in parti uguali o personalizzato).",
             "Nessuna cifra raccolta viene mostrata: ognuno decide liberamente. Se lasci l'email, il cassiere ti conferma quando la quota è arrivata."
         ),
         GuideStep(
@@ -151,7 +151,7 @@ fun roleGuideSteps(role: String, graduateName: String = ""): List<GuideStep> = w
         ),
         GuideStep(
             "💳", "Le tue coordinate",
-            "IBAN, PayPal e Satispay come li vedono gli invitati per il regalo diretto. Controlla che siano giusti: se c'è da correggere qualcosa, avvisa gli organizzatori (si cambiano nel file dell'evento). Le quote uniche sono riservate ai cassieri: niente cifre né elenco dei donatori, nemmeno per te.",
+            "IBAN, PayPal, Satispay e BANCOMAT Pay come li vedono gli invitati per il regalo diretto. Controlla che siano giusti: se c'è da correggere qualcosa, avvisa gli organizzatori (si cambiano nel file dell'evento). Le quote uniche sono riservate ai cassieri: niente cifre né elenco dei donatori, nemmeno per te.",
             "Riapri questa guida da ⚙️ Impostazioni → Guida festeggiato."
         )
     )

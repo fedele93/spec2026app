@@ -171,6 +171,8 @@ details.catering[open] summary::before { content: "▾"; }
 .iban { color: var(--primary); font-weight: 700; margin: 4px 0; font-size: 13px; word-break: break-all; }
 .btn.paypal { background: #0070BA; color: #fff; }
 .btn.satispay { background: #EF4444; color: #fff; }
+.btn.bancomat { background: #003F7D; color: #fff; }
+.gift .bpay { font-size: 13px; }
 .collector { border-color: rgba(201,162,39,.45); background: #FFFBEB; }
 .collector .mine { margin-top: 12px; border-top: 1px solid rgba(201,162,39,.35); padding-top: 6px; font-size: 13px; }
 .split-list { display: flex; flex-direction: column; gap: 4px; }

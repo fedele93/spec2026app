@@ -771,9 +771,12 @@ function photoDialog(onDone) {
 // ============================ REGALI ============================
 // Nessuna cifra raccolta è visibile. Due modi per partecipare:
 //  - quota unica al cassiere (registrata sul server con la ripartizione, visibile solo a lui);
-//  - regalo diretto a un neo-specialista: copia IBAN / PayPal / Satispay, senza registrare nulla.
+//  - regalo diretto a un neo-specialista: copia IBAN / PayPal / Satispay / numero BANCOMAT Pay, senza registrare nulla.
 const POOL_STATUS = { PENDING: "In attesa", RECEIVED: "Ricevuta" };
 const eur2 = (n) => `${Number(n || 0).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+// "3469556702" -> "346 955 6702" (solo per leggerlo meglio; si copia il numero com'è)
+const fmtPhone = (n) => { const d = String(n || "").replace(/\s+/g, ""); return /^\d{10}$/.test(d) ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : d; };
 
 async function copyText(text, okMsg) {
   try { await navigator.clipboard.writeText(text); toast(okMsg); }
@@ -805,15 +808,17 @@ export async function gifts(el) {
     <div id="pool-board"></div>
 
     <h2 class="section">Regalo diretto a un neo-specialista</h2>
-    <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Copia l'IBAN o apri PayPal/Satispay: l'importo lo decidi tu e non serve registrarlo qui.</div>
+    <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Copia l'IBAN o il numero BANCOMAT Pay, oppure apri PayPal/Satispay: l'importo lo decidi tu e non serve registrarlo qui.</div>
     ${targets.map((t) => `<div class="card gift" data-target="${esc(t.id)}">
         <div class="gname">👤 ${esc(t.name)}</div>
         <div class="muted" style="margin-top:6px;"><b>Intestatario:</b> ${esc(t.ibanHolder)}</div>
         <div class="mono iban">${esc(t.iban)}</div>
+        ${t.bancomatPay ? `<div class="muted bpay"><b>BANCOMAT Pay:</b> <span class="mono">${esc(fmtPhone(t.bancomatPay))}</span></div>` : ""}
         <div class="pay">
           <button class="btn btn-primary" data-copy-iban="${esc(t.id)}">📋 Copia IBAN</button>
           ${t.paypalMeUrl ? `<a class="btn paypal" href="${esc(t.paypalMeUrl)}" target="_blank" rel="noopener">PayPal</a>` : ""}
           ${t.satispayUrl ? `<a class="btn satispay" href="${esc(t.satispayUrl)}" target="_blank" rel="noopener">Satispay</a>` : ""}
+          ${t.bancomatPay ? `<button class="btn bancomat" data-copy-bpay="${esc(t.id)}">📱 BANCOMAT Pay</button>` : ""}
         </div>
       </div>`).join("")}
   `;
@@ -821,6 +826,11 @@ export async function gifts(el) {
   el.querySelectorAll("[data-copy-iban]").forEach((b) => {
     const t = targets.find((x) => x.id === b.dataset.copyIban);
     b.onclick = () => copyText(t.iban, `IBAN di ${shortName(t.name)} copiato!`);
+  });
+  // BANCOMAT Pay non ha un link da aprire: si copia il numero e si paga dall'app della propria banca
+  el.querySelectorAll("[data-copy-bpay]").forEach((b) => {
+    const t = targets.find((x) => x.id === b.dataset.copyBpay);
+    b.onclick = () => copyText(t.bancomatPay, `Numero BANCOMAT Pay di ${shortName(t.name)} copiato: incollalo nell'app della tua banca`);
   });
   el.querySelectorAll("[data-pool-del]").forEach((b) => b.onclick = async () => {
     if (!confirm("Annullare questa quota? Il cassiere non la vedrà più.")) return;

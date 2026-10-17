@@ -61,9 +61,15 @@ data class SnapshotDto(
     val busBookings: List<BusBookingEntity> = emptyList(),
     val wishes: List<WishEntity> = emptyList(),
     val photos: List<SharedPhotoEntity> = emptyList(),
+    val photosHasMore: Boolean = false, // lo snapshot porta solo le foto più recenti: le altre con photosPage
+    val photosTotal: Int? = null,
     val giftTargets: List<GiftTargetEntity> = emptyList(),
     val notifications: List<EventNotificationEntity> = emptyList()
 )
+
+/** Una pagina della galleria (GET /api/photos/page), dalla più recente. */
+@JsonClass(generateAdapter = true)
+data class PhotosPageDto(val photos: List<SharedPhotoEntity> = emptyList(), val hasMore: Boolean = false, val total: Int = 0)
 
 /** snapshot.event: i cassieri delle quote uniche (giftCollectors); giftCollector è il primo, per i server più vecchi. */
 @JsonClass(generateAdapter = true)
@@ -375,6 +381,12 @@ interface NeuroPartyApi {
         @Part("authorName") authorName: RequestBody,
         @Part("caption") caption: RequestBody
     ): SharedPhotoEntity
+
+    /** Foto più vecchie di quella indicata (createdAt + id), a pagine. */
+    @GET("api/photos/page")
+    suspend fun photosPage(
+        @Query("beforeTs") beforeTs: Long?, @Query("beforeId") beforeId: Long?, @Query("limit") limit: Int = 24
+    ): PhotosPageDto
 
     @POST("api/photos/{id}/like")
     suspend fun likePhoto(@Path("id") id: Long): SharedPhotoEntity

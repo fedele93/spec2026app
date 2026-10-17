@@ -114,7 +114,7 @@ export async function openAssistant() {
             <div class="as-bubble">${esc(m.text)}</div>
             ${m.actions?.length ? `<div class="as-actions">${m.actions.map((x) => `<span class="pill ${x.ok ? "pill-conf" : "pill-decl"}">${x.ok ? "✓" : "✗"} ${esc(x.summary || x.tool)}</span>`).join(" ")}</div>` : ""}
           </div>`).join("")
-          : `<div class="muted as-empty">Ciao! Sono ${esc(current().shortName)}. Chiedimi del programma, degli orari, della navetta o dei regali; posso anche prenotarti la navetta o confermare la tua presenza.${getGuestToken() ? " Hai aperto il tuo profilo: puoi chiedermi del tuo menu, dei tuoi accompagnatori e della tua navetta, e cambiarli a voce." : ""}</div>`;
+          : `<div class="muted as-empty">Ciao! Sono ${esc(current().shortName)}. Chiedimi del programma, degli orari, della navetta o di come fare un regalo a uno di noi; posso prenotarti la navetta, confermare la tua presenza, leggerti gli ultimi auguri e mandarti via email il link personale.${getGuestToken() ? " Hai aperto il tuo profilo: puoi chiedermi del tuo menu, dei tuoi accompagnatori e della tua navetta, e cambiarli a voce." : ""}${isGraduate() ? " Sei un festeggiato: chiedimi quanti hanno confermato e quanti auguri hai ricevuto." : ""}</div>`;
         chat.scrollTop = chat.scrollHeight;
       };
       const setBusy = (v, label) => {

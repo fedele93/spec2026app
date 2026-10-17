@@ -48,6 +48,23 @@ export function isTreasurer() { return !!getTreasurerToken(); }
 // Festeggiato: GRADUATE_TOKEN_<ID> sul server apre l'area 🎓 (chi viene, auguri, coordinate, il proprio avatar)
 export function getGraduateToken() { return ls(LS_GRADUATE); }
 export function setGraduateToken(token) { lsSet(LS_GRADUATE, (token || "").trim()); }
+
+// Link personali ricevuti via email: https://<app>/#<chiave>=<token>. Una tabella sola per tutti i ruoli:
+// la chiave dice quale token salvare (i token dei cassieri vengono dal .env e possono essere corti).
+const HASH_LINKS = {
+  profilo: { set: setGuestToken, minLen: 10 },
+  festeggiato: { set: setGraduateToken, minLen: 10 },
+  cassiere: { set: setTreasurerToken, minLen: 4 },
+};
+/** Se l'URL contiene un link personale lo consuma: salva il token, pulisce l'indirizzo e ritorna la chiave
+ *  ("profilo", "festeggiato", "cassiere"); altrimenti null. */
+export function consumeHashLink() {
+  const m = /[#&](profilo|festeggiato|cassiere)=([A-Za-z0-9_-]+)/.exec(location.hash || "");
+  if (!m || m[2].length < HASH_LINKS[m[1]].minLen) return null;
+  HASH_LINKS[m[1]].set(m[2]);
+  try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignora */ }
+  return m[1];
+}
 export function isGraduate() { return !!getGraduateToken(); }
 
 export class ApiError extends Error {
@@ -118,6 +135,8 @@ export const api = {
   heartWish: (id) => request(`/api/wishes/${id}/heart`, { method: "POST" }),
 
   photos: () => request("/api/photos"),
+  // a ritroso: le foto più vecchie dell'ultima già mostrata (createdAt + id)
+  photosPage: (before, limit = 24) => request(`/api/photos/page?limit=${limit}` + (before ? `&beforeTs=${before.createdAt}&beforeId=${before.id}` : "")),
   uploadPhoto: (file, authorName, caption) => {
     const fd = new FormData();
     fd.append("file", file);
@@ -142,6 +161,8 @@ export const api = {
   graduateMe: () => request("/api/graduate/me"),
   graduateRequestLink: (body) => request("/api/graduate/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
   adminDashboard: () => request("/api/admin/dashboard"),
+  adminInvites: (body) => request("/api/admin/invites", { method: "POST", json: body, timeoutMs: 60000 }),
+  adminResetTestData: (confirm) => request("/api/admin/reset-test-data", { method: "POST", json: { confirm }, timeoutMs: 60000 }),
   importGuests: (rows, { sendLinks = false, dryRun = false } = {}) => request("/api/guests/import", { method: "POST", json: { rows, sendLinks, dryRun }, timeoutMs: 120000 }),
 
   notifications: (since = 0) => request(`/api/notifications${since ? `?since=${since}` : ""}`),

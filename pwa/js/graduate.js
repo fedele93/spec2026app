@@ -10,15 +10,6 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const shortName = (n) => String(n || "").replace(/^Dott\.(ssa)?\s*/i, "");
 const stat = (title, value, sub, color) => `<div class="card" style="flex:1;padding:12px;margin:0;"><div class="muted" style="font-size:11px;">${title}</div><div style="font-size:24px;font-weight:800;color:${color};">${value}</div><div class="muted" style="font-size:11px;">${sub}</div></div>`;
 
-// Link personale del festeggiato aperto dall'email: salva il token (come quello in ⚙️) e pulisce l'indirizzo.
-export function initGraduateFromHash() {
-  const m = /[#&]festeggiato=([A-Za-z0-9_-]{10,})/.exec(location.hash || "");
-  if (!m) return false;
-  setGraduateToken(m[1]);
-  try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignora */ }
-  return true;
-}
-
 // Il festeggiato scrive la sua email e riceve il link che apre la sua area (niente token da copiare).
 export function requestGraduateLinkDialog() {
   openModal(`<h3>🎓 Sei un festeggiato?</h3>

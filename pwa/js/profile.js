@@ -13,15 +13,6 @@ const PRIVACY = "I dati (nome, contatti, menu e allergie, persone al seguito) se
 
 export const hasProfile = () => !!getGuestToken();
 
-// Link personale aperto dall'email: salva il token, pulisce l'indirizzo e apre il profilo.
-export async function initProfileFromHash() {
-  const m = /[#&]profilo=([A-Za-z0-9_-]{10,})/.exec(location.hash || "");
-  if (!m) return false;
-  setGuestToken(m[1]);
-  try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignora */ }
-  return true;
-}
-
 export async function openProfile() {
   if (Repo.mode !== "server") { toast("Il profilo personale funziona solo con il server della festa"); return; }
   if (!getGuestToken()) { requestLinkDialog(); return; }

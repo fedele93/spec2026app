@@ -56,7 +56,7 @@ fun welcomeGuideSteps(serverMode: Boolean): List<GuideStep> {
     val steps = mutableListOf(
         GuideStep(
             "🎓", "Benvenuto a NeuroParty",
-            "Questa è l'app della festa di specializzazione in Neurologia: programma, conferma della presenza, navetta, auguri, foto e regali, tutto in un posto. Non serve un account: l'app riconosce questo telefono e ti chiede solo il nome.",
+            "Questa è l'app della festa di specializzazione in Neurologia: programma, conferma della presenza, navetta, auguri, foto e regali, tutto in un posto. Non serve una password: l'app riconosce questo telefono e ti chiede solo il nome; per foto e auguri colleghi il tuo profilo con il link personale ricevuto via email.",
             "Le notifiche degli organizzatori (cambi di orario, partenza della navetta) arrivano come notifiche di sistema: accetta il permesso quando te lo chiede."
         ),
         GuideStep(
@@ -83,7 +83,7 @@ fun welcomeGuideSteps(serverMode: Boolean): List<GuideStep> {
             "🎉", "Bacheca: auguri e foto",
             "In Bacheca lasci un augurio ai neo-specialisti, a tutti o a uno in particolare, con un'emoji, e carichi le foto della giornata dalla galleria o dalla fotocamera." +
                 if (serverMode) " Auguri e foto li vede solo chi è registrato: collega il tuo profilo con il link personale ricevuto via email (vale anche se non vieni) e firmi col tuo nome." else " I cuori e i like sono per tutti.",
-            "Le foto vengono ridimensionate in automatico prima dell'invio."
+            "Le foto sono dalla più recente: toccane una per ingrandirla e tocca di nuovo per chiuderla; in fondo, \"Mostra foto precedenti\" carica le più vecchie. Prima dell'invio vengono ridimensionate in automatico."
         ),
         GuideStep(
             "🎁", "Regali",
@@ -129,15 +129,15 @@ fun roleGuideSteps(role: String, graduateName: String = ""): List<GuideStep> = w
         ),
         GuideStep(
             "🔒", "Cosa non vedi",
-            "Le cifre delle quote uniche restano ai cassieri: tu vedi solo quante quote sono state registrate. Gli elenchi completi di invitati e navetta sono visibili a organizzatori, cassieri e neo-specialisti; gli invitati vedono solo i propri dati. Esportazioni CSV ed email si gestiscono dalla versione web.",
+            "Le cifre delle quote uniche restano ai cassieri: tu vedi solo quante quote sono state registrate. Gli elenchi completi di invitati e navetta sono visibili a organizzatori, cassieri e neo-specialisti; gli invitati vedono solo i propri dati. Esportazioni CSV, email, inviti a festeggiati e cassieri e l'azzeramento dei dati di prova si gestiscono dal cruscotto della versione web.",
             "Riapri questa guida da ⚙️ Impostazioni → Guida organizzatore."
         )
     )
     GuideRoles.GRADUATE -> listOf(
         GuideStep(
             "🎓", if (graduateName.isNotBlank()) "Ciao ${graduateName.substringBefore(' ')}, questa è la tua area" else "Sei un neo-specialista",
-            "Il token festeggiato è attivo: nella scheda Programma compare la card Area festeggiato, aggiornata in tempo reale. Qui sotto cosa ci trovi.",
-            "Il token vale solo su questo telefono. Non condividerlo."
+            "Il tuo accesso da festeggiato è attivo (token o link ricevuto via email, incollato in ⚙️): nella scheda Programma compare la card Area festeggiato, aggiornata in tempo reale. Vedi e pubblichi anche foto e auguri.",
+            "L'accesso vale solo su questo telefono. Il link non va inoltrato: se lo perdi, in ⚙️ scrivi la tua email e te lo rimandiamo."
         ),
         GuideStep(
             "👥", "Chi viene",
@@ -146,12 +146,12 @@ fun roleGuideSteps(role: String, graduateName: String = ""): List<GuideStep> = w
         ),
         GuideStep(
             "💌", "Gli auguri per te",
-            "I messaggi indirizzati a te, con i cuori ricevuti; quelli per tutti restano in Bacheca.",
+            "I messaggi indirizzati a te, con i cuori ricevuti; quelli per tutti restano in Bacheca. Se gli organizzatori hanno la tua email, ti arriva un'email a ogni augurio dedicato a te.",
             "I messaggi e le foto li possono eliminare solo gli organizzatori."
         ),
         GuideStep(
             "💳", "Le tue coordinate",
-            "IBAN, PayPal, Satispay e BANCOMAT Pay come li vedono gli invitati per il regalo diretto. Controlla che siano giusti: se c'è da correggere qualcosa, avvisa gli organizzatori (si cambiano nel file dell'evento). Le quote uniche sono riservate ai cassieri: niente cifre né elenco dei donatori, nemmeno per te.",
+            "IBAN, PayPal, Satispay e BANCOMAT Pay come li vedono gli invitati per il regalo diretto. Controlla che siano giusti: se c'è da correggere qualcosa, avvisa gli organizzatori. Le quote uniche sono riservate ai cassieri: niente cifre né elenco dei donatori, nemmeno per te.",
             "Riapri questa guida da ⚙️ Impostazioni → Guida festeggiato."
         )
     )

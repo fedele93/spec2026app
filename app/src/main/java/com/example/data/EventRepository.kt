@@ -12,6 +12,7 @@ import com.example.data.remote.GraduateMeDto
 import com.example.data.remote.ImportRequest
 import com.example.data.remote.ImportResultDto
 import com.example.data.remote.ImportRowRequest
+import com.example.data.remote.PhotosPageDto
 import com.example.data.remote.PoolContributionRequest
 import com.example.data.remote.ProfileLinkRequest
 import com.example.data.remote.ProfileLinkResponse
@@ -267,6 +268,12 @@ class EventRepository(private val db: AppDatabase) {
                 it.uploadPhoto(filePart, photo.authorName.toRequestBody(text), photo.caption.toRequestBody(text))
             }
         }
+    }
+
+    /** Galleria a ritroso: le foto più vecchie di [oldest] (solo con il server; in locale sono già tutte qui). */
+    suspend fun olderPhotos(oldest: SharedPhotoEntity?): PhotosPageDto {
+        val api = remote ?: return PhotosPageDto()
+        return runRemote { api.photosPage(oldest?.createdAt, oldest?.id) }
     }
 
     suspend fun incrementPhotoLikes(photoId: Long) {

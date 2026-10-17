@@ -210,12 +210,43 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     private val _tickerIndex = MutableStateFlow(0)
     val tickerIndex: StateFlow<Int> = _tickerIndex.asStateFlow()
 
-    // Photos
-    val photos = repository.allPhotos.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        emptyList()
+    /** Galleria oltre lo snapshot: le pagine più vecchie chieste dall'utente (in memoria, non in Room),
+     *  se ce ne sono altre (null = lo dice lo snapshot) e se una pagina è in caricamento. */
+    private data class OlderPhotos(
+        val photos: List<SharedPhotoEntity> = emptyList(),
+        val hasMore: Boolean? = null,
+        val snapshotHasMore: Boolean = false,
+        val loading: Boolean = false
     )
+    private val _older = MutableStateFlow(OlderPhotos())
+    val loadingOlderPhotos: StateFlow<Boolean> = _older.map { it.loading }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    val photosHasMore: StateFlow<Boolean> = _older.map { it.hasMore ?: it.snapshotHasMore }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    // Room (ORDER BY createdAt DESC, id DESC) + pagine già ordinate e più vecchie: basta accodare senza doppioni
+    // (dopo una cancellazione lo snapshot può scorrere su una foto già caricata).
+    val photos: StateFlow<List<SharedPhotoEntity>> = combine(repository.allPhotos, _older) { recent, older ->
+        val seen = recent.mapTo(HashSet()) { it.id }
+        recent + older.photos.filterNot { it.id in seen }
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** "Mostra foto precedenti": la pagina successiva, a partire dalla foto più vecchia già in elenco. */
+    fun loadOlderPhotos() {
+        if (_older.value.loading) return
+        viewModelScope.launch {
+            _older.update { it.copy(loading = true) }
+            try {
+                val page = repository.olderPhotos(photos.value.lastOrNull())
+                _older.update { o ->
+                    val seen = o.photos.mapTo(HashSet()) { it.id }
+                    o.copy(photos = o.photos + page.photos.filterNot { it.id in seen }, hasMore = page.hasMore)
+                }
+            } catch (e: Exception) {
+                _uiMessage.emit(RemoteClient.toRemoteException(e).message ?: "Foto non disponibili")
+            } finally {
+                _older.update { it.copy(loading = false) }
+            }
+        }
+    }
 
     // Gifts
     val giftTargets = repository.giftTargets.stateIn(
@@ -415,7 +446,9 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
             val old = _serverStatus.value
             val accessChanged = state.canSeeLists != old.canSeeLists || state.canSeeMemories != old.canSeeMemories
             if (changed || force || accessChanged) {
-                repository.syncFromServer()
+                val snap = repository.syncFromServer()
+                // bacheca chiusa: via anche le pagine già caricate
+                _older.update { if (snap.canSeeMemories) it.copy(snapshotHasMore = snap.photosHasMore) else OlderPhotos(snapshotHasMore = snap.photosHasMore) }
                 prefs.dataVersion = state.version
                 showUnseenNotifications(state.serverTime)
             }
@@ -544,6 +577,7 @@ class EventViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deletePhoto(photoId: Long) {
+        _older.update { o -> o.copy(photos = o.photos.filterNot { it.id == photoId }) }
         runAction("Foto eliminata") { repository.deletePhoto(photoId) }
     }
 

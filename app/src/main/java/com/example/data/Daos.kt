@@ -77,7 +77,7 @@ interface WishDao {
 
 @Dao
 interface PhotoDao {
-    @Query("SELECT * FROM shared_photos ORDER BY createdAt DESC")
+    @Query("SELECT * FROM shared_photos ORDER BY createdAt DESC, id DESC")
     fun getAllPhotos(): Flow<List<SharedPhotoEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

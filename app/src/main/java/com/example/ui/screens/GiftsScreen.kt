@@ -52,7 +52,7 @@ import java.util.*
  * Sezione Regali. Nessuna cifra raccolta è visibile. Due modi per partecipare:
  * - quota unica al cassiere (registrata sul server con la ripartizione fra i neo-specialisti,
  *   visibile solo a lui: il cruscotto è nella PWA);
- * - regalo diretto a un neo-specialista: copia IBAN / PayPal / Satispay, senza registrare nulla.
+ * - regalo diretto a un neo-specialista: copia IBAN / PayPal / Satispay / numero BANCOMAT Pay, senza registrare nulla.
  */
 private val PayPalBlue = Color(0xFF0070BA)
 private val SatispayRed = Color(0xFFEF4444)
@@ -133,7 +133,7 @@ fun GiftsScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Copia l'IBAN o apri PayPal/Satispay: l'importo lo decidi tu e non serve registrarlo qui.",
+                    text = "Copia l'IBAN o il numero BANCOMAT Pay, oppure apri PayPal/Satispay: l'importo lo decidi tu e non serve registrarlo qui.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -145,6 +145,9 @@ fun GiftsScreen(
             GiftTargetCard(
                 target = target,
                 onCopyIban = { copyToClipboard(context, "IBAN", target.iban, "IBAN di ${shortName(target.name)} copiato!") },
+                onCopyBancomatPay = {
+                    copyToClipboard(context, "BANCOMAT Pay", target.bancomatPay, "Numero BANCOMAT Pay di ${shortName(target.name)} copiato: incollalo nell'app della tua banca")
+                },
                 onOpenUrl = { openUrl(context, it) }
             )
         }
@@ -319,7 +322,8 @@ private fun StatusPill(received: Boolean) {
 fun GiftTargetCard(
     target: GiftTargetEntity,
     onCopyIban: () -> Unit,
-    onOpenUrl: (String) -> Unit
+    onOpenUrl: (String) -> Unit,
+    onCopyBancomatPay: () -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -391,6 +395,17 @@ fun GiftTargetCard(
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
                     ) { Text("Satispay", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
                 }
+            }
+            if (target.bancomatPay.isNotBlank()) {
+                // BANCOMAT Pay non ha un link da aprire: si copia il numero e si paga dall'app della propria banca
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onCopyBancomatPay,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("copy_bancomat_${target.id}"),
+                    shape = RoundedCornerShape(10.dp)
+                ) { Text("📱 BANCOMAT Pay: ${target.bancomatPay} (copia)", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
             }
         }
     }

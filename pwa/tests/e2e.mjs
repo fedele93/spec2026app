@@ -213,6 +213,7 @@ check("9 neo-specialisti con regalo diretto", (await page.$$("[data-target]")).l
 check("nessuna cifra raccolta visibile", !/Raccolt|Obiettivo/.test(await page.textContent("#screen")));
 check("nessun cruscotto cassiere senza token", (await page.$(".board")) === null);
 check("pulsanti copia IBAN per tutti; PayPal solo per Luisi, Totaro e Regina; Satispay solo per Luisi", (await page.$$("[data-copy-iban]")).length === 9 && (await page.$$(".gift .paypal")).length === 3 && (await page.$$(".gift .satispay")).length === 1 && (await page.$('.gift[data-target="luisi"] .satispay')) !== null && (await page.$('.gift[data-target="totaro"] .paypal')) !== null && (await page.$('.gift[data-target="carlone"] .paypal')) === null);
+check("BANCOMAT Pay solo per Luisi, con il numero", (await page.$$("[data-copy-bpay]")).length === 1 && (await page.textContent('.gift[data-target="luisi"]')).includes("346 955 6702"));
 check("nessuna opzione contanti per il regalo diretto", !(await page.textContent(".gift")).includes("Contanti"));
 check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[data-pool-open]")).length === 2 && (await page.textContent('.collector[data-collector="aki"]')).includes("Dott. Akilesh Bhunjun"));
 await page.click("#pool-open");

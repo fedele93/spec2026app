@@ -164,8 +164,11 @@ fun GraduateAreaDialog(viewModel: EventViewModel, onDismiss: () -> Unit) {
                             OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(g.satispayUrl))) }, modifier = Modifier.weight(1f)) { Text("Satispay", fontSize = 12.sp) }
                         }
                     }
+                    if (g.bancomatPay.isNotBlank()) {
+                        Text("BANCOMAT Pay: ${g.bancomatPay}", style = MaterialTheme.typography.bodySmall)
+                    }
                     Text(
-                        if (g.email.isNullOrBlank()) "Se gli organizzatori aggiungono la tua email al file dell'evento, ricevi un'email per ogni augurio dedicato a te."
+                        if (g.email.isNullOrBlank()) "Se gli organizzatori aggiungono la tua email sul server, ricevi un'email per ogni augurio dedicato a te."
                         else "Ricevi un'email a ${g.email} per ogni augurio dedicato a te.",
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

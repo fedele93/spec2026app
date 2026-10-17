@@ -9,8 +9,9 @@ indicando come ripartirlo. Il tuo link personale arriva via email dagli organizz
    e apre la scheda **Regali**. Al primo accesso parte una breve guida del ruolo.
 2. Il **cruscotto dei cassieri è nella versione web** dell'app (non nell'app Android). Installala sulla
    Home: iPhone → Safari → *Condividi* → *Aggiungi a Home*; Android → Chrome → ⋮ → *Installa app*.
-3. Il link contiene il tuo token: **non inoltrarlo**. Vedi solo le quote versate a te; nemmeno gli
-   organizzatori vedono le cifre.
+3. Il link contiene il tuo accesso: **non inoltrarlo**. Se finisce alla persona sbagliata, avvisa gli
+   organizzatori: lo rigenerano e il vecchio smette di valere. Vedi solo le quote versate a te; nemmeno
+   gli organizzatori vedono le cifre.
 
 ## 2. Il cruscotto (scheda Regali, sotto il blocco della quota unica)
 | Azione | Come |

@@ -334,7 +334,8 @@ object SeedData {
             ibanHolder = "Fedele Luisi",
             satispayUrl = "https://web.satispay.com/download/qrcode/S6Y-CON--6F32BD93-1233-47D0-A362-4EB4C249ACE1?locale=it",
             paypalMeUrl = "https://www.paypal.com/qrcodes/p2pqrc/MBSHEM4F557R8",
-            bancomatPay = "3469556702"
+            bancomatPay = "3469556702",
+            paypalEmail = ""
         ),
         GiftTargetEntity(
             id = "carlone",
@@ -347,7 +348,8 @@ object SeedData {
             ibanHolder = "Sebastiano Carlone",
             satispayUrl = "",
             paypalMeUrl = "",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = ""
         ),
         GiftTargetEntity(
             id = "prezioso",
@@ -360,7 +362,8 @@ object SeedData {
             ibanHolder = "Roberto Spiridione Prezioso",
             satispayUrl = "",
             paypalMeUrl = "https://www.paypal.me/RobertoPrezioso96",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = ""
         ),
         GiftTargetEntity(
             id = "totaro",
@@ -373,7 +376,8 @@ object SeedData {
             ibanHolder = "Dalila Totaro",
             satispayUrl = "",
             paypalMeUrl = "https://www.paypal.me/dalilatotaro1996",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = ""
         ),
         GiftTargetEntity(
             id = "ruta",
@@ -386,7 +390,8 @@ object SeedData {
             ibanHolder = "Giorgia Ruta",
             satispayUrl = "",
             paypalMeUrl = "",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = ""
         ),
         GiftTargetEntity(
             id = "parrulli",
@@ -399,7 +404,8 @@ object SeedData {
             ibanHolder = "Lorenzo Parrulli",
             satispayUrl = "",
             paypalMeUrl = "",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = ""
         ),
         GiftTargetEntity(
             id = "cusmai",
@@ -408,11 +414,12 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Tappeto Rotante & Kit Valutazione Neurologica",
             giftDescription = "Contributo per la dotazione di neuroriabilitazione e l'attività ambulatoriale di Francesco.",
-            iban = "IT88 D030 6909 6061 0000 7778 889",
+            iban = "IT49 O010 3041 3400 0000 1593 702",
             ibanHolder = "Francesco Cusmai",
             satispayUrl = "",
             paypalMeUrl = "",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = "francescocusmai96@gmail.com"
         ),
         GiftTargetEntity(
             id = "esposto",
@@ -425,7 +432,8 @@ object SeedData {
             ibanHolder = "Chiara Esposto",
             satispayUrl = "",
             paypalMeUrl = "",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = ""
         ),
         GiftTargetEntity(
             id = "regina",
@@ -438,7 +446,8 @@ object SeedData {
             ibanHolder = "Donato Regina",
             satispayUrl = "",
             paypalMeUrl = "https://www.paypal.me/DonatoRegina",
-            bancomatPay = ""
+            bancomatPay = "",
+            paypalEmail = ""
         ),
     )
 

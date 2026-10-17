@@ -164,6 +164,9 @@ fun GraduateAreaDialog(viewModel: EventViewModel, onDismiss: () -> Unit) {
                             OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(g.satispayUrl))) }, modifier = Modifier.weight(1f)) { Text("Satispay", fontSize = 12.sp) }
                         }
                     }
+                    if (g.paypalMeUrl.isBlank() && g.paypalEmail.isNotBlank()) {
+                        Text("PayPal (email): ${g.paypalEmail}", style = MaterialTheme.typography.bodySmall)
+                    }
                     if (g.bancomatPay.isNotBlank()) {
                         Text("BANCOMAT Pay: ${g.bancomatPay}", style = MaterialTheme.typography.bodySmall)
                     }

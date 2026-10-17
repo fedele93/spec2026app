@@ -76,7 +76,7 @@ export async function openGraduateArea() {
     <details class="card" id="grad-pay"><summary><b>💳 Le tue coordinate</b> <span class="muted">· come le vedono gli invitati</span></summary>
       <div class="muted" style="margin-top:6px;"><b>Intestatario:</b> ${esc(g.ibanHolder)}</div>
       <div class="mono iban">${esc(g.iban)}</div>
-      <div class="muted">PayPal: ${g.paypalMeUrl ? `<a href="${esc(g.paypalMeUrl)}" target="_blank" rel="noopener">${esc(g.paypalMeUrl)}</a>` : "—"} · Satispay: ${g.satispayUrl ? `<a href="${esc(g.satispayUrl)}" target="_blank" rel="noopener">${esc(g.satispayUrl)}</a>` : "—"} · BANCOMAT Pay: ${g.bancomatPay ? `<span class="mono">${esc(g.bancomatPay)}</span>` : "—"}</div>
+      <div class="muted">PayPal: ${g.paypalMeUrl ? `<a href="${esc(g.paypalMeUrl)}" target="_blank" rel="noopener">${esc(g.paypalMeUrl)}</a>` : g.paypalEmail ? `<span class="mono">${esc(g.paypalEmail)}</span>` : "—"} · Satispay: ${g.satispayUrl ? `<a href="${esc(g.satispayUrl)}" target="_blank" rel="noopener">${esc(g.satispayUrl)}</a>` : "—"} · BANCOMAT Pay: ${g.bancomatPay ? `<span class="mono">${esc(g.bancomatPay)}</span>` : "—"}</div>
       <div class="muted as-hint">Per cambiarle chiedi agli organizzatori (file giftTargets dell'evento). Le quote uniche ai cassieri non sono mostrate qui.</div>
       ${g.email ? `<div class="muted as-hint">Ricevi un'email a <b>${esc(g.email)}</b> per ogni augurio dedicato a te.</div>` : `<div class="muted as-hint">Se gli organizzatori aggiungono la tua email sul server, ricevi un'email per ogni augurio dedicato a te.</div>`}
     </details>

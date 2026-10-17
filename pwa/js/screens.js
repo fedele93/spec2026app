@@ -814,9 +814,11 @@ export async function gifts(el) {
         <div class="muted" style="margin-top:6px;"><b>Intestatario:</b> ${esc(t.ibanHolder)}</div>
         <div class="mono iban">${esc(t.iban)}</div>
         ${t.bancomatPay ? `<div class="muted bpay"><b>BANCOMAT Pay:</b> <span class="mono">${esc(fmtPhone(t.bancomatPay))}</span></div>` : ""}
+        ${t.paypalEmail ? `<div class="muted bpay"><b>PayPal (email):</b> <span class="mono">${esc(t.paypalEmail)}</span></div>` : ""}
         <div class="pay">
           <button class="btn btn-primary" data-copy-iban="${esc(t.id)}">📋 Copia IBAN</button>
           ${t.paypalMeUrl ? `<a class="btn paypal" href="${esc(t.paypalMeUrl)}" target="_blank" rel="noopener">PayPal</a>` : ""}
+          ${!t.paypalMeUrl && t.paypalEmail ? `<button class="btn paypal" data-copy-ppmail="${esc(t.id)}">PayPal (copia email)</button>` : ""}
           ${t.satispayUrl ? `<a class="btn satispay" href="${esc(t.satispayUrl)}" target="_blank" rel="noopener">Satispay</a>` : ""}
           ${t.bancomatPay ? `<button class="btn bancomat" data-copy-bpay="${esc(t.id)}">📱 BANCOMAT Pay</button>` : ""}
         </div>
@@ -826,6 +828,11 @@ export async function gifts(el) {
   el.querySelectorAll("[data-copy-iban]").forEach((b) => {
     const t = targets.find((x) => x.id === b.dataset.copyIban);
     b.onclick = () => copyText(t.iban, `IBAN di ${shortName(t.name)} copiato!`);
+  });
+  // PayPal senza link paypal.me: si copia l'email e in PayPal si sceglie "Invia"
+  el.querySelectorAll("[data-copy-ppmail]").forEach((b) => {
+    const t = targets.find((x) => x.id === b.dataset.copyPpmail);
+    b.onclick = () => copyText(t.paypalEmail, `Email PayPal di ${shortName(t.name)} copiata: in PayPal scegli "Invia" e incollala`);
   });
   // BANCOMAT Pay non ha un link da aprire: si copia il numero e si paga dall'app della propria banca
   el.querySelectorAll("[data-copy-bpay]").forEach((b) => {

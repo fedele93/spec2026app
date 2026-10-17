@@ -354,10 +354,10 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Corso Neurosonologia Doppler & Attrezzatura Studio",
             giftDescription = "Regalo dedicato per la certificazione in ecocolordoppler transcranico e dotazione clinica di Roberto.",
-            iban = "IT99 Z030 6909 6061 0000 3210 987",
+            iban = "IT83 H030 6964 7161 0000 0060 343",
             ibanHolder = "Roberto Spiridione Prezioso",
-            satispayUrl = "https://tag.satispay.com/robertoprezioso",
-            paypalMeUrl = "https://paypal.me/robertoprezioso"
+            satispayUrl = "",
+            paypalMeUrl = ""
         ),
         GiftTargetEntity(
             id = "totaro",
@@ -378,10 +378,10 @@ object SeedData {
             roleTitle = "Neo-Specialista in Neurologia",
             giftTitle = "Elettromiografo Portatile & Stage Neurofisiologia",
             giftDescription = "Regalo per l'avvio dell'attività in elettrofisiologia clinica e lo studio delle neuropatie di Giorgia.",
-            iban = "IT66 B030 6909 6061 0000 3334 445",
+            iban = "IT04 G030 6904 0131 0000 0005 259",
             ibanHolder = "Giorgia Ruta",
-            satispayUrl = "https://tag.satispay.com/gorgiaruta",
-            paypalMeUrl = "https://paypal.me/giorgiaruta"
+            satispayUrl = "",
+            paypalMeUrl = ""
         ),
         GiftTargetEntity(
             id = "parrulli",

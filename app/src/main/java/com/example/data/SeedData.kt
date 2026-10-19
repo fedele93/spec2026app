@@ -469,11 +469,11 @@ object SeedData {
             sortOrder = 1,
             name = "Dott. Akilesh Bhunjun",
             roleTitle = "Cassiere delle quote uniche",
-            description = "In alternativa puoi versare la tua quota unica ad Akilesh, che la ripartisce allo stesso modo fra i neo-specialisti. Akilesh accetta solo bonifico o PayPal (niente contanti).",
+            description = "In alternativa puoi versare la tua quota unica ad Akilesh, che la ripartisce allo stesso modo fra i neo-specialisti.",
             iban = "IT96 E010 0504 0010 0000 0003 247",
             ibanHolder = "Akilesh Bhunjun",
             paypalMeUrl = "https://www.paypal.me/AkileshBhunjun",
-            paymentMethodsCsv = "IBAN,PayPal",
+            paymentMethodsCsv = "IBAN,PayPal,Contanti",
             transferReason = "Regalo specializzazione Neurologia 2026"
         )
     )

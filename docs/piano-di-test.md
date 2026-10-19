@@ -28,7 +28,7 @@ Segna ✅ / ❌ e, per ogni ❌, manda una segnalazione (vedi in fondo).
       chiusura al secondo tocco, *Mostra foto precedenti* quando sono più di 24.
 - [ ] Regali: copia IBAN, apertura PayPal/Satispay, copia email PayPal (Cusmai) e BANCOMAT Pay (Luisi).
       **Controlla che ogni IBAN e link corrisponda alla persona giusta.**
-- [ ] Quota unica a ciascun cassiere: parti uguali e personalizzata, metodi ammessi (Aki senza contanti),
+- [ ] Quota unica a ciascun cassiere: parti uguali e personalizzata, metodi ammessi,
       email di riepilogo, annullamento finché non è ricevuta.
 - [ ] Notifiche push: attivazione, ricezione di una notifica di prova degli organizzatori.
 - [ ] Assistente (*Chiedi*): orari, posti in navetta, «come faccio un regalo a Dalila?», «leggimi gli ultimi

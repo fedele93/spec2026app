@@ -7,6 +7,9 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 
 ## [Non rilasciato]
 
+### Modificato
+- Quote uniche: Akilesh Bhunjun accetta di nuovo anche i contanti (IBAN, PayPal, Contanti).
+
 ### Aggiunto
 - Link personale dei cassieri generato dal server (come quello dei festeggiati), rigenerabile dal cruscotto con "Rigenera i link": i token nel `.env` non servono più ma restano validi.
 - Galleria foto dalla più recente, con miniature leggere (la foto intera solo ingrandendo) e caricamento a pagine: lo snapshot porta le 24 più recenti, il pulsante "Mostra foto precedenti" scarica le altre a ritroso (`/api/photos/page`). Tocco per ingrandire, secondo tocco per chiudere (PWA e Android; Android: database locale alla versione 6).

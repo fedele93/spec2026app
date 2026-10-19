@@ -27,7 +27,6 @@ indicando come ripartirlo. Il tuo link personale arriva via email dagli organizz
 ## 3. Da controllare subito
 - Nel blocco della tua quota unica: **IBAN, intestatario, PayPal e metodi accettati** sono quelli che
   vedono gli invitati. Se qualcosa è sbagliato, scrivilo agli organizzatori.
-- Aki accetta solo **bonifico e PayPal** (niente contanti).
 
 ## 4. Fase di prova
 Prova a registrare quote finte con metodi diversi (dalla scheda Regali come farebbe un invitato) e poi a

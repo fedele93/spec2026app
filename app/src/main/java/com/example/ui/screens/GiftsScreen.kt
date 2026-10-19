@@ -647,7 +647,7 @@ fun PoolContributionDialog(
                                     ) { Text("Copia causale", fontSize = 12.sp) }
                                 }
                             }
-                            "PayPal" -> {
+                            "PayPal" -> if (collector.paypalMeUrl.isNotBlank()) {
                                 Text("Invia la quota con PayPal.me indicando nel messaggio il tuo nome:", style = MaterialTheme.typography.bodySmall)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Button(
@@ -656,6 +656,17 @@ fun PoolContributionDialog(
                                     shape = RoundedCornerShape(8.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = PayPalBlue)
                                 ) { Text("Apri PayPal.me") }
+                            } else {
+                                // PayPal senza link: si copia il contatto (email o telefono) e in PayPal si sceglie "Invia"
+                                Text("In PayPal scegli Invia a questo contatto, indicando nel messaggio il tuo nome:", style = MaterialTheme.typography.bodySmall)
+                                Text(collector.paypalContact, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Button(
+                                    onClick = { copyToClipboard(context, "PayPal", collector.paypalContact, "Contatto PayPal copiato: in PayPal scegli Invia e incollalo") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = PayPalBlue)
+                                ) { Text("Copia contatto PayPal") }
                             }
                             else -> {
                                 Text(

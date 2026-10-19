@@ -87,13 +87,14 @@ data class GiftCollectorDto(
     val iban: String = "",
     val ibanHolder: String = "",
     val paypalMeUrl: String = "",
+    val paypalContact: String = "",
     val paymentMethods: List<String> = listOf("IBAN", "PayPal", "Contanti"),
     val transferReason: String = ""
 ) {
     fun toEntity(sortOrder: Int = 0): GiftCollectorEntity = GiftCollectorEntity(
         id = id.ifBlank { name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-') }, sortOrder = sortOrder,
         name = name, roleTitle = roleTitle, description = description, iban = iban, ibanHolder = ibanHolder,
-        paypalMeUrl = paypalMeUrl, paymentMethodsCsv = paymentMethods.joinToString(","), transferReason = transferReason
+        paypalMeUrl = paypalMeUrl, paypalContact = paypalContact, paymentMethodsCsv = paymentMethods.joinToString(","), transferReason = transferReason
     )
 }
 

@@ -95,6 +95,7 @@ data class GiftCollectorEntity(
     val iban: String = "",
     val ibanHolder: String = "",
     val paypalMeUrl: String = "",
+    val paypalContact: String = "", // PayPal senza link paypal.me: email o numero di telefono a cui inviare
     val paymentMethodsCsv: String = "IBAN,PayPal,Contanti",
     val transferReason: String = ""
 )

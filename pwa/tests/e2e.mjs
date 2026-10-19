@@ -242,6 +242,11 @@ check("due cassieri per la quota unica (Paolo Roberto e Aki)", (await page.$$("[
 await page.click("#pool-open");
 await page.waitForSelector("#q-save");
 check("metodi cassa: IBAN, PayPal, Contanti (no Satispay)", (await Promise.all((await page.$$("#q-methods .chip")).map((c) => c.textContent()))).join(",") === "IBAN,PayPal,Contanti");
+// Paolo riceve PayPal al numero di telefono (niente link paypal.me): si mostra il contatto e si copia
+await page.click('#q-methods .chip[data-m="PayPal"]');
+check("PayPal del cassiere senza link: contatto mostrato e pulsante per copiarlo", (await page.textContent("#q-pay")).includes("+39 348 276 7437") && (await page.$("#q-copy-paypal")) !== null && (await page.$("#q-pay a.paypal")) === null);
+await page.click('#q-methods .chip[data-m="IBAN"]');
+check("IBAN del cassiere (Revolut) nel dialogo", (await page.textContent("#q-pay")).includes("IT89 T036 6901 6002 8511 6017 627"));
 await page.fill("#q-donor", "Zio Playwright");
 await page.fill("#q-email", "zio@example.org");
 await page.fill("#q-contact", "333 1234567");

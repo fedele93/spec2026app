@@ -8,6 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Modificato
+- Quote uniche: Paolo Roberto riceve con bonifico (IBAN Revolut IT89 T036 6901 6002 8511 6017 627) o PayPal al numero +39 348 276 7437; nuovo campo `paypalContact` dei cassieri per chi non ha un link paypal.me (l'app mostra il contatto e lo copia). Android: database locale alla versione 7.
 - Quote uniche: Akilesh Bhunjun accetta di nuovo anche i contanti (IBAN, PayPal, Contanti).
 
 ### Aggiunto

@@ -218,6 +218,7 @@ for i, c in enumerate(_collectors):
     out.append("            iban = %s," % kt_str(c.get("iban")))
     out.append("            ibanHolder = %s," % kt_str(c.get("ibanHolder")))
     out.append("            paypalMeUrl = %s," % kt_str(c.get("paypalMeUrl")))
+    out.append("            paypalContact = %s," % kt_str(c.get("paypalContact")))
     out.append("            paymentMethodsCsv = %s," % kt_str(",".join(c.get("paymentMethods", ["IBAN", "PayPal", "Contanti"])), raw=True))
     out.append("            transferReason = %s" % kt_str(c.get("transferReason")))
     out.append("        )%s" % ("," if i < len(_collectors) - 1 else ""))

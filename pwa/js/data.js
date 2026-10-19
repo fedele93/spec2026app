@@ -15,7 +15,7 @@ const EMPTY_EVENT = {
   busSchedule: { subtitle: "", andata: {}, ritorno: {}, pickupStops: [] }, mapPoints: [],
   giftCollectors: []
 };
-const COLLECTOR_DEFAULTS = { id: "", name: "", roleTitle: "", description: "", iban: "", ibanHolder: "", paypalMeUrl: "", paymentMethods: ["IBAN", "PayPal", "Contanti"], transferReason: "" };
+const COLLECTOR_DEFAULTS = { id: "", name: "", roleTitle: "", description: "", iban: "", ibanHolder: "", paypalMeUrl: "", paypalContact: "", paymentMethods: ["IBAN", "PayPal", "Contanti"], transferReason: "" };
 
 // --- Costanti dell'evento (live bindings: vengono aggiornate da initData) -------------
 export let MAX_BUS_SEATS = 54;

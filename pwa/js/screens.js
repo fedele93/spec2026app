@@ -937,10 +937,13 @@ function poolDialog(targets, collector, onDone) {
         if (method === "IBAN") box.innerHTML = `<div class="muted"><b>Intestatario:</b> ${esc(collector.ibanHolder)}</div><div class="mono iban">${esc(collector.iban)}</div>
           <div class="muted"><b>Causale suggerita:</b> <span class="mono" id="q-reason">${esc(reason)}</span></div>
           <div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost" id="q-copy-iban">📋 Copia IBAN</button><button class="btn btn-ghost" id="q-copy-reason">📋 Copia causale</button></div>`;
-        else if (method === "PayPal") box.innerHTML = `<div class="muted">Invia la quota con PayPal.me indicando nel messaggio il tuo nome:</div><a class="btn paypal" style="margin-top:8px;" href="${esc(collector.paypalMeUrl)}" target="_blank" rel="noopener">Apri PayPal.me</a>`;
+        else if (method === "PayPal") box.innerHTML = collector.paypalMeUrl
+          ? `<div class="muted">Invia la quota con PayPal.me indicando nel messaggio il tuo nome:</div><a class="btn paypal" style="margin-top:8px;" href="${esc(collector.paypalMeUrl)}" target="_blank" rel="noopener">Apri PayPal.me</a>`
+          : `<div class="muted">In PayPal scegli <b>Invia</b> a questo contatto, indicando nel messaggio il tuo nome:</div><div class="mono iban">${esc(collector.paypalContact)}</div><button class="btn paypal" style="margin-top:8px;" id="q-copy-paypal">📋 Copia contatto PayPal</button>`;
         else box.innerHTML = `<div class="muted">Consegna i contanti a ${esc(shortName(collector.name) || "al cassiere")} (in reparto o alla festa): registra comunque la quota qui, così sa cosa aspettarsi.</div>`;
-        const ci = $("#q-copy-iban"), cr = $("#q-copy-reason");
+        const ci = $("#q-copy-iban"), cr = $("#q-copy-reason"), cp = $("#q-copy-paypal");
         if (ci) ci.onclick = () => copyText(collector.iban, "IBAN del cassiere copiato!");
+        if (cp) cp.onclick = () => copyText(collector.paypalContact, "Contatto PayPal copiato: in PayPal scegli Invia e incollalo");
         if (cr) cr.onclick = () => copyText(reason, "Causale copiata!");
       };
       $$("#q-methods .chip").forEach((c) => c.onclick = () => { $$("#q-methods .chip").forEach((x) => x.classList.remove("active")); c.classList.add("active"); method = c.dataset.m; paintPay(); });

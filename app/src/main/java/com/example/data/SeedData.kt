@@ -458,9 +458,10 @@ object SeedData {
             name = "Dott. Paolo Roberto",
             roleTitle = "Cassiere delle quote uniche",
             description = "Se preferisci fare un solo versamento per tutti i neo-specialisti, Paolo raccoglie la tua quota e la gira a ciascuno di loro: scegli tu se dividerla in parti uguali o personalizzarla.",
-            iban = "IT00 A000 0000 0000 0000 0000 000",
+            iban = "IT89 T036 6901 6002 8511 6017 627",
             ibanHolder = "Paolo Roberto",
-            paypalMeUrl = "https://paypal.me/paoloroberto",
+            paypalMeUrl = "",
+            paypalContact = "+39 348 276 7437",
             paymentMethodsCsv = "IBAN,PayPal,Contanti",
             transferReason = "Regalo specializzazione Neurologia 2026"
         ),
@@ -473,6 +474,7 @@ object SeedData {
             iban = "IT96 E010 0504 0010 0000 0003 247",
             ibanHolder = "Akilesh Bhunjun",
             paypalMeUrl = "https://www.paypal.me/AkileshBhunjun",
+            paypalContact = "",
             paymentMethodsCsv = "IBAN,PayPal,Contanti",
             transferReason = "Regalo specializzazione Neurologia 2026"
         )

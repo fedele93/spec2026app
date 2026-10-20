@@ -362,7 +362,7 @@ object SeedData {
             ibanHolder = "Roberto Spiridione Prezioso",
             satispayUrl = "",
             paypalMeUrl = "https://www.paypal.me/RobertoPrezioso96",
-            bancomatPay = "",
+            bancomatPay = "3889861472",
             paypalEmail = ""
         ),
         GiftTargetEntity(

@@ -2,9 +2,12 @@
 // - il link https://<app>/#profilo=<token> salva il token sul dispositivo e apre il profilo;
 // - senza token: modulo "inserisci la tua email" (e il nome se non sei in lista);
 // - con token: RSVP, contatti, accompagnatori con menu, consenso; salvando arriva l'email di conferma.
+// - su iPhone l'app aggiunta alla schermata Home non condivide la memoria con Safari, dove si apre il link
+//   dell'email: per entrare dall'app installata si digita il codice a 6 cifre che arriva insieme al link.
 import { api, getGuestToken, setGuestToken } from "./api.js";
-import { Repo, BUS_SCHEDULE } from "./data.js";
+import { Repo, BUS_SCHEDULE, reconnect } from "./data.js";
 import { toast, openModal, render } from "./app.js";
+import { isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const MENU_LABELS = { "": "Da scegliere", STANDARD: "Menu completo", VEGETARIANO: "Vegetariano", VEGANO: "Vegano", SENZA_GLUTINE: "Senza glutine", ALTRO: "Altro (vedi note)" };
@@ -12,6 +15,8 @@ const CATEGORIES = ["Famigliari", "Colleghi Reparto", "Docenti e Reparto", "Spec
 const PRIVACY = "I dati (nome, contatti, menu e allergie, persone al seguito) servono solo a organizzare la festa, sono visibili agli organizzatori e al catering e vengono cancellati dopo l'evento. Puoi modificarli o chiederne la cancellazione in qualsiasi momento.";
 
 export const hasProfile = () => !!getGuestToken();
+// Su iPhone, in Safari con il profilo aperto: chi aggiunge l'app alla Home non si ritrova il profilo dentro l'app
+export const iosInstallHint = () => isIos() && !isInstalledPwa() && hasProfile();
 
 export async function openProfile() {
   if (Repo.mode !== "server") { toast("Il profilo personale funziona solo con il server della festa"); return; }
@@ -28,22 +33,46 @@ export async function openProfile() {
 const fmtDeadline = (iso) => { try { return new Date(iso + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }); } catch { return iso; } };
 
 export function requestLinkDialog() {
+  const installed = isInstalledPwa();
   openModal(`<h3>👤 Il mio profilo</h3>
-    <div class="muted" style="margin-bottom:10px;">Con il profilo confermi la partecipazione, indichi chi viene con te e il menu di ciascuno, e ricevi le conferme via email. Niente password: ti mandiamo un link personale.</div>
+    <div class="muted" style="margin-bottom:10px;">Con il profilo confermi la partecipazione, indichi chi viene con te e il menu di ciascuno, e ricevi le conferme via email. Niente password: ti mandiamo un link personale e un codice.</div>
     <div class="field"><label>La tua email *</label><input id="pl-email" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></div>
     <div class="field"><label>Nome e cognome (solo se non sei ancora in lista)</label><input id="pl-name" autocomplete="name" placeholder="es. Maria Rossi"></div>
-    <button class="btn btn-primary" id="pl-send">Inviami il link</button>
+    <button class="btn btn-primary" id="pl-send">Inviami il link e il codice</button>
     <div class="muted as-hint" id="pl-msg" style="margin-top:10px;"></div>
-    <div class="muted as-hint">Hai già ricevuto il link? Aprilo dall'email: il profilo si apre da solo.</div>`,
-    (bg) => {
+    <div class="muted as-hint">${installed ? "Dall'app installata entra con il codice: il link dell'email si aprirebbe nel browser, non qui." : "Hai già ricevuto l'email? Apri il link: il profilo si apre da solo. Oppure usa il codice qui sotto."}</div>
+    <div class="card" style="margin-top:12px;" id="pl-code-card">
+      <b style="font-size:13px;">🔢 Entra con il codice</b>
+      <div class="muted" style="margin:4px 0 8px;">Il codice a 6 cifre è nell'email insieme al link (vale 15 minuti). Serve soprattutto a chi ha aggiunto l'app alla schermata Home dell'iPhone.</div>
+      <div class="field"><label>Codice ricevuto</label><input id="pl-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" placeholder="123456"></div>
+      <button class="btn btn-gold" id="pl-verify">Entra</button>
+    </div>`,
+    (bg, close) => {
+      const email = () => bg.querySelector("#pl-email").value.trim();
       bg.querySelector("#pl-send").onclick = async () => {
-        const email = bg.querySelector("#pl-email").value.trim(), fullName = bg.querySelector("#pl-name").value.trim();
-        if (!email.includes("@")) { toast("Inserisci un'email valida"); return; }
+        const fullName = bg.querySelector("#pl-name").value.trim();
+        if (!email().includes("@")) { toast("Inserisci un'email valida"); return; }
         const btn = bg.querySelector("#pl-send"); btn.disabled = true;
         try {
-          const r = await api.profileRequestLink({ email, fullName });
+          const r = await api.profileRequestLink({ email: email(), fullName });
           bg.querySelector("#pl-msg").textContent = r.message;
-          if (r.queued) toast("Email inviata: controlla la posta");
+          if (r.queued) { toast("Email inviata: controlla la posta"); bg.querySelector("#pl-code").focus(); }
+        } catch (e) { toast(e.message); }
+        finally { btn.disabled = false; }
+      };
+      bg.querySelector("#pl-verify").onclick = async () => {
+        const code = bg.querySelector("#pl-code").value.replace(/\D/g, "");
+        if (!email().includes("@")) { toast("Scrivi prima la tua email"); return; }
+        if (code.length !== 6) { toast("Il codice ha 6 cifre"); return; }
+        const btn = bg.querySelector("#pl-verify"); btn.disabled = true;
+        try {
+          const r = await api.profileVerifyCode({ email: email(), code });
+          setGuestToken(r.token);
+          close();
+          await reconnect(); // con il token il server manda anche il proprio record: si ricarica tutto
+          await render();
+          toast("Profilo aperto su questo dispositivo ✓");
+          openProfile();
         } catch (e) { toast(e.message); }
         finally { btn.disabled = false; }
       };

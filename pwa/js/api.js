@@ -176,6 +176,7 @@ export const api = {
 
   // profilo personale dell'invitato (vedi profile.js) ed email tramite n8n
   profileRequestLink: (body) => request("/api/profile/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
+  profileVerifyCode: (body) => request("/api/profile/verify-code", { method: "POST", json: body }),
   profileGet: () => request("/api/profile"),
   profilePut: (body) => request("/api/profile", { method: "PUT", json: body, timeoutMs: 30000 }),
   profileLogout: () => request("/api/profile/logout", { method: "POST" }),

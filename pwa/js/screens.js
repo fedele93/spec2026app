@@ -4,6 +4,7 @@ import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
 import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getGraduateToken, setGraduateToken, isGraduate, getGuestToken, getClientId, downloadCsv } from "./api.js";
 import { openGraduateArea, requestGraduateLinkDialog } from "./graduate.js";
+import { requestRoleLinkDialog } from "./rolelink.js";
 import { openDashboard, openImportDialog } from "./admin.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
 import { openProfile, openMailAdmin, hasProfile, iosInstallHint, requestLinkDialog, MENU_LABELS } from "./profile.js";
@@ -293,10 +294,12 @@ function settingsDialog() {
     <div class="field"><label>Token organizzatore (X-Admin-Token)</label><input id="s-token" type="password" value="${esc(getAdminToken())}" placeholder="Solo per gli organizzatori"></div>
     <div class="muted" style="margin-bottom:10px;">Con il token puoi inviare notifiche push a tutti e cancellare qualsiasi invitato o prenotazione.</div>
     <div class="field"><label>Token cassiere quote uniche (X-Treasurer-Token)</label><input id="s-treasurer" type="password" value="${esc(getTreasurerToken())}" placeholder="Solo per chi raccoglie le quote uniche"></div>
+    ${serverMode ? `<button class="btn btn-ghost" id="s-treas-link" style="margin-bottom:8px;">📧 Sono un cassiere: mandami il link</button>` : ""}
     <div class="muted" style="margin-bottom:10px;">Solo con il token cassiere la tab Regali mostra il cruscotto delle quote uniche (chi, quanto, per chi) e il CSV per Excel: ogni cassiere vede le proprie quote, il token organizzatore non basta.</div>
     <div class="field"><label>Token festeggiato (X-Graduate-Token)</label><input id="s-graduate" type="password" value="${esc(getGraduateToken())}" placeholder="Solo per i neo-specialisti"></div>
     ${serverMode ? `<button class="btn btn-ghost" id="s-grad-link" style="margin-bottom:8px;">📧 Sono un festeggiato: mandami il link</button>` : ""}
     <div class="muted" style="margin-bottom:10px;">Con il tuo token personale compare il pulsante 🎓 in alto: chi viene, gli auguri per te, le tue coordinate di pagamento e il tuo avatar dell'assistente.</div>
+    ${serverMode && isIos() && !isInstalledPwa() && (isGraduate() || isTreasurer()) ? `<div class="muted as-hint" id="ios-role-hint" style="margin-bottom:10px;">📲 Vuoi l'app sulla schermata Home? Condividi → "Aggiungi alla schermata Home". L'app installata non eredita l'accesso: aprila, torna qui in ⚙️, tocca "mandami il link" ed entra con il codice che trovi nell'email.</div>` : ""}
     ${serverMode && isAdmin() ? `<div class="card" style="margin-bottom:12px;"><b style="font-size:13px;">📊 Cruscotto organizzatori</b>
       <div class="muted" style="margin-bottom:8px;">Confermati, menu mancanti, navetta, email, quote e le cose da fare; import della lista invitati con invio dei link.</div>
       <div class="btn-row"><button class="btn btn-primary" id="s-dash">Apri il cruscotto</button><button class="btn btn-ghost" id="s-import">Importa invitati</button></div></div>` : ""}
@@ -324,6 +327,8 @@ function settingsDialog() {
       bg.querySelector("#s-guide").onclick = () => { close(); openGuide(); };
       const gradLink = bg.querySelector("#s-grad-link");
       if (gradLink) gradLink.onclick = () => { close(); requestGraduateLinkDialog(); };
+      const treasLink = bg.querySelector("#s-treas-link");
+      if (treasLink) treasLink.onclick = () => { close(); requestRoleLinkDialog("treasurer"); };
       bg.querySelectorAll("[data-role-guide]").forEach((b) => b.onclick = () => { close(); openRoleGuide(b.dataset.roleGuide); });
       const dash = bg.querySelector("#s-dash");
       if (dash) dash.onclick = () => { close(); openDashboard(); };

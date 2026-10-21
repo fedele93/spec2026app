@@ -10,27 +10,10 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const shortName = (n) => String(n || "").replace(/^Dott\.(ssa)?\s*/i, "");
 const stat = (title, value, sub, color) => `<div class="card" style="flex:1;padding:12px;margin:0;"><div class="muted" style="font-size:11px;">${title}</div><div style="font-size:24px;font-weight:800;color:${color};">${value}</div><div class="muted" style="font-size:11px;">${sub}</div></div>`;
 
-// Il festeggiato scrive la sua email e riceve il link che apre la sua area (niente token da copiare).
-export function requestGraduateLinkDialog() {
-  openModal(`<h3>🎓 Sei un festeggiato?</h3>
-    <div class="muted" style="margin-bottom:10px;">Scrivi la tua email: se è quella registrata dagli organizzatori ti mandiamo il link che apre la tua area (chi viene, auguri per te, coordinate per i regali, il tuo avatar).</div>
-    <div class="field"><label>La tua email *</label><input id="gl-email" type="email" inputmode="email" autocomplete="email" placeholder="nome@esempio.it"></div>
-    <button class="btn btn-primary" id="gl-send">Inviami il link</button>
-    <div class="muted as-hint" id="gl-msg" style="margin-top:10px;"></div>
-    <div class="muted as-hint">Apri il link dall'email su questo telefono: l'area si apre da sola.</div>`,
-    (bg) => {
-      bg.querySelector("#gl-send").onclick = async () => {
-        const email = bg.querySelector("#gl-email").value.trim();
-        if (!email.includes("@")) { toast("Inserisci un'email valida"); return; }
-        const btn = bg.querySelector("#gl-send"); btn.disabled = true;
-        try {
-          const r = await api.graduateRequestLink({ email });
-          bg.querySelector("#gl-msg").textContent = r.message;
-          if (r.queued) toast("Controlla la posta");
-        } catch (e) { toast(e.message); }
-        finally { btn.disabled = false; }
-      };
-    });
+// Il festeggiato scrive la sua email e riceve il link che apre la sua area e il codice a 6 cifre (vedi rolelink.js).
+export async function requestGraduateLinkDialog() {
+  const { requestRoleLinkDialog } = await import("./rolelink.js");
+  requestRoleLinkDialog("graduate");
 }
 
 export async function openGraduateArea() {

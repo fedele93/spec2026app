@@ -8,6 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Corretto
+- iPhone: il codice a 6 cifre vale anche per festeggiati e cassieri: in ⚙️ "Sono un festeggiato" / "Sono un cassiere" (nuovo) → email → "Entra con il codice". L'email del link porta il codice; i cassieri possono farsi rimandare il link da soli (email registrata dagli organizzatori). Richiede il backend aggiornato (`/api/graduate/verify-code`, `/api/gifts/collector/request-link` e `verify-code`).
 - iPhone: chi aggiungeva l'app alla schermata Home perdeva il profilo (l'app installata non condivide la memoria con Safari, dove si apre il link dell'email). Ora l'email del link porta anche un codice a 6 cifre (vale 15 minuti) da digitare nell'app in "Accedi con la tua email" → "Entra con il codice"; in Safari la scheda Invitati lo spiega prima di installare. Richiede il backend aggiornato (`POST /api/profile/verify-code`).
 
 ### Modificato

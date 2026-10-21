@@ -12,6 +12,9 @@ indicando come ripartirlo. Il tuo link personale arriva via email dagli organizz
 3. Il link contiene il tuo accesso: **non inoltrarlo**. Se finisce alla persona sbagliata, avvisa gli
    organizzatori: lo rigenerano e il vecchio smette di valere. Vedi solo le quote versate a te; nemmeno
    gli organizzatori vedono le cifre.
+4. **Hai perso il link, o usi l'app sulla schermata Home dell'iPhone** (dove il link dell'email si apre in
+   Safari e non nell'app)? In ⚙️ tocca *Sono un cassiere: mandami il link*, scrivi la tua email: arriva lo
+   stesso link con un **codice a 6 cifre**; nell'app installata inseriscilo in *Entra con il codice*.
 
 ## 2. Il cruscotto (scheda Regali, sotto il blocco della quota unica)
 | Azione | Come |

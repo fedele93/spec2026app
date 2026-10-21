@@ -160,6 +160,10 @@ export const api = {
   mailRemindPool: (days = 7) => request(`/api/mail/reminders/pool?days=${days}`, { method: "POST", timeoutMs: 60000 }),
   graduateMe: () => request("/api/graduate/me"),
   graduateRequestLink: (body) => request("/api/graduate/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
+  graduateVerifyCode: (body) => request("/api/graduate/verify-code", { method: "POST", json: body }),
+  // cassiere: link e codice alla TREASURER_EMAIL_<ID> del server, poi accesso con il codice (app installata su iPhone)
+  treasurerRequestLink: (body) => request("/api/gifts/collector/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
+  treasurerVerifyCode: (body) => request("/api/gifts/collector/verify-code", { method: "POST", json: body }),
   adminDashboard: () => request("/api/admin/dashboard"),
   adminInvites: (body) => request("/api/admin/invites", { method: "POST", json: body, timeoutMs: 60000 }),
   adminResetTestData: (confirm) => request("/api/admin/reset-test-data", { method: "POST", json: { confirm }, timeoutMs: 60000 }),

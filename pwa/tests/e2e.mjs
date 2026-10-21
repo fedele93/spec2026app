@@ -686,6 +686,19 @@ await page.fill("#gl-email", "fedele@example.org");
 await page.click("#gl-send");
 await page.waitForFunction(() => (document.querySelector("#gl-msg")?.textContent || "").length > 0, null, { timeout: 10000 });
 check("richiesta del link festeggiato: senza n8n il server lo dice", (await page.textContent("#gl-msg")).includes("organizzatori"));
+check("campo del codice anche per il festeggiato", (await page.$("#gl-code")) !== null);
+await page.fill("#gl-code", "000000");
+check("codice festeggiato sbagliato rifiutato", (await clickExpectToast("#gl-verify")).includes("non valido"));
+await page.click(".modal .close");
+// stesso dialogo per il cassiere (email TREASURER_EMAIL_<ID> del server)
+await page.click("#settings");
+await page.waitForSelector("#s-treas-link");
+await page.click("#s-treas-link");
+await page.waitForSelector("#tl-send");
+await page.fill("#tl-email", "aki@example.org");
+await page.fill("#tl-code", "000000");
+check("codice cassiere sbagliato rifiutato", (await clickExpectToast("#tl-verify")).includes("non valido"));
+check("API request-link del cassiere risponde senza rivelare l'email", (await fetch(BASE + "/api/gifts/collector/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "chiunque@example.org" }) })).status === 202);
 await page.click(".modal .close");
 check("API request-link del festeggiato risponde senza rivelare l'email", (await fetch(BASE + "/api/graduate/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: "chiunque@example.org" }) })).status === 202);
 // il link dell'email (qui con il token del .env, che vale allo stesso modo) apre direttamente l'area

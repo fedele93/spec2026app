@@ -6,7 +6,7 @@ import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, get
 import { openGraduateArea, requestGraduateLinkDialog } from "./graduate.js";
 import { openDashboard, openImportDialog } from "./admin.js";
 import { initAssistant, openAssistantAdmin } from "./assistant.js";
-import { openProfile, openMailAdmin, hasProfile, requestLinkDialog, MENU_LABELS } from "./profile.js";
+import { openProfile, openMailAdmin, hasProfile, iosInstallHint, requestLinkDialog, MENU_LABELS } from "./profile.js";
 import { openGuide, openRoleGuide, maybeOpenRoleGuides, activeRoles, ROLE_LABELS } from "./guide.js";
 import { showLocalNotification, subscribeToPush, unsubscribeFromPush, isPushSubscribed, supportsPush, supportsNotifications, isIos, isInstalledPwa } from "./notify.js";
 
@@ -390,6 +390,7 @@ export async function rsvp(el) {
         <b style="font-size:14px;">👤 ${hasProfile() ? "Il mio profilo" : "Sei un invitato? Crea il tuo profilo"}</b>
         <div class="muted" style="margin:4px 0 8px;">${hasProfile() ? "Partecipazione, chi viene con te e menu: modifica quando vuoi, ricevi la conferma via email." : "Con un link personale via email confermi la partecipazione, indichi chi viene con te e il menu di ciascuno. Niente password."}</div>
         <button class="btn ${hasProfile() ? "btn-primary" : "btn-gold"}" id="open-profile">${hasProfile() ? "Apri il mio profilo" : "Accedi con la tua email"}</button>
+        ${iosInstallHint() ? `<div class="muted as-hint" id="ios-install-hint" style="margin-top:8px;">📲 Vuoi l'app sulla schermata Home? Condividi → "Aggiungi alla schermata Home". L'app installata non eredita il profilo: aprila, tocca "Accedi con la tua email" ed entra con il codice che trovi nell'email insieme al link.</div>` : ""}
       </div>` : ""}
       ${limited ? "" : cateringSummary(confirmed, pending)}
       ${limited ? "" : `<div class="card">

@@ -7,6 +7,9 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 
 ## [Non rilasciato]
 
+### Corretto
+- iPhone: chi aggiungeva l'app alla schermata Home perdeva il profilo (l'app installata non condivide la memoria con Safari, dove si apre il link dell'email). Ora l'email del link porta anche un codice a 6 cifre (vale 15 minuti) da digitare nell'app in "Accedi con la tua email" → "Entra con il codice"; in Safari la scheda Invitati lo spiega prima di installare. Richiede il backend aggiornato (`POST /api/profile/verify-code`).
+
 ### Modificato
 - Regali: Roberto Spiridione Prezioso riceve anche con BANCOMAT Pay (+39 388 986 1472).
 - Quote uniche: Paolo Roberto riceve con bonifico (IBAN Revolut IT89 T036 6901 6002 8511 6017 627) o PayPal al numero +39 348 276 7437; nuovo campo `paypalContact` dei cassieri per chi non ha un link paypal.me (l'app mostra il contatto e lo copia). Android: database locale alla versione 7.

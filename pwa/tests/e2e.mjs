@@ -463,6 +463,10 @@ await page.fill("#pl-name", "Nuova Invitata");
 await page.click("#pl-send");
 await page.waitForFunction(() => (document.querySelector("#pl-msg")?.textContent || "").length > 0, null, { timeout: 10000 });
 check("senza n8n il server lo dice", (await page.textContent("#pl-msg")).includes("organizzatori"));
+// codice a 6 cifre (per l'app installata su iPhone): qui senza email non lo conosciamo, si prova il rifiuto
+check("campo del codice nel dialogo", (await page.$("#pl-code")) !== null && (await page.textContent("#pl-code-card")).includes("6 cifre"));
+await page.fill("#pl-code", "000000");
+check("codice sbagliato rifiutato", (await clickExpectToast("#pl-verify")).includes("non valido"));
 await page.click(".modal .close");
 const nuova = (await fetch(BASE + "/api/guests", { headers: adminHeaders }).then((r) => r.json())).find((g) => g.fullName === "Nuova Invitata");
 check("invitata creata in attesa; l'email la vede l'organizzatore, l'elenco pubblico è vuoto", nuova && nuova.rsvpStatus === "PENDING" && nuova.email === "nuova@example.org" && (await fetch(BASE + "/api/guests").then((r) => r.json())).length === 0);

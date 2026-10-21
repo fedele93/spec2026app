@@ -96,7 +96,7 @@ function busSection(data) {
     <b>🚌 Navetta</b> ${status}
     ${b ? `<div class="muted">${b.seatsCount} ${b.seatsCount === 1 ? "posto" : "posti"} · codice <b>${esc(b.code)}</b>${b.pickupStop ? ` · da ${esc(b.pickupStop)}` : ""}${b.checkedInAt ? " · ✓ salito" : ""}</div>` : `<div class="muted">Posti liberi: ${bus.availableSeats ?? "-"} su ${bus.maxSeats ?? "-"}${bus.waitlistSeats ? ` · ${bus.waitlistSeats} in lista d'attesa` : ""}</div>`}
     ${dl.busLocked ? `<div class="muted">Il termine per prenotare o modificare la navetta è passato: per cambiamenti contatta gli organizzatori.</div>` : `
-    <div class="as-row" style="margin-top:6px;"><div class="field" style="flex:0 0 90px;"><label>Posti</label><input id="pb-seats" type="number" min="1" max="54" inputmode="numeric" value="${b ? b.seatsCount : ""}" placeholder="auto"></div>
+    <div class="as-row" style="margin-top:6px;"><div class="field" style="flex:0 0 90px;"><label>Posti</label><input id="pb-seats" type="number" min="1" max="30" inputmode="numeric" value="${b ? b.seatsCount : ""}" placeholder="auto"></div>
       <div class="field" style="flex:1;"><label>Fermata di salita</label><select id="pb-stop">${stops.map((st) => `<option ${b && b.pickupStop === st ? "selected" : ""}>${esc(st)}</option>`).join("")}</select></div></div>
     <label class="as-check"><input type="checkbox" id="pb-return" ${!b || b.returnTripWanted ? "checked" : ""}> Mi serve anche il ritorno notturno</label>
     <div class="btn-row"><button class="btn btn-primary" id="pb-save">${b ? "Aggiorna navetta" : "Prenota la navetta"}</button>${b ? `<button class="btn btn-ghost" id="pb-cancel">Annulla prenotazione</button>` : ""}</div>

@@ -73,7 +73,7 @@ evento dedicato; n8n lo spedisce con il nodo Send Email già configurato.
 
 - Prenotazione agganciata al profilo: posti proposti = persone dell'RSVP, fermata e ritorno
   nel profilo; una sola prenotazione per profilo, modificabile fino a una data limite.
-- **Lista d'attesa** quando i 54 posti sono esauriti, con promozione automatica (ed email) se
+- **Lista d'attesa** quando i 30 posti sono esauriti, con promozione automatica (ed email) se
   si libera un posto.
 - Email di conferma con codice prenotazione e `.ics`; promemoria il giorno prima con orario
   definitivo; cancellazione dal link.

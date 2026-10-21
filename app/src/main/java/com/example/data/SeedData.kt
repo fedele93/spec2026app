@@ -5,7 +5,7 @@ import com.example.ui.MapPoint
 // FILE GENERATO DA tools/gen-event-data.py a partire da pwa/shared/event-data.json.
 // NON modificare a mano: cambia il JSON e rigenera con: python3 tools/gen-event-data.py
 object SeedData {
-    const val maxBusSeats: Int = 54
+    const val maxBusSeats: Int = 30
 
     // Date (AAAA-MM-GG) e orari (HH:MM, vuoto = da definire) dal blocco "schedule" del JSON
     val schedule: EventSchedule = EventSchedule(
@@ -53,7 +53,7 @@ object SeedData {
             latitude = 41.1131,
             longitude = 16.8663,
             iconType = "BUS",
-            description = "Ritrovo in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Navetta riservata 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari di andata e ritorno saranno confermati prossimamente.",
+            description = "Ritrovo in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Navetta riservata 30 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari di andata e ritorno saranno confermati prossimamente.",
             mapsUrl = "https://www.google.com/maps/search/?api=1&query=Piazza+Giulio+Cesare,+Bari"
         ),
         MapPoint(
@@ -95,7 +95,7 @@ object SeedData {
             time = "Ven 13",
             title = "Ritrovo & Imbarco Autobus Navetta",
             location = "Piazza Giulio Cesare (Policlinico di Bari)",
-            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 54 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orario di partenza da definire.",
+            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 30 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orario di partenza da definire.",
             hasMore = true
         ),
         ProgramTimelineEntry(
@@ -504,7 +504,7 @@ object SeedData {
         ),
         EventNotificationEntity(
             title = "🚌 Prenotazione Bus Navetta Aperta",
-            message = "Sono disponibili 54 posti gratuiti per il transfer dal Policlinico di Bari al Giardino dei Tempi. Riserva il tuo posto!",
+            message = "Sono disponibili 30 posti gratuiti per il transfer dal Policlinico di Bari al Giardino dei Tempi. Riserva il tuo posto!",
             category = "Navetta",
             timestamp = (System.currentTimeMillis() - 3600000L),
             isRead = false

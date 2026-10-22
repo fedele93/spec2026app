@@ -147,13 +147,20 @@ await tab("bus");
 await page.waitForSelector("#book-bus");
 const summary = await (await fetch(BASE + "/api/bus/summary")).json();
 check("posti liberi coerenti con /api/bus/summary", (await page.textContent(".pill")).includes(`${summary.availableSeats} liberi`));
+// senza profilo il pulsante porta al profilo (la navetta si prenota da lì, così chi sale è anche in lista)
 await page.click("#book-bus");
-await page.fill("#bk-name", "Gruppo troppo grande");
-await page.fill("#bk-seats", String(summary.availableSeats + 1));
-check("overbooking rifiutato (409)", (await clickExpectToast("#bk-save")).includes("non sufficienti"));
-await page.fill("#bk-seats", "2");
-check("prenotazione ok", (await clickExpectToast("#bk-save")).includes("prenotato"));
-await page.waitForTimeout(500);
+await page.waitForSelector("#pl-send");
+check("senza profilo \"Prenota la navetta\" apre l'accesso con l'email", (await page.textContent(".modal")).includes("Il mio profilo"));
+await page.click(".modal .close");
+const anon = await fetch(BASE + "/api/bus/bookings", { method: "POST", headers: { "Content-Type": "application/json", "X-Client-Id": "anon" }, body: JSON.stringify({ passengerName: "Anonimo", seatsCount: 1 }) });
+check("prenotazione anonima rifiutata dal server (403)", anon.status === 403 && (await anon.json()).detail.includes("profilo"));
+// a mano (organizzatori): overbooking rifiutato, poi 2 posti per un gruppo senza invitato (si riconcilia dal cruscotto più avanti)
+const over = await fetch(BASE + "/api/bus/bookings", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Token": ADMIN_TOKEN }, body: JSON.stringify({ passengerName: "Gruppo troppo grande", seatsCount: summary.availableSeats + 1 }) });
+check("overbooking rifiutato (409)", over.status === 409);
+const manual = await fetch(BASE + "/api/bus/bookings", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Token": ADMIN_TOKEN }, body: JSON.stringify({ passengerName: "Gruppo troppo grande", seatsCount: 2 }) });
+check("prenotazione a mano ok", manual.status === 201);
+await tab("program"); await tab("bus");
+await page.waitForSelector("#book-bus");
 check("posti liberi diminuiti di 2", (await page.textContent(".pill")).includes(`${summary.availableSeats - 2} liberi`));
 await shot("03-navetta");
 
@@ -519,7 +526,7 @@ check("prenotazione legata al profilo con 2 posti (le persone)", myBooking && my
 await page.click(".modal .close");
 // riempio il pullman via API: i posti restanti vanno a un gruppo, poi il profilo chiede 3 posti -> lista d'attesa
 const summary0 = await fetch(BASE + "/api/bus/summary").then((r) => r.json());
-const filler = await fetch(BASE + "/api/bus/bookings", { method: "POST", headers: { "Content-Type": "application/json", "X-Client-Id": "filler" }, body: JSON.stringify({ passengerName: "Gruppo Pieno", seatsCount: summary0.availableSeats }) }).then((r) => r.json());
+const filler = await fetch(BASE + "/api/bus/bookings", { method: "POST", headers: { "Content-Type": "application/json", "X-Client-Id": "filler", ...adminHeaders }, body: JSON.stringify({ passengerName: "Gruppo Pieno", seatsCount: summary0.availableSeats }) }).then((r) => r.json());
 await page.click("#bus-profile");
 await page.waitForSelector("#pb-seats");
 await page.fill("#pb-seats", "3");
@@ -634,6 +641,19 @@ await page.waitForSelector("#dash-stats");
 const dashText = await page.textContent(".modal");
 check("cruscotto con contatori e cose da fare", dashText.includes("Confermati") && dashText.includes("Quote uniche") && (await page.$$("#dash-todo .dash-todo")).length >= 1);
 check("menu scelti nel cruscotto", (await page.textContent("#dash-menu")).includes("Vegano"));
+// prenotazioni senza invitato: quella a mano di prima, con "crea invitato" (tocco di conferma)
+check("cruscotto segnala le prenotazioni senza invitato", (await page.textContent("#dash-orphans")).match(/\((\d+)\)/)[1] !== "0" && dashText.includes("senza invitato"));
+await page.click("#dash-orphans");
+await page.waitForSelector("#orphans");
+const orphanCard = (await page.$$(".orphan")).length;
+check("elenco delle prenotazioni senza invitato", orphanCard >= 1 && (await page.textContent("#orphans")).includes("Gruppo troppo grande"));
+const createBtn = await page.$('.orphan [data-create][data-name="Gruppo troppo grande"]');
+check("crea invitato e collega", (await (async () => { await resetToast(); await createBtn.click(); return toastText(); })()).includes("creato e collegato"));
+const linked = (await fetch(BASE + "/api/admin/bus/orphans", { headers: adminHeaders }).then((r) => r.json())).some((o) => o.passengerName === "Gruppo troppo grande");
+const created = (await fetch(BASE + "/api/guests", { headers: adminHeaders }).then((r) => r.json())).find((g) => g.fullName === "Gruppo troppo grande");
+check("l'invitato esiste in attesa e la prenotazione non è più orfana", !linked && created && created.rsvpStatus === "PENDING" && created.guestsCount === 2);
+await page.click(".modal .close");
+await page.click("#settings"); await page.waitForSelector("#s-dash"); await page.click("#s-dash"); await page.waitForSelector("#dash-stats");
 await page.click("#dash-import");
 await page.waitForSelector("#im-text");
 // import: una riga nuova, una che aggiorna Nuova Invitata (telefono), una senza nome

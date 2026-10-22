@@ -92,8 +92,12 @@ function busSection(data) {
   const b = data.busBooking, bus = data.bus || {}, dl = data.deadlines || {};
   const stops = BUS_SCHEDULE.pickupStops && BUS_SCHEDULE.pickupStops.length ? BUS_SCHEDULE.pickupStops : ["Policlinico di Bari"];
   const status = b ? (b.status === "WAITLIST" ? `<span class="pill pill-pend">in lista d'attesa</span>` : `<span class="pill pill-conf">confermata</span>`) : "";
+  const u = !b && data.unclaimedBooking;
   return `<div class="pf-bus" id="pf-bus">
     <b>🚌 Navetta</b> ${status}
+    ${u ? `<div class="card" id="pb-unclaimed" style="margin:6px 0;"><b style="font-size:13px;">C'è una prenotazione a tuo nome</b>
+      <div class="muted" style="margin:4px 0 8px;">${esc(u.passengerName)}: ${u.seatsCount} ${u.seatsCount === 1 ? "posto" : "posti"}${u.pickupStop ? ` da ${esc(u.pickupStop)}` : ""}, codice <b>${esc(u.code)}</b>, fatta senza profilo. È la tua? Collegandola ricevi la conferma via email e non ne crei una seconda.</div>
+      <button class="btn btn-gold" id="pb-claim">Sì, è la mia</button></div>` : ""}
     ${b ? `<div class="muted">${b.seatsCount} ${b.seatsCount === 1 ? "posto" : "posti"} · codice <b>${esc(b.code)}</b>${b.pickupStop ? ` · da ${esc(b.pickupStop)}` : ""}${b.checkedInAt ? " · ✓ salito" : ""}</div>` : `<div class="muted">Posti liberi: ${bus.availableSeats ?? "-"} su ${bus.maxSeats ?? "-"}${bus.waitlistSeats ? ` · ${bus.waitlistSeats} in lista d'attesa` : ""}</div>`}
     ${dl.busLocked ? `<div class="muted">Il termine per prenotare o modificare la navetta è passato: per cambiamenti contatta gli organizzatori.</div>` : `
     <div class="as-row" style="margin-top:6px;"><div class="field" style="flex:0 0 90px;"><label>Posti</label><input id="pb-seats" type="number" min="1" max="30" inputmode="numeric" value="${b ? b.seatsCount : ""}" placeholder="auto"></div>
@@ -156,6 +160,15 @@ function profileDialog(g, data = {}) {
           render();
         } catch (e) { toast(e.message); }
         finally { const b = $("#pf-save"); if (b) b.disabled = false; }
+      };
+      const pbClaim = $("#pb-claim");
+      if (pbClaim) pbClaim.onclick = async () => {
+        pbClaim.disabled = true;
+        try {
+          const r = await api.profileBusClaim(data.unclaimedBooking.id);
+          toast("Prenotazione collegata al tuo profilo ✓ (conferma via email)");
+          close(); await Repo.pollState(); render(); profileDialog(r.guest, r);
+        } catch (e) { toast(e.message); pbClaim.disabled = false; }
       };
       const pbSave = $("#pb-save");
       if (pbSave) pbSave.onclick = async () => {

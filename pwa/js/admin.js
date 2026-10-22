@@ -23,7 +23,7 @@ export async function openDashboard() {
       ${stat("Confermati", g.confirmed, `${g.covers} coperti`, "#166534")}
       ${stat("In attesa", g.pending, `${g.pendingCovers} persone · ${g.declined} no`, "#854D0E")}
       ${stat("Senza menu", g.missingMenu, `${g.allergies} allergie`, g.missingMenu ? "#991B1B" : "#166534")}
-      ${stat("Navetta", b.bookedSeats, `di ${b.maxSeats} · ${b.waitlistSeats} in attesa · ${b.checkedInSeats} saliti`, "var(--primary)")}
+      ${stat("Navetta", b.bookedSeats, `di ${b.maxSeats} · ${b.waitlistSeats} in attesa · ${b.checkedInSeats} saliti${b.withoutGuest ? ` · <span style="color:#991B1B;font-weight:700;">${b.withoutGuest} senza invitato</span>` : ""}`, b.withoutGuest ? "#991B1B" : "var(--primary)")}
       ${stat("Profili", g.withProfile, `${g.withEmail} con email · ${g.consented} consensi`, "var(--primary)")}
       ${stat("Email", mailTotal, m.enabled ? `${m.counts.DELIVERED || 0} consegnate · ${m.counts.FAILED || 0} fallite` : "n8n non attivo", m.enabled ? "#166534" : "#991B1B")}
       ${stat("Quote uniche", p.contributions, `${p.pending} in attesa · ${p.received} ricevute (cifre solo ai cassieri)`, "var(--gold-dark)")}
@@ -41,6 +41,7 @@ export async function openDashboard() {
       <button class="btn btn-ghost" id="dash-mail" style="width:auto;">✉️ Email</button>
       <button class="btn btn-ghost" id="dash-exp-guests" style="width:auto;">📄 CSV invitati</button>
       <button class="btn btn-ghost" id="dash-exp-bus" style="width:auto;">📄 CSV navetta</button>
+      <button class="btn ${b.withoutGuest ? "btn-gold" : "btn-ghost"}" id="dash-orphans" style="width:auto;">🚌 Senza invitato (${b.withoutGuest || 0})</button>
       <button class="btn btn-ghost" id="dash-exp-pool" style="width:auto;">📄 CSV quote</button>
     </div>
     <details class="card" id="dash-invites"><summary><b>🎟️ Inviti a festeggiati e cassieri</b></summary>
@@ -58,6 +59,7 @@ export async function openDashboard() {
       const act = (action, section) => {
         close();
         if (action === "mail" || action === "remind_menu") openMailAdmin();
+        else if (action === "bus_orphans") openBusOrphans();
         else if (action === "import") openImportDialog();
         else if (action === "assistant") openAssistantAdmin();
         else if (section) goto(section);
@@ -67,6 +69,7 @@ export async function openDashboard() {
       bg.querySelector("#dash-mail").onclick = () => { close(); openMailAdmin(); };
       bg.querySelector("#dash-exp-guests").onclick = () => downloadCsv("guests").then(() => toast("invitati.csv scaricato")).catch((e) => toast(e.message));
       bg.querySelector("#dash-exp-bus").onclick = () => downloadCsv("bus").then(() => toast("navetta.csv scaricato")).catch((e) => toast(e.message));
+      bg.querySelector("#dash-orphans").onclick = () => { close(); openBusOrphans(); };
       bg.querySelector("#dash-exp-pool").onclick = () => downloadCsv("gift-pool").then(() => toast("quote-uniche.csv scaricato")).catch((e) => toast(e.message));
       initInvites(bg);
       bg.querySelector("#reset-go").onclick = async () => {
@@ -79,6 +82,43 @@ export async function openDashboard() {
           close(); await Repo.pollState();
         } catch (e) { toast(e.message); }
       };
+    });
+}
+
+// ------------------------------------------------------------------ navetta: prenotazioni senza invitato
+// Nate dal vecchio modulo libero o inserite a mano: il server propone gli invitati dal nome simile, ma
+// il collegamento lo decide sempre l'organizzatore con un tocco (mai automatico).
+const RSVP_SHORT = { CONFIRMED: "confermato", PENDING: "in attesa", DECLINED: "non viene" };
+
+export async function openBusOrphans() {
+  let rows;
+  try { rows = await api.adminBusOrphans(); } catch (e) { toast(e.message); return; }
+  const sugg = (o, s) => `<div class="row" style="padding:6px 0;"><div class="grow"><div class="name" style="font-size:13px;">${esc(s.fullName)} ${s.score === 2 ? '<span class="pill pill-conf">stesso nome</span>' : '<span class="pill pill-pend">simile</span>'}</div>
+      <div class="cat">${esc(s.category)} · ${RSVP_SHORT[s.rsvpStatus] || esc(s.rsvpStatus)} · ${s.guestsCount} ${s.guestsCount === 1 ? "persona" : "persone"}${s.hasEmail ? " · ✉️" : ""}${s.hasBooking ? " · ha già una prenotazione" : ""}</div></div>
+      <button class="btn btn-ghost" style="width:auto;padding:6px 10px;font-size:12px;" data-link="${o.id}" data-guest="${s.id}" data-name="${esc(s.fullName)}" ${s.hasBooking ? "disabled" : ""}>Collega</button></div>`;
+  const row = (o) => `<div class="card orphan" data-orphan="${o.id}">
+      <div class="name">🚌 ${esc(o.passengerName)} <span class="muted">· ${o.seatsCount} ${o.seatsCount === 1 ? "posto" : "posti"} · ${esc(o.code || "")}${o.status === "WAITLIST" ? " · lista d'attesa" : ""}</span></div>
+      <div class="cat">${o.pickupStop ? `Fermata: ${esc(o.pickupStop)}` : ""}${o.contactPhone ? ` · ☎ <a href="tel:${esc(o.contactPhone.replace(/\s+/g, ""))}">${esc(o.contactPhone)}</a>` : ""}${o.notes ? ` · ${esc(o.notes)}` : ""}</div>
+      ${o.suggestions.length ? `<div class="muted" style="margin-top:6px;">Invitati con un nome simile:</div>${o.suggestions.map((s) => sugg(o, s)).join("")}` : `<div class="muted" style="margin-top:6px;">Nessun invitato con un nome simile.</div>`}
+      <button class="btn btn-ghost" style="margin-top:6px;" data-create="${o.id}" data-name="${esc(o.passengerName)}">➕ Crea l'invitato "${esc(o.passengerName)}" (in attesa) e collega</button>
+    </div>`;
+  openModal(`<h3>🚌 Prenotazioni senza invitato</h3>
+    <div class="muted" style="margin-bottom:10px;">Passeggeri prenotati che non risultano fra gli invitati (il catering non li conta). Per ciascuno: collegalo a un invitato esistente o crea l'invitato dalla prenotazione. Chi ha l'email riceve la conferma con il codice. Da ora la navetta si prenota solo dal profilo, quindi di nuove non ne nascono (salvo quelle inserite a mano da voi).</div>
+    <div id="orphans">${rows.length ? rows.map(row).join("") : `<div class="muted">Nessuna: ogni passeggero è anche un invitato ✓</div>`}</div>`,
+    (bg) => {
+      const done = (id, msg) => { toast(msg); const card = bg.querySelector(`[data-orphan="${id}"]`); if (card) card.remove(); if (!bg.querySelector(".orphan")) bg.querySelector("#orphans").innerHTML = `<div class="muted">Tutto collegato ✓</div>`; Repo.pollState(); };
+      bg.querySelectorAll("[data-link]").forEach((b) => b.onclick = async () => {
+        if (!confirm(`Collegare questa prenotazione a ${b.dataset.name}?`)) return;
+        b.disabled = true;
+        try { const r = await api.adminBusLink(Number(b.dataset.link), Number(b.dataset.guest)); done(b.dataset.link, r.mail ? `Collegata a ${b.dataset.name}: conferma inviata ✓` : `Collegata a ${b.dataset.name} ✓`); }
+        catch (e) { toast(e.message); b.disabled = false; }
+      });
+      bg.querySelectorAll("[data-create]").forEach((b) => b.onclick = async () => {
+        if (!confirm(`Creare l'invitato "${b.dataset.name}" (in attesa di conferma) e collegargli la prenotazione?`)) return;
+        b.disabled = true;
+        try { await api.adminBusCreateGuest(Number(b.dataset.create)); done(b.dataset.create, `Invitato "${b.dataset.name}" creato e collegato ✓`); }
+        catch (e) { toast(e.message); b.disabled = false; }
+      });
     });
 }
 

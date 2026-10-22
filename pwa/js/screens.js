@@ -599,7 +599,7 @@ export async function bus(el) {
           <button class="icon-btn" data-cancel="${b.id}" title="Cancella prenotazione">🗑️</button>
         </div>`).join("")}
     </div>
-    <button class="fab" id="book-bus">🚌 Aderisci all'Autobus</button>
+    <button class="fab" id="book-bus">${admin ? "➕ Inserisci prenotazione a mano" : "🚌 Prenota la navetta"}</button>
   `;
   const bp = el.querySelector("#bus-profile");
   if (bp) bp.onclick = () => openProfile();
@@ -610,7 +610,9 @@ export async function bus(el) {
     if (!confirm("Cancellare questa prenotazione?")) return;
     if (await tryAction(() => Repo.deleteBooking(Number(b.dataset.cancel)), "Prenotazione annullata")) bus(el);
   });
-  el.querySelector("#book-bus").onclick = () => busDialog(() => bus(el));
+  // In modalità server la navetta si prenota dal profilo (così chi sale è anche fra gli invitati e riceve la conferma);
+  // il modulo libero resta agli organizzatori (chi telefona) e alla demo offline.
+  el.querySelector("#book-bus").onclick = () => (serverMode && !admin ? openProfile() : busDialog(() => bus(el)));
 }
 
 function busTripRow(label, trip) {
@@ -625,6 +627,7 @@ function busTripRow(label, trip) {
 function busDialog(onDone) {
   const stops = BUS_SCHEDULE.pickupStops && BUS_SCHEDULE.pickupStops.length ? BUS_SCHEDULE.pickupStops : ["Policlinico di Bari"];
   openModal(`<h3>🚌 Prenota Posto Autobus Navetta</h3>
+    ${Repo.mode === "server" ? `<div class="muted" style="margin-bottom:10px;">Inserimento a mano da organizzatore (es. chi ha telefonato). La prenotazione nasce senza invitato: collegala poi dal cruscotto, oppure di' alla persona di crearsi il profilo e toccare "È la mia".</div>` : ""}
     <div class="field"><label>Nome e cognome passeggero *</label><input id="bk-name"></div>
     <div class="field"><label>Numero di posti richiesti</label><input id="bk-seats" type="number" min="1" value="1"></div>
     <div class="field"><label>Fermata di salita</label><select id="bk-stop">${stops.map((s) => `<option>${esc(s)}</option>`).join("")}</select></div>

@@ -12,7 +12,10 @@ via email dagli organizzatori (oggetto: *«La tua area festeggiato per …»*).
 3. **App Android** (se la usi al posto della versione web): copia il link dell'email e incollalo in
    ⚙️ → *Token o link festeggiato* → *Salva e connetti*.
 4. **Hai perso il link?** In ⚙️ tocca *Sono un festeggiato: mandami il link* e scrivi la tua email:
-   arriva lo stesso link. Il link è personale: **non inoltrarlo**.
+   arriva lo stesso link, insieme a un **codice a 6 cifre**. Il link è personale: **non inoltrarlo**.
+5. **iPhone, app sulla schermata Home:** lì il link dell'email si apre in Safari e non nell'app, quindi
+   l'app non "vede" il tuo accesso. Apri l'app, ⚙️ → *Sono un festeggiato: mandami il link*, scrivi
+   l'email e poi inserisci il codice dell'email in *Entra con il codice* (vale 15 minuti).
 
 ## 2. Cosa trovi nella tua area 🎓
 | Sezione | Cosa c'è |

@@ -44,7 +44,7 @@ def build_snapshot(backend_dir: str) -> dict:
     dev = {"X-Client-Id": "dev-fixture"}
     staff = {**dev, **admin}  # auguri e foto: solo invitati registrati e ruoli
     with TestClient(create_app(settings)) as c:
-        c.post("/api/bus/bookings", json={"passengerName": "Famiglia Regina", "seatsCount": 3, "pickupStop": "Piazza Giulio Cesare (Policlinico di Bari)", "returnTripWanted": True, "contactPhone": "347 0001122", "notes": "Arriviamo in treno"}, headers=dev)
+        c.post("/api/bus/bookings", json={"passengerName": "Famiglia Regina", "seatsCount": 3, "pickupStop": "Piazza Giulio Cesare (Policlinico di Bari)", "returnTripWanted": True, "contactPhone": "347 0001122", "notes": "Arriviamo in treno"}, headers=staff)  # a mano: la navetta si prenota dal profilo, il modulo libero è degli organizzatori
         c.post("/api/wishes", json={"authorName": "Un amico", "message": "Auguri a tutti e nove! Ci vediamo al Giardino dei Tempi.", "targetGraduate": "Tutti i Laureandi", "emojiBadge": "🥂"}, headers=staff)
         img = Image.new("RGB", (800, 600), (30, 60, 120))
         buf = io.BytesIO()

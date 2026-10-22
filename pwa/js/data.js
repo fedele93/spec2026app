@@ -10,7 +10,7 @@ import { getSchedule, resolvePlaceholders } from "./schedule.js";
 export const RsvpStatus = { CONFIRMED: "CONFIRMED", PENDING: "PENDING", DECLINED: "DECLINED" };
 
 const EMPTY_EVENT = {
-  meta: { maxBusSeats: 54 }, schedule: {}, graduates: [],
+  meta: { maxBusSeats: 30 }, schedule: {}, graduates: [],
   program: { badge: "", title: "", subtitle: "", dateLabel: "", locationLabel: "", timeline: [] },
   busSchedule: { subtitle: "", andata: {}, ritorno: {}, pickupStops: [] }, mapPoints: [],
   giftCollectors: []
@@ -18,7 +18,7 @@ const EMPTY_EVENT = {
 const COLLECTOR_DEFAULTS = { id: "", name: "", roleTitle: "", description: "", iban: "", ibanHolder: "", paypalMeUrl: "", paypalContact: "", paymentMethods: ["IBAN", "PayPal", "Contanti"], transferReason: "" };
 
 // --- Costanti dell'evento (live bindings: vengono aggiornate da initData) -------------
-export let MAX_BUS_SEATS = 54;
+export let MAX_BUS_SEATS = 30;
 export let GRADUATES = [];
 export let MAP_POINTS = [];
 export let PROGRAM = EMPTY_EVENT.program;
@@ -34,7 +34,7 @@ function applyEvent(ev) {
   EVENT = { ...e, program: resolvePlaceholders(e.program ?? EMPTY_EVENT.program, SCHEDULE),
     busSchedule: resolvePlaceholders(e.busSchedule ?? EMPTY_EVENT.busSchedule, SCHEDULE),
     mapPoints: resolvePlaceholders(e.mapPoints ?? [], SCHEDULE) };
-  MAX_BUS_SEATS = e.meta?.maxBusSeats ?? 54;
+  MAX_BUS_SEATS = e.meta?.maxBusSeats ?? 30;
   GRADUATES = e.graduates ?? [];
   MAP_POINTS = EVENT.mapPoints;
   PROGRAM = EVENT.program;

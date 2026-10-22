@@ -160,7 +160,15 @@ export const api = {
   mailRemindPool: (days = 7) => request(`/api/mail/reminders/pool?days=${days}`, { method: "POST", timeoutMs: 60000 }),
   graduateMe: () => request("/api/graduate/me"),
   graduateRequestLink: (body) => request("/api/graduate/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
+  graduateVerifyCode: (body) => request("/api/graduate/verify-code", { method: "POST", json: body }),
+  // cassiere: link e codice alla TREASURER_EMAIL_<ID> del server, poi accesso con il codice (app installata su iPhone)
+  treasurerRequestLink: (body) => request("/api/gifts/collector/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
+  treasurerVerifyCode: (body) => request("/api/gifts/collector/verify-code", { method: "POST", json: body }),
   adminDashboard: () => request("/api/admin/dashboard"),
+  // navetta: prenotazioni senza invitato e riconciliazione (sempre con la conferma dell'organizzatore)
+  adminBusOrphans: () => request("/api/admin/bus/orphans"),
+  adminBusLink: (bookingId, guestId) => request(`/api/admin/bus/${bookingId}/link`, { method: "POST", json: { guestId }, timeoutMs: 30000 }),
+  adminBusCreateGuest: (bookingId) => request(`/api/admin/bus/${bookingId}/create-guest`, { method: "POST", timeoutMs: 30000 }),
   adminInvites: (body) => request("/api/admin/invites", { method: "POST", json: body, timeoutMs: 60000 }),
   adminResetTestData: (confirm) => request("/api/admin/reset-test-data", { method: "POST", json: { confirm }, timeoutMs: 60000 }),
   importGuests: (rows, { sendLinks = false, dryRun = false } = {}) => request("/api/guests/import", { method: "POST", json: { rows, sendLinks, dryRun }, timeoutMs: 120000 }),
@@ -181,6 +189,7 @@ export const api = {
   profilePut: (body) => request("/api/profile", { method: "PUT", json: body, timeoutMs: 30000 }),
   profileLogout: () => request("/api/profile/logout", { method: "POST" }),
   profileBusPut: (body) => request("/api/profile/bus", { method: "PUT", json: body, timeoutMs: 30000 }),
+  profileBusClaim: (bookingId) => request("/api/profile/bus/claim", { method: "POST", json: { bookingId }, timeoutMs: 30000 }),
   profileBusDelete: () => request("/api/profile/bus", { method: "DELETE", timeoutMs: 30000 }),
   busCheckin: (id, checkedIn) => request(`/api/bus/bookings/${id}/checkin`, { method: "POST", json: { checkedIn } }),
   mailRemindMenu: () => request("/api/mail/reminders/menu", { method: "POST", timeoutMs: 60000 }),

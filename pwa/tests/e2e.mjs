@@ -742,6 +742,8 @@ await page.click("#dash-invites summary");
 await page.waitForFunction(() => !document.querySelector("#inv-list")?.textContent.includes("Caricamento"), null, { timeout: 10000 });
 const invText = await page.textContent("#inv-list");
 check("anteprima inviti: festeggiati e cassieri con lo stato (senza n8n non partono)", invText.includes("Fedele Luisi") && invText.includes("Akilesh") && invText.includes("manca") && (await page.$eval("#inv-send", (b) => b.disabled)));
+check("un pulsante Invia per persona (spento senza email attive)", (await page.$$("[data-inv-one]")).length >= 10 && (await page.$$("[data-inv-one]:not([disabled])")).length === 0 && (await page.$('[data-inv-one="cusmai"][data-inv-role="graduate"]')) !== null);
+check("Francesco Cusmai ha l'email del festeggiato", invText.includes("francescocusmai96@gmail.com"));
 await page.click("#dash-reset summary");
 promptAnswer = "AZZERA";
 check("azzeramento dei dati di prova dal cruscotto", (await clickExpectToast("#reset-go")).includes("Dati di prova cancellati"));

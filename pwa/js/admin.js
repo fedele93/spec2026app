@@ -45,7 +45,7 @@ export async function openDashboard() {
       <button class="btn btn-ghost" id="dash-exp-pool" style="width:auto;">📄 CSV quote</button>
     </div>
     <details class="card" id="dash-invites"><summary><b>🎟️ Inviti a festeggiati e cassieri</b></summary>
-      <div class="muted" style="margin:6px 0;">Manda a ciascuno il link personale (festeggiati: area 🎓; cassieri: cruscotto delle quote) con le istruzioni dettagliate per usare l'app. Le email vengono dal <span class="mono">.env</span> del server (<span class="mono">GRADUATE_EMAIL_&lt;ID&gt;</span>, <span class="mono">TREASURER_EMAIL_&lt;ID&gt;</span>); i link sono generati dal server e restano gli stessi a ogni invio.</div>
+      <div class="muted" style="margin:6px 0;">Manda a ciascuno il link personale (festeggiati: area 🎓; cassieri: cruscotto delle quote) con il codice a 6 cifre e le istruzioni dettagliate per usare l'app. Le email vengono dal <span class="mono">.env</span> del server (<span class="mono">GRADUATE_EMAIL_&lt;ID&gt;</span>, <span class="mono">TREASURER_EMAIL_&lt;ID&gt;</span>) o dal campo email dei festeggiati; i link restano gli stessi a ogni invio, il codice è nuovo ogni volta (vale 15 minuti). Il pulsante accanto a un nome rimanda l'email solo a quella persona.</div>
       <div id="inv-list" class="muted">Caricamento…</div>
       <label class="as-check" style="margin-top:8px;"><input type="checkbox" id="inv-test" checked> Aggiungi le istruzioni per la fase di prova (segnalare i bug; i dati di prova verranno cancellati)</label>
       <label class="as-check"><input type="checkbox" id="inv-rotate"> Rigenera i link prima di inviarli (quelli già in giro smettono di valere: usalo se un'email è finita alla persona sbagliata)</label>
@@ -127,22 +127,36 @@ const INVITE_STATUS = { READY: "pronto", QUEUED: "in invio", DELIVERED: "inviato
 // Elenco di chi riceverebbe l'invito (anteprima, nessuna email) e invio con conferma.
 async function initInvites(bg) {
   const list = bg.querySelector("#inv-list"), send = bg.querySelector("#inv-send");
-  const row = (r) => `<div class="row"><div class="grow"><div class="name" style="font-size:13px;">${r.role === "graduate" ? "🎓" : "👛"} ${esc(r.name)}</div>
-      <div class="cat">${esc(r.email || "—")}</div></div><span class="pill ${["READY", "QUEUED", "DELIVERED"].includes(r.status) ? "pill-conf" : "pill-pend"}">${esc(INVITE_STATUS[r.status] || r.status)}</span></div>`;
   let preview;
+  // una riga per persona; il pulsante "Invia" rimanda link e codice solo a lei (es. codice scaduto o email persa)
+  const row = (r) => `<div class="row"><div class="grow"><div class="name" style="font-size:13px;">${r.role === "graduate" ? "🎓" : "👛"} ${esc(r.name)}</div>
+      <div class="cat">${esc(r.email || "—")}</div></div><span class="pill ${["READY", "QUEUED", "DELIVERED"].includes(r.status) ? "pill-conf" : "pill-pend"}">${esc(INVITE_STATUS[r.status] || r.status)}</span>
+      <button class="btn btn-ghost" style="width:auto;padding:6px 10px;font-size:12px;margin-left:6px;" data-inv-one="${esc(r.id)}" data-inv-role="${esc(r.role)}" data-inv-name="${esc(r.name)}" ${preview && preview.mailEnabled && r.email ? "" : "disabled"} title="Rimanda link e codice solo a questa persona">✉️ Invia</button></div>`;
+  const options = () => ({ testPhase: bg.querySelector("#inv-test").checked, rotate: bg.querySelector("#inv-rotate").checked });
+  const confirmRotate = () => !bg.querySelector("#inv-rotate").checked || confirm("Rigenerare i link? Chi ha già aperto il vecchio link dovrà aprire quello nuovo.");
+  const wireRows = () => bg.querySelectorAll("[data-inv-one]").forEach((b) => b.onclick = async () => {
+    if (!confirm(`Mandare link e codice a ${b.dataset.invName}?`) || !confirmRotate()) return;
+    b.disabled = true;
+    try {
+      const r = await api.adminInvites({ dryRun: false, roles: [b.dataset.invRole + "s"], ids: [b.dataset.invOne], ...options() });
+      const sent = r.invites.find((x) => x.id === b.dataset.invOne && x.role === b.dataset.invRole);
+      toast(sent && ["QUEUED", "DELIVERED"].includes(sent.status) ? `Email mandata a ${b.dataset.invName} ✓` : `Non inviata: ${INVITE_STATUS[sent?.status] || sent?.status || "errore"}`);
+    } catch (e) { toast(e.message); }
+    finally { b.disabled = false; }
+  });
   try { preview = await api.adminInvites({ dryRun: true }); }
   catch (e) { list.textContent = e.message; return; }
   list.innerHTML = preview.invites.map(row).join("") + (preview.mailEnabled ? "" : `<div class="muted as-hint">Le email non sono attive (N8N_WEBHOOK_URL): gli inviti non possono partire.</div>`);
+  wireRows();
   send.disabled = !preview.mailEnabled || !preview.ready;
-  send.textContent = `Invia gli inviti (${preview.ready})`;
+  send.textContent = `Invia a tutti (${preview.ready})`;
   send.onclick = async () => {
-    if (!confirm(`Mandare l'invito con il link personale a ${preview.ready} persone?`)) return;
+    if (!confirm(`Mandare l'invito con il link personale e il codice a ${preview.ready} persone?`) || !confirmRotate()) return;
     send.disabled = true;
     try {
-      const rotate = bg.querySelector("#inv-rotate").checked;
-      if (rotate && !confirm("Rigenerare i link? Chi ha già aperto il vecchio link dovrà aprire quello nuovo.")) { send.disabled = false; return; }
-      const r = await api.adminInvites({ dryRun: false, testPhase: bg.querySelector("#inv-test").checked, rotate });
+      const r = await api.adminInvites({ dryRun: false, ...options() });
       list.innerHTML = r.invites.map(row).join("");
+      wireRows();
       toast(`Inviti mandati: ${r.ready}`);
     } catch (e) { toast(e.message); send.disabled = false; }
   };

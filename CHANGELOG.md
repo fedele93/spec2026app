@@ -7,6 +7,12 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Cruscotto organizzatori → Inviti: pulsante "✉️ Invia" accanto a ogni festeggiato e cassiere per rimandare link e codice a una sola persona (il codice vale 15 minuti: utile quando è scaduto). Il pulsante generale diventa "Invia a tutti".
+
+### Modificato
+- Festeggiati: email di Francesco Cusmai (francescocusmai96@gmail.com) nei dati dell'evento, per il link personale e il codice.
+
 ### Corretto
 - Navetta: chi prenotava dal pulsante libero "Aderisci all'Autobus" non finiva fra gli invitati. Ora in modalità server la navetta si prenota solo dal profilo (il pulsante porta lì; il server rifiuta le prenotazioni senza profilo); il modulo libero resta agli organizzatori per gli inserimenti a mano. Cruscotto: "Senza invitato (N)" con l'elenco delle prenotazioni orfane, gli invitati dal nome simile e i pulsanti "Collega" / "Crea l'invitato" (sempre con conferma); nel profilo, se c'è una prenotazione a proprio nome fatta a mano, compare "Sì, è la mia". CSV navetta con la colonna Invitato. Richiede il backend aggiornato.
 - iPhone: il codice a 6 cifre vale anche per festeggiati e cassieri: in ⚙️ "Sono un festeggiato" / "Sono un cassiere" (nuovo) → email → "Entra con il codice". L'email del link porta il codice; i cassieri possono farsi rimandare il link da soli (email registrata dagli organizzatori). Richiede il backend aggiornato (`/api/graduate/verify-code`, `/api/gifts/collector/request-link` e `verify-code`).

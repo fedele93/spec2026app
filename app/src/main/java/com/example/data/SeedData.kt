@@ -10,7 +10,7 @@ object SeedData {
     // Date (AAAA-MM-GG) e orari (HH:MM, vuoto = da definire) dal blocco "schedule" del JSON
     val schedule: EventSchedule = EventSchedule(
         ceremonyDate = "2026-11-09",
-        ceremonyTime = "",
+        ceremonyTime = "09:00",
         partyDate = "2026-11-13",
         partyTime = "21:30",
         partyEndTime = "03:00",
@@ -36,12 +36,12 @@ object SeedData {
             id = "seduta",
             title = "Seduta di Specializzazione & Proclamazione",
             subtitle = "Discussione Tesi & Brindisi",
-            timeLabel = "9 Novembre - ora da definire",
+            timeLabel = "9 Novembre - ore 09:00",
             address = "Aula Magna \"G. De Benedictis\", AOUC Policlinico di Bari, Piazza Giulio Cesare 11, Bari",
             latitude = 41.1122,
             longitude = 16.8655,
             iconType = "GRADUATION",
-            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (in via di definizione).",
+            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (ore 09:00).",
             mapsUrl = "https://maps.app.goo.gl/RhZKgXuxfYgg2RgTA"
         ),
         MapPoint(
@@ -78,10 +78,10 @@ object SeedData {
 
     val programTimeline: List<ProgramTimelineEntry> = listOf(
         ProgramTimelineEntry(
-            time = "Lun 9",
+            time = "Ore 09:00",
             title = "Seduta di Laurea & Proclamazione",
             location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
-            details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. L'ora esatta della seduta sarà comunicata a breve.",
+            details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. Inizio alle ore 09:00.",
             hasMore = true
         ),
         ProgramTimelineEntry(
@@ -109,7 +109,7 @@ object SeedData {
             time = "Ven 13",
             title = "Taglio della Torta & Dj Set",
             location = "Il Giardino dei Tempi - Orto Botanico, Bari",
-            details = "Taglio della torta di specializzazione, video celebrativo a sorpresa, musica e balli per chiudere in bellezza la serata.",
+            details = "Taglio della torta di specializzazione, musica e balli per chiudere in bellezza la serata.",
             hasMore = false
         ),
     )

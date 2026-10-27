@@ -7,6 +7,9 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 
 ## [Non rilasciato]
 
+### Modificato
+- Programma: la seduta di laurea inizia alle 9:00 (orario nel calendario, nella mappa e nei testi); tolto il "video celebrativo a sorpresa" dalla descrizione del taglio della torta.
+
 ### Aggiunto
 - Cruscotto organizzatori → Inviti: pulsante "✉️ Invia" accanto a ogni festeggiato e cassiere per rimandare link e codice a una sola persona (il codice vale 15 minuti: utile quando è scaduto). Il pulsante generale diventa "Invia a tutti".
 

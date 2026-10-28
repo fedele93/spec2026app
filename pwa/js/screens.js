@@ -564,6 +564,8 @@ export async function bus(el) {
   const available = Math.max(0, MAX_BUS_SEATS - booked);
   const pct = Math.min(100, (booked / MAX_BUS_SEATS) * 100);
   const admin = isAdmin() && serverMode;
+  // una prenotazione può valere più posti (le persone del profilo): nel titolo si leggono entrambi i numeri
+  const persone = (n) => `${n} ${n === 1 ? "persona" : "persone"}`;
   el.innerHTML = `
     <h2 class="section">Navetta Autobus Riservata</h2>
     <div class="muted" style="margin-top:-4px;margin-bottom:12px;">${esc(BUS_SCHEDULE.subtitle || "")}</div>
@@ -583,7 +585,7 @@ export async function bus(el) {
       ${busTripRow("ANDATA", BUS_SCHEDULE.andata)}
       ${busTripRow("RITORNO", BUS_SCHEDULE.ritorno)}
     </div>
-    <h2 class="section">${limited ? `Le tue prenotazioni (${bookings.length})` : `Elenco Passeggeri Prenotati (${bookings.length})`}</h2>
+    <h2 class="section">${limited ? `Le tue prenotazioni (${bookings.length})` : `Prenotazioni (${bookings.length})`} · ${persone(limited ? bookings.reduce((s, b) => s + (b.seatsCount || 0), 0) : booked + waiting)}</h2>
     ${limited ? `<div class="muted" style="margin-top:-4px;margin-bottom:8px;">🔒 L'elenco completo dei passeggeri lo vedono solo organizzatori, festeggiati e cassieri.</div>` : ""}
     <div class="card">
       ${bookings.length === 0 ? `<div class="empty">${limited ? "Nessuna prenotazione da questo telefono o dal tuo profilo." : "Nessun passeggero ha ancora prenotato la navetta."}</div>` : bookings.map((b) => `

@@ -383,6 +383,9 @@ await page.reload({ waitUntil: "networkidle" });
 await tab("bus");
 await page.waitForSelector("#book-bus");
 check("prenotazione persistita dopo reload", (await page.textContent("#screen")).includes("Gruppo troppo grande"));
+const busSum = await fetch(BASE + "/api/bus/summary").then((r) => r.json());
+const busTitle = (await page.textContent("#screen")).match(/Prenotazioni \((\d+)\) · (\d+) person/);
+check("titolo con prenotazioni e persone (posti confermati + lista d'attesa)", busTitle && Number(busTitle[2]) === busSum.bookedSeats + busSum.waitlistSeats && Number(busTitle[1]) === (await fetch(BASE + "/api/bus/bookings", { headers: adminHeaders }).then((r) => r.json())).length);
 
 console.log("9) Polling: una modifica fatta via API compare senza ricaricare");
 const res = await fetch(BASE + "/api/wishes", { method: "POST", headers: { "Content-Type": "application/json", ...adminHeaders }, body: JSON.stringify({ authorName: "API", message: "Arrivato dal server" }) });

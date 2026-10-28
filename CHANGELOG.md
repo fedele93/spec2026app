@@ -8,7 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Modificato
-- Quote uniche (backend): l'avviso in tempo reale che n8n manda agli organizzatori a ogni quota registrata non contiene più importi, ripartizione né recapiti del donatore, solo chi, metodo, cassiere e per quanti neo-specialisti. Le cifre restano ai soli cassieri. Va reimportato il flusso `n8n/avvisi-in-tempo-reale.json`.
+- Quote uniche (backend): gli organizzatori non ricevono più l'avviso email di n8n a ogni quota registrata (il flusso `n8n/avvisi-in-tempo-reale.json` ignora l'evento, da reimportare) e l'evento stesso non porta più importi, ripartizione né recapiti. Le cifre restano ai soli cassieri.
 - Navetta: il titolo dell'elenco distingue prenotazioni e persone ("Prenotazioni (14) · 17 persone"): una prenotazione dal profilo vale tanti posti quante sono le persone.
 - Programma: la seduta di laurea inizia alle 9:00 (orario nel calendario, nella mappa e nei testi); tolto il "video celebrativo a sorpresa" dalla descrizione del taglio della torta.
 

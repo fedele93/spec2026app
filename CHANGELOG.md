@@ -8,6 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Modificato
+- Navetta: il titolo dell'elenco distingue prenotazioni e persone ("Prenotazioni (14) · 17 persone"): una prenotazione dal profilo vale tanti posti quante sono le persone.
 - Programma: la seduta di laurea inizia alle 9:00 (orario nel calendario, nella mappa e nei testi); tolto il "video celebrativo a sorpresa" dalla descrizione del taglio della torta.
 
 ### Aggiunto

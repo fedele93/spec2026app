@@ -71,7 +71,7 @@ export function openModal(html, onMount) {
   bg.className = "modal-bg";
   bg.innerHTML = `<div class="modal"><button class="close" aria-label="Chiudi">×</button>${html}</div>`;
   document.body.appendChild(bg);
-  const close = () => bg.remove();
+  const close = () => { bg.remove(); if (bg.onClosed) bg.onClosed(); };
   bg.querySelector(".close").onclick = close;
   bg.addEventListener("click", (e) => { if (e.target === bg) close(); });
   if (onMount) onMount(bg, close);

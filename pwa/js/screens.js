@@ -677,8 +677,51 @@ const photoCard = (p) => `
         ${p.imageUri ? `<img class="thumb" src="${esc(p.thumbUri || p.imageUri)}" data-full="${esc(p.imageUri)}" alt="${esc(p.caption)}" loading="lazy" decoding="async" width="480" height="160">` : `<div class="placeholder">🎓 Neurologia 2026</div>`}
         <div class="name" style="font-weight:700;font-size:13px;">${esc(p.caption)}</div>
         <div class="cat">di ${esc(p.authorName)} · ${fmtTime(p.createdAt)}</div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;"><button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-like="${p.id}">❤️ ${p.likesCount}</button>${isAdmin() ? `<button class="icon-btn" data-photo-del="${p.id}" title="Elimina foto (organizzatore)">🗑️</button>` : ""}</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;"><button class="btn btn-ghost" style="width:auto;padding:6px 12px;color:#F43F5E;" data-like="${p.id}">❤️ ${p.likesCount}</button>${Repo.mode === "server" ? `<button class="btn btn-ghost" style="width:auto;padding:6px 12px;" data-comments="${p.id}" title="Commenti">💬 ${p.commentsCount || 0}</button>` : ""}${isAdmin() ? `<button class="icon-btn" data-photo-del="${p.id}" title="Elimina foto (organizzatore)">🗑️</button>` : ""}</div>
+        ${(p.lastComments || []).length ? `<div class="pc-preview">${p.lastComments.map((c) => `<div class="pc-row"><b>${esc(c.authorName)}</b> ${esc(c.text)}</div>`).join("")}${(p.commentsCount || 0) > p.lastComments.length ? `<div class="muted" style="font-size:12px;">… e altri ${p.commentsCount - p.lastComments.length}</div>` : ""}</div>` : ""}
       </div>`;
+
+// Pannello dei commenti di una foto: elenco completo dal server, nuovo commento (l'autore lo mette il server:
+// profilo, festeggiato, cassiere o "Organizzatori"), cestino sui propri (su tutti per l'organizzatore).
+async function commentsDialog(photoId, el) {
+  let rows, changed = false;
+  const onChange = () => { changed = true; };
+  try { rows = await Repo.photoComments(photoId); } catch (e) { toast(e.message); return; }
+  const row = (c) => `<div class="pc-row" data-pc="${c.id}"><div class="grow"><b>${esc(c.authorName)}</b> ${esc(c.text)}<div class="muted" style="font-size:11px;">${fmtTime(c.createdAt)}</div></div>${c.mine ? `<button class="icon-btn" data-pc-del="${c.id}" title="Cancella commento">🗑️</button>` : ""}</div>`;
+  openModal(`<h3>💬 Commenti</h3>
+    <div id="pc-list">${rows.length ? rows.map(row).join("") : `<div class="muted" id="pc-empty">Nessun commento: scrivi tu il primo!</div>`}</div>
+    <div class="field" style="margin-top:10px;"><label>Il tuo commento</label><textarea id="pc-text" rows="2" maxlength="300" placeholder="Scrivi un commento…"></textarea></div>
+    <button class="btn btn-primary" id="pc-send">Pubblica commento</button>
+    <div class="muted as-hint">Firmi con il nome del tuo profilo (o del tuo ruolo). Puoi cancellare solo i tuoi commenti.</div>`,
+    (bg, close) => {
+      bg.onClosed = () => { if (changed) wishes(el); }; // alla chiusura la galleria mostra conteggio e anteprima aggiornati
+      const list = bg.querySelector("#pc-list");
+      const wireDel = () => bg.querySelectorAll("[data-pc-del]").forEach((b) => b.onclick = async () => {
+        if (!confirm("Cancellare questo commento?")) return;
+        if (await tryAction(() => Repo.deletePhotoComment(photoId, Number(b.dataset.pcDel)), "Commento cancellato")) {
+          bg.querySelector(`[data-pc="${b.dataset.pcDel}"]`)?.remove();
+          if (!list.querySelector("[data-pc]")) list.innerHTML = `<div class="muted" id="pc-empty">Nessun commento: scrivi tu il primo!</div>`;
+          onChange();
+        }
+      });
+      wireDel();
+      bg.querySelector("#pc-send").onclick = async () => {
+        const text = bg.querySelector("#pc-text").value.trim();
+        if (!text) { toast("Scrivi qualcosa"); return; }
+        const btn = bg.querySelector("#pc-send"); btn.disabled = true;
+        try {
+          const r = await Repo.addPhotoComment(photoId, text);
+          bg.querySelector("#pc-empty")?.remove();
+          list.insertAdjacentHTML("beforeend", row(r.comment));
+          wireDel();
+          bg.querySelector("#pc-text").value = "";
+          toast("Commento pubblicato ✓");
+          onChange();
+        } catch (e) { toast(e.message); }
+        finally { btn.disabled = false; }
+      };
+    });
+}
 
 export async function wishes(el) {
   if (Repo.mode === "server" && !Status.canSeeMemories) { memoriesLocked(el); return; }
@@ -721,9 +764,10 @@ export async function wishes(el) {
   el.querySelector("#add-photo").onclick = () => photoDialog(() => wishes(el));
   // un solo listener per cuori, like, cestini e ingrandimento: vale anche per le card aggiunte dopo
   el.onclick = async (e) => {
-    const t = e.target.closest("img.thumb, [data-heart], [data-like], [data-wish-del], [data-photo-del]");
+    const t = e.target.closest("img.thumb, [data-heart], [data-like], [data-comments], [data-wish-del], [data-photo-del]");
     if (!t || !el.contains(t)) return;
     if (t.matches("img.thumb")) { openLightbox(t.dataset.full || t.src, t.alt); return; }
+    if (t.dataset.comments) { commentsDialog(Number(t.dataset.comments), el); return; }
     if (t.dataset.heart) { if (await tryAction(() => Repo.heartWish(Number(t.dataset.heart)))) wishes(el); return; }
     if (t.dataset.like) { if (await tryAction(() => Repo.likePhoto(Number(t.dataset.like)))) wishes(el); return; }
     if (t.dataset.wishDel) {

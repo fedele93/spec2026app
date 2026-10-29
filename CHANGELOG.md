@@ -7,6 +7,9 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Foto: chi è registrato (profilo o ruolo) può commentare le foto della galleria: pulsante 💬 nella card con il conteggio e l'anteprima degli ultimi due commenti, pannello con tutti i commenti, invio e cancellazione dei propri (gli organizzatori cancellano qualsiasi commento). L'autore lo mette il server: nome del profilo, del festeggiato, del cassiere o "Organizzatori". Richiede il backend aggiornato. Android: nessuna modifica (ignora i campi nuovi).
+
 ### Modificato
 - Navetta: capienza a 40 posti (dati dell'evento, testi, limiti dei moduli).
 - Invitati: categoria "Familiari" (era il refuso "Famigliari") in app, Android e dati; il backend corregge da solo al riavvio gli invitati già salvati con la vecchia dicitura.

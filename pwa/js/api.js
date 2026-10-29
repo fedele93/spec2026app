@@ -135,6 +135,10 @@ export const api = {
   heartWish: (id) => request(`/api/wishes/${id}/heart`, { method: "POST" }),
 
   photos: () => request("/api/photos"),
+  // commenti alle foto (solo registrati; l'autore lo decide il server)
+  photoComments: (id) => request(`/api/photos/${id}/comments`),
+  addPhotoComment: (id, text) => request(`/api/photos/${id}/comments`, { method: "POST", json: { text } }),
+  deletePhotoComment: (id, cid) => request(`/api/photos/${id}/comments/${cid}`, { method: "DELETE" }),
   // a ritroso: le foto più vecchie dell'ultima già mostrata (createdAt + id)
   photosPage: (before, limit = 24) => request(`/api/photos/page?limit=${limit}` + (before ? `&beforeTs=${before.createdAt}&beforeId=${before.id}` : "")),
   uploadPhoto: (file, authorName, caption) => {

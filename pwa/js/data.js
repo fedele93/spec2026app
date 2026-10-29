@@ -215,6 +215,9 @@ const ServerRepo = {
   },
   addPhoto: ({ file, authorName, caption }) => write(() => api.uploadPhoto(file, authorName, caption)),
   likePhoto: (id) => write(() => api.likePhoto(id)),
+  photoComments: (id) => api.photoComments(id),
+  addPhotoComment: (id, text) => write(() => api.addPhotoComment(id, text)),
+  deletePhotoComment: (id, cid) => write(() => api.deletePhotoComment(id, cid)),
 
   allGiftTargets: async () => (snapshot ?? await refreshSnapshot()).giftTargets,
   // quota unica al cassiere: il server calcola la ripartizione e la conserva; le proprie quote si leggono a parte
@@ -311,6 +314,10 @@ const LocalRepo = {
     return add("photos", { authorName, caption, imageUri, likesCount: 1, createdAt: Date.now() }).then(notify);
   },
   likePhoto: (id) => updateRecord("photos", id, (p) => { p.likesCount = (p.likesCount || 0) + 1; }).then(notify),
+  // i commenti vivono sul server (serve sapere chi scrive): in modalità locale non ci sono
+  photoComments: async () => [],
+  addPhotoComment: async () => { throw new ApiError(400, "I commenti alle foto funzionano solo con il server della festa"); },
+  deletePhotoComment: async () => { throw new ApiError(400, "I commenti alle foto funzionano solo con il server della festa"); },
 
   allGiftTargets: () => getAll("giftTargets"),
   addPoolContribution: async (c) => {

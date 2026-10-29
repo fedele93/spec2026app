@@ -211,6 +211,26 @@ check("tocco sulla foto: si ingrandisce con la versione intera", (await page.get
 await page.click(".lightbox");
 check("secondo tocco: torna normale", (await page.$(".lightbox")) === null);
 check("in galleria la miniatura leggera, non la foto intera", (await page.getAttribute(".photo img.thumb", "src")).includes("_t.jpg"));
+// commenti: solo registrati, firmati dal server, anteprima nella card, cancellazione del proprio
+check("pulsante commenti a zero", (await page.textContent(".photo [data-comments]")).includes("💬 0"));
+await page.click(".photo [data-comments]");
+await page.waitForSelector("#pc-send");
+check("pannello vuoto", (await page.$("#pc-empty")) !== null);
+await page.fill("#pc-text", "Che bella foto!");
+check("commento pubblicato", (await clickExpectToast("#pc-send")).includes("pubblicato"));
+check("commento firmato dal profilo, con il cestino", (await page.textContent("#pc-list")).includes("Ospite Registrato") && (await page.textContent("#pc-list")).includes("Che bella foto!") && (await page.$("#pc-list [data-pc-del]")) !== null);
+await page.click(".modal .close");
+await page.waitForFunction(() => (document.querySelector(".photo [data-comments]")?.textContent || "").includes("💬 1"), null, { timeout: 10000 });
+check("card con conteggio e anteprima del commento", (await page.textContent(".photo .pc-preview")).includes("Che bella foto!"));
+const photoId = await page.getAttribute(".photo", "data-photo");
+const anonComment = await fetch(BASE + `/api/photos/${photoId}/comments`, { method: "POST", headers: { "Content-Type": "application/json", "X-Client-Id": "anon" }, body: JSON.stringify({ text: "intruso" }) });
+check("commento senza registrazione rifiutato (401)", anonComment.status === 401);
+await page.click(".photo [data-comments]");
+await page.waitForSelector("#pc-list [data-pc-del]");
+check("cancellazione del proprio commento", (await clickExpectToast("#pc-list [data-pc-del]")).includes("cancellato"));
+await page.click(".modal .close");
+await page.waitForFunction(() => (document.querySelector(".photo [data-comments]")?.textContent || "").includes("💬 0"), null, { timeout: 10000 });
+check("card tornata a zero commenti", (await page.$(".photo .pc-preview")) === null);
 // tante foto: lo snapshot ne porta 24, le altre si caricano a ritroso
 for (let i = 0; i < 24; i++) {
   const fd = new FormData();

@@ -519,7 +519,7 @@ function statCard(title, value, sub, color) {
 }
 
 function guestDialog(onDone) {
-  const cats = ["Colleghi Reparto", "Docenti & Medici", "Famigliari", "Amici Università", "Specializzandi"];
+  const cats = ["Colleghi Reparto", "Docenti & Medici", "Familiari", "Amici Università", "Specializzandi"];
   openModal(`<h3>＋ Aggiungi Nuovo Invitato</h3>
     <div class="field"><label>Nome e cognome *</label><input id="ag-name"></div>
     <div class="field"><label>Categoria / Gruppo</label><div class="chips" id="ag-cats">${cats.map((c, i) => `<button class="chip ${i === 0 ? "active" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>

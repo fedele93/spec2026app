@@ -518,7 +518,7 @@ fun AddGuestDialog(
     var contact by remember { mutableStateOf("") }
     var status by remember { mutableStateOf(RsvpStatus.CONFIRMED) }
 
-    val categories = listOf("Colleghi Reparto", "Docenti & Medici", "Famigliari", "Amici Università", "Specializzandi")
+    val categories = listOf("Colleghi Reparto", "Docenti & Medici", "Familiari", "Amici Università", "Specializzandi")
 
     AlertDialog(
         onDismissRequest = onDismiss,

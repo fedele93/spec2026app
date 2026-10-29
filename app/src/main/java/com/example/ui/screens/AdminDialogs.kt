@@ -216,7 +216,7 @@ fun ImportGuestsDialog(viewModel: EventViewModel, onDismiss: () -> Unit, onDone:
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it; preview = null; message = "" },
-                    placeholder = { Text("Nome;Categoria;Email;Telefono;Persone\nMaria Rossi;Famigliari;maria@esempio.it;333 1234567;2") },
+                    placeholder = { Text("Nome;Categoria;Email;Telefono;Persone\nMaria Rossi;Familiari;maria@esempio.it;333 1234567;2") },
                     minLines = 5,
                     modifier = Modifier.fillMaxWidth().testTag("import_text")
                 )

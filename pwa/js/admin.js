@@ -202,7 +202,7 @@ export function openImportDialog() {
   if (Repo.mode !== "server") { toast("L'import funziona solo con il server della festa"); return; }
   openModal(`<h3>📥 Importa la lista invitati</h3>
     <div class="muted" style="margin-bottom:8px;">Incolla qui le righe da Excel o da un CSV (una persona per riga, colonne Nome, Categoria, Email, Telefono, Persone, Stato: l'intestazione viene riconosciuta), oppure carica il file. Chi c'è già viene aggiornato (abbinato per email o per nome), gli altri vengono creati in attesa di risposta.</div>
-    <textarea id="im-text" rows="6" placeholder="Nome;Categoria;Email;Telefono;Persone&#10;Maria Rossi;Famigliari;maria@esempio.it;333 1234567;2" style="width:100%;"></textarea>
+    <textarea id="im-text" rows="6" placeholder="Nome;Categoria;Email;Telefono;Persone&#10;Maria Rossi;Familiari;maria@esempio.it;333 1234567;2" style="width:100%;"></textarea>
     <div class="btn-row" style="margin-top:8px;"><label class="btn btn-ghost" style="width:auto;">📁 Carica CSV<input type="file" accept=".csv,.txt,.tsv,text/csv,text/plain" id="im-file" hidden></label><button class="btn btn-primary" id="im-preview" style="width:auto;">Anteprima</button></div>
     <label class="as-check" style="margin-top:8px;"><input type="checkbox" id="im-links"> Invia il link personale via email a chi ha l'indirizzo</label>
     <div id="im-result" class="muted as-hint" style="margin-top:8px;"></div>

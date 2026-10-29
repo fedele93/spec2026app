@@ -8,6 +8,8 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Modificato
+- Navetta: capienza a 40 posti (dati dell'evento, testi, limiti dei moduli).
+- Invitati: categoria "Familiari" (era il refuso "Famigliari") in app, Android e dati; il backend corregge da solo al riavvio gli invitati già salvati con la vecchia dicitura.
 - Quote uniche (backend): gli organizzatori non ricevono più l'avviso email di n8n a ogni quota registrata (il flusso `n8n/avvisi-in-tempo-reale.json` ignora l'evento, da reimportare) e l'evento stesso non porta più importi, ripartizione né recapiti. Le cifre restano ai soli cassieri.
 - Navetta: il titolo dell'elenco distingue prenotazioni e persone ("Prenotazioni (14) · 17 persone"): una prenotazione dal profilo vale tanti posti quante sono le persone.
 - Programma: la seduta di laurea inizia alle 9:00 (orario nel calendario, nella mappa e nei testi); tolto il "video celebrativo a sorpresa" dalla descrizione del taglio della torta.

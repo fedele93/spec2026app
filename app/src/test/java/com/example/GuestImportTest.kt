@@ -37,9 +37,9 @@ class GuestImportTest {
 
     @Test
     fun `intestazione con accenti e virgole`() {
-        val p = GuestImport.parse("NOME,Categorìa,E-mail\nAnna,Famigliari,anna@x.it")
+        val p = GuestImport.parse("NOME,Categorìa,E-mail\nAnna,Familiari,anna@x.it")
         assertTrue(p.hasHeader)
-        assertEquals("Famigliari", p.rows[0].category)
+        assertEquals("Familiari", p.rows[0].category)
         assertEquals("anna@x.it", p.rows[0].email)
         assertTrue(GuestImport.parse("").rows.isEmpty())
     }

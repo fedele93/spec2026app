@@ -124,7 +124,7 @@ Viene servita direttamente dal backend (Caddy) allo stesso sottodominio dell'API
 - **Android** (unit test JVM + Robolectric): `./gradlew testDebugUnitTest`
   - `SnapshotParsingTest`: i modelli Kotlin leggono una risposta reale di `/api/snapshot`
   - `EventRepositoryRoomTest`: Room in memoria, dati demo, contributi, sincronizzazione snapshot
-  - `BusCapacityTest`: regola dei 30 posti
+  - `BusCapacityTest`: regola dei 40 posti
   - `NotificationScheduleTest`: parsing della data "Programma invio" delle notifiche
 - **PWA** (Playwright end-to-end contro il backend): `node pwa/tests/e2e.mjs` (vedi `pwa/README.md`)
 - **Dati**: `python3 tools/check-event-data.py` controlla `event-data.json` (id, segnaposto orari,

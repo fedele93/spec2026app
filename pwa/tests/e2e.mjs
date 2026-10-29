@@ -109,7 +109,7 @@ const guestsBefore = (await page.$$("[data-guest]")).length;
 check("elenco invitati caricato dal server", guestsBefore >= 7);
 check("riepilogo catering con menu speciali", (await page.textContent("#catering")).includes("Celiaco"));
 await page.click("#catering summary");
-check("riepilogo catering: categorie e nomi", (await page.textContent("#catering")).includes("Famigliari") && (await page.textContent("#catering")).includes("Matteo Moretti"));
+check("riepilogo catering: categorie e nomi", (await page.textContent("#catering")).includes("Familiari") && (await page.textContent("#catering")).includes("Matteo Moretti"));
 await page.fill("#g-search", "Colombo");
 await page.waitForTimeout(200);
 check("ricerca filtra a 1", (await page.$$("[data-guest]")).length === 1);
@@ -660,7 +660,7 @@ await page.click("#settings"); await page.waitForSelector("#s-dash"); await page
 await page.click("#dash-import");
 await page.waitForSelector("#im-text");
 // import: una riga nuova, una che aggiorna Nuova Invitata (telefono), una senza nome
-await page.fill("#im-text", "Nome;Categoria;Email;Telefono;Persone\nImportato Uno;Amici Università;uno@example.org;;3\nNuova Invitata;;nuova@example.org;333 0000000;\n;Famigliari;x@example.org;;");
+await page.fill("#im-text", "Nome;Categoria;Email;Telefono;Persone\nImportato Uno;Amici Università;uno@example.org;;3\nNuova Invitata;;nuova@example.org;333 0000000;\n;Familiari;x@example.org;;");
 await page.click("#im-preview");
 await page.waitForFunction(() => (document.querySelector("#im-result")?.textContent || "").includes("Anteprima"), null, { timeout: 10000 });
 const preview = await page.textContent("#im-result");

@@ -11,7 +11,7 @@ import { isIos, isInstalledPwa } from "./notify.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const MENU_LABELS = { "": "Da scegliere", STANDARD: "Menu completo", VEGETARIANO: "Vegetariano", VEGANO: "Vegano", SENZA_GLUTINE: "Senza glutine", ALTRO: "Altro (vedi note)" };
-const CATEGORIES = ["Famigliari", "Colleghi Reparto", "Docenti e Reparto", "Specializzandi 1° e 2° anno", "Amici Università", "Invitato"];
+const CATEGORIES = ["Familiari", "Colleghi Reparto", "Docenti e Reparto", "Specializzandi 1° e 2° anno", "Amici Università", "Invitato"];
 const PRIVACY = "I dati (nome, contatti, menu e allergie, persone al seguito) servono solo a organizzare la festa, sono visibili agli organizzatori e al catering e vengono cancellati dopo l'evento. Puoi modificarli o chiederne la cancellazione in qualsiasi momento.";
 
 export const hasProfile = () => !!getGuestToken();
@@ -100,7 +100,7 @@ function busSection(data) {
       <button class="btn btn-gold" id="pb-claim">Sì, è la mia</button></div>` : ""}
     ${b ? `<div class="muted">${b.seatsCount} ${b.seatsCount === 1 ? "posto" : "posti"} · codice <b>${esc(b.code)}</b>${b.pickupStop ? ` · da ${esc(b.pickupStop)}` : ""}${b.checkedInAt ? " · ✓ salito" : ""}</div>` : `<div class="muted">Posti liberi: ${bus.availableSeats ?? "-"} su ${bus.maxSeats ?? "-"}${bus.waitlistSeats ? ` · ${bus.waitlistSeats} in lista d'attesa` : ""}</div>`}
     ${dl.busLocked ? `<div class="muted">Il termine per prenotare o modificare la navetta è passato: per cambiamenti contatta gli organizzatori.</div>` : `
-    <div class="as-row" style="margin-top:6px;"><div class="field" style="flex:0 0 90px;"><label>Posti</label><input id="pb-seats" type="number" min="1" max="30" inputmode="numeric" value="${b ? b.seatsCount : ""}" placeholder="auto"></div>
+    <div class="as-row" style="margin-top:6px;"><div class="field" style="flex:0 0 90px;"><label>Posti</label><input id="pb-seats" type="number" min="1" max="40" inputmode="numeric" value="${b ? b.seatsCount : ""}" placeholder="auto"></div>
       <div class="field" style="flex:1;"><label>Fermata di salita</label><select id="pb-stop">${stops.map((st) => `<option ${b && b.pickupStop === st ? "selected" : ""}>${esc(st)}</option>`).join("")}</select></div></div>
     <label class="as-check"><input type="checkbox" id="pb-return" ${!b || b.returnTripWanted ? "checked" : ""}> Mi serve anche il ritorno notturno</label>
     <div class="btn-row"><button class="btn btn-primary" id="pb-save">${b ? "Aggiorna navetta" : "Prenota la navetta"}</button>${b ? `<button class="btn btn-ghost" id="pb-cancel">Annulla prenotazione</button>` : ""}</div>

@@ -2,7 +2,7 @@
 import { Repo, Status, RsvpStatus, MAX_BUS_SEATS, GRADUATES, MAP_POINTS, PROGRAM, BUS_SCHEDULE, EVENT, GIFT_COLLECTORS, collectorById, splitEqually, reconnect } from "./data.js";
 import { downloadIcs } from "./schedule.js";
 import { toast, openModal, fmtTime, goto, render, updateStatusBar } from "./app.js";
-import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getGraduateToken, setGraduateToken, isGraduate, getGuestToken, getClientId, downloadCsv } from "./api.js";
+import { api, getApiBase, setApiBase, getAdminToken, setAdminToken, isAdmin, getTreasurerToken, setTreasurerToken, isTreasurer, getGraduateToken, setGraduateToken, isGraduate, getGuestToken, getClientId, downloadCsv, downloadPhotosArchive } from "./api.js";
 import { openGraduateArea, requestGraduateLinkDialog } from "./graduate.js";
 import { requestRoleLinkDialog } from "./rolelink.js";
 import { openDashboard, openImportDialog } from "./admin.js";
@@ -746,9 +746,16 @@ export async function wishes(el) {
 
     <h2 class="section">Galleria Foto (${Repo.photosTotal() ?? photos.length})</h2>
     <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Dalla più recente. Tocca una foto per ingrandirla, toccala di nuovo per chiuderla.</div>
+    ${Status.photosDownloadEnabled && photos.length ? `<button class="btn btn-ghost" id="dl-photos" style="margin-bottom:12px;">📦 Scarica tutte le foto (zip)</button>` : ""}
     ${photos.length === 0 ? '<div class="empty">Nessuna foto condivisa ancora.</div>' : photos.map(photoCard).join("")}
     ${Repo.photosHasMore() ? `<button class="btn btn-ghost" id="more-photos" style="margin-bottom:12px;">⬇️ Mostra foto precedenti</button>` : ""}
   `;
+  const dl = el.querySelector("#dl-photos");
+  if (dl) dl.onclick = async () => {
+    dl.disabled = true; dl.textContent = "Preparazione dello zip…";
+    await tryAction(() => downloadPhotosArchive(), "Zip pronto: controlla i download");
+    dl.disabled = false; dl.textContent = "📦 Scarica tutte le foto (zip)";
+  };
   const more = el.querySelector("#more-photos");
   if (more) more.onclick = async () => {
     // si aggiungono solo le card nuove, in fondo: niente ridisegno della bacheca né salti di scroll

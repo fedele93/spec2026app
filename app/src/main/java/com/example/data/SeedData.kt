@@ -5,12 +5,12 @@ import com.example.ui.MapPoint
 // FILE GENERATO DA tools/gen-event-data.py a partire da pwa/shared/event-data.json.
 // NON modificare a mano: cambia il JSON e rigenera con: python3 tools/gen-event-data.py
 object SeedData {
-    const val maxBusSeats: Int = 40
+    const val maxBusSeats: Int = 50
 
     // Date (AAAA-MM-GG) e orari (HH:MM, vuoto = da definire) dal blocco "schedule" del JSON
     val schedule: EventSchedule = EventSchedule(
         ceremonyDate = "2026-11-09",
-        ceremonyTime = "09:00",
+        ceremonyTime = "09:30",
         partyDate = "2026-11-13",
         partyTime = "21:30",
         partyEndTime = "03:00",
@@ -36,12 +36,12 @@ object SeedData {
             id = "seduta",
             title = "Seduta di Specializzazione & Proclamazione",
             subtitle = "Discussione Tesi & Brindisi",
-            timeLabel = "9 Novembre - ore 09:00",
+            timeLabel = "9 Novembre - ore 09:30",
             address = "Aula Magna \"G. De Benedictis\", AOUC Policlinico di Bari, Piazza Giulio Cesare 11, Bari",
             latitude = 41.1122,
             longitude = 16.8655,
             iconType = "GRADUATION",
-            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (ore 09:00).",
+            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (ore 09:30). Ogni neo-specialista ha 10 minuti per la sua esposizione, in ordine alfabetico (orari indicativi): 9:30 Carlone, 9:40 Cusmai, 9:50 Esposto, 10:00 Luisi, 10:10 Parrulli, 10:20 Prezioso, 10:30 Regina, 10:40 Ruta, 10:50 Totaro.",
             mapsUrl = "https://maps.app.goo.gl/RhZKgXuxfYgg2RgTA"
         ),
         MapPoint(
@@ -53,7 +53,7 @@ object SeedData {
             latitude = 41.1131,
             longitude = 16.8663,
             iconType = "BUS",
-            description = "Ritrovo in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Navetta riservata 40 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari di andata e ritorno saranno confermati prossimamente.",
+            description = "Ritrovo in Piazza Giulio Cesare, davanti all'ingresso del Policlinico. Navetta riservata 50 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orari di andata e ritorno saranno confermati prossimamente.",
             mapsUrl = "https://www.google.com/maps/search/?api=1&query=Piazza+Giulio+Cesare,+Bari"
         ),
         MapPoint(
@@ -78,10 +78,10 @@ object SeedData {
 
     val programTimeline: List<ProgramTimelineEntry> = listOf(
         ProgramTimelineEntry(
-            time = "Ore 09:00",
+            time = "Ore 09:30",
             title = "Seduta di Laurea & Proclamazione",
             location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
-            details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. Inizio alle ore 09:00.",
+            details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. Inizio alle ore 09:30. Ogni neo-specialista ha 10 minuti per la sua esposizione, in ordine alfabetico (orari indicativi): 9:30 Carlone, 9:40 Cusmai, 9:50 Esposto, 10:00 Luisi, 10:10 Parrulli, 10:20 Prezioso, 10:30 Regina, 10:40 Ruta, 10:50 Totaro.",
             hasMore = true
         ),
         ProgramTimelineEntry(
@@ -95,7 +95,7 @@ object SeedData {
             time = "Ven 13",
             title = "Ritrovo & Imbarco Autobus Navetta",
             location = "Piazza Giulio Cesare (Policlinico di Bari)",
-            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 40 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orario di partenza da definire.",
+            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 50 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orario di partenza da definire.",
             hasMore = true
         ),
         ProgramTimelineEntry(
@@ -504,7 +504,7 @@ object SeedData {
         ),
         EventNotificationEntity(
             title = "🚌 Prenotazione Bus Navetta Aperta",
-            message = "Sono disponibili 40 posti gratuiti per il transfer dal Policlinico di Bari al Giardino dei Tempi. Riserva il tuo posto!",
+            message = "Sono disponibili 50 posti gratuiti per il transfer dal Policlinico di Bari al Giardino dei Tempi. Riserva il tuo posto!",
             category = "Navetta",
             timestamp = (System.currentTimeMillis() - 3600000L),
             isRead = false

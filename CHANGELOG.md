@@ -8,9 +8,12 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Aggiunto
+- Foto: "📦 Scarica tutte le foto (zip)" in cima alla galleria per chi è registrato, quando l'organizzatore lo accende dal cruscotto ("Funzioni per gli invitati"). Lo zip contiene le foto intere. Richiede il backend aggiornato.
 - Foto: chi è registrato (profilo o ruolo) può commentare le foto della galleria: pulsante 💬 nella card con il conteggio e l'anteprima degli ultimi due commenti, pannello con tutti i commenti, invio e cancellazione dei propri (gli organizzatori cancellano qualsiasi commento). L'autore lo mette il server: nome del profilo, del festeggiato, del cassiere o "Organizzatori". Richiede il backend aggiornato. Android: nessuna modifica (ignora i campi nuovi).
 
 ### Modificato
+- Programma: la seduta inizia alle 9:30; ogni neo-specialista ha 10 minuti, in ordine alfabetico, con gli orari indicativi nel programma e nella mappa.
+- Navetta: capienza a 50 posti.
 - Navetta: capienza a 40 posti (dati dell'evento, testi, limiti dei moduli).
 - Invitati: categoria "Familiari" (era il refuso "Famigliari") in app, Android e dati; il backend corregge da solo al riavvio gli invitati già salvati con la vecchia dicitura.
 - Quote uniche (backend): gli organizzatori non ricevono più l'avviso email di n8n a ogni quota registrata (il flusso `n8n/avvisi-in-tempo-reale.json` ignora l'evento, da reimportare) e l'evento stesso non porta più importi, ripartizione né recapiti. Le cifre restano ai soli cassieri.

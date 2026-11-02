@@ -14,8 +14,8 @@ object SeedData {
         partyDate = "2026-11-13",
         partyTime = "21:30",
         partyEndTime = "03:00",
-        busDepartureTime = "",
-        busReturnTime = "",
+        busDepartureTime = "21:30",
+        busReturnTime = "02:30",
     )
 
     val graduates: List<String> = listOf(
@@ -48,7 +48,7 @@ object SeedData {
             id = "bus",
             title = "Partenza Autobus Navetta",
             subtitle = "Punto di Ritrovo Transfer Gratuito",
-            timeLabel = "Venerdì 13 - ritrovo da definire",
+            timeLabel = "Venerdì 13 - partenza ore 21:30",
             address = "Piazza Giulio Cesare, Bari (davanti all'ingresso del Policlinico)",
             latitude = 41.1131,
             longitude = 16.8663,
@@ -92,10 +92,10 @@ object SeedData {
             hasMore = true
         ),
         ProgramTimelineEntry(
-            time = "Ven 13",
+            time = "Ven 13 ore 21:30",
             title = "Ritrovo & Imbarco Autobus Navetta",
             location = "Piazza Giulio Cesare (Policlinico di Bari)",
-            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 50 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Orario di partenza da definire.",
+            details = "Venerdì 13 novembre: ritrovo dei partecipanti e transfer riservato 50 posti verso Il Giardino dei Tempi - Orto Botanico (Via Giovanni Amendola 247, 70126 Bari). Partenza alle ore 21:30.",
             hasMore = true
         ),
         ProgramTimelineEntry(
@@ -116,10 +116,10 @@ object SeedData {
 
     val busScheduleSubtitle: String = "Transfer andata e ritorno da Piazza Giulio Cesare (Policlinico di Bari) al Giardino dei Tempi"
     val busAndata: BusTripInfo = BusTripInfo(
-        timeLabel = "Ven 13 - da definire", from = "Piazza Giulio Cesare (Policlinico di Bari)", to = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", notes = "Venerdì 13 novembre: orario di partenza in via di definizione, sarà confermato con l'orario della festa"
+        timeLabel = "Ven 13 - ore 21:30", from = "Piazza Giulio Cesare (Policlinico di Bari)", to = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", notes = "Venerdì 13 novembre: partenza alle ore 21:30 da Piazza Giulio Cesare (ingresso del Policlinico)"
     )
     val busRitorno: BusTripInfo = BusTripInfo(
-        timeLabel = "Ven 13 - notte", from = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", to = "Piazza Giulio Cesare (Policlinico di Bari)", notes = "Rientro notturno garantito per tornare a casa in totale sicurezza"
+        timeLabel = "Ven 13 - ore 02:30", from = "Il Giardino dei Tempi - Orto Botanico (Via Amendola 247)", to = "Piazza Giulio Cesare (Policlinico di Bari)", notes = "Partenza del rientro alle ore 02:30 dal Giardino dei Tempi."
     )
     val busPickupStops: List<String> = listOf(
         "Piazza Giulio Cesare (Policlinico di Bari)",

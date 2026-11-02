@@ -169,6 +169,7 @@ export const api = {
   treasurerRequestLink: (body) => request("/api/gifts/collector/request-link", { method: "POST", json: body, timeoutMs: 30000 }),
   treasurerVerifyCode: (body) => request("/api/gifts/collector/verify-code", { method: "POST", json: body }),
   adminDashboard: () => request("/api/admin/dashboard"),
+  adminSettings: (body) => request("/api/admin/settings", { method: "PUT", json: body }),
   // navetta: prenotazioni senza invitato e riconciliazione (sempre con la conferma dell'organizzatore)
   adminBusOrphans: () => request("/api/admin/bus/orphans"),
   adminBusLink: (bookingId, guestId) => request(`/api/admin/bus/${bookingId}/link`, { method: "POST", json: { guestId }, timeoutMs: 30000 }),
@@ -244,12 +245,22 @@ const CSV_NAMES = { guests: "invitati.csv", bus: "navetta.csv", "gift-pool": "qu
 
 // Scarica un CSV riservato (organizzatori, o cassiere per le quote uniche): il token viaggia nell'header, non nell'URL.
 export async function downloadCsv(kind) {
-  const res = await fetch(`${getApiBase()}/api/export/${kind}.csv`, { headers: headers() });
+  return downloadFile(`/api/export/${kind}.csv`, CSV_NAMES[kind] || `${kind}.csv`);
+}
+
+/** Tutte le foto in uno zip (registrati; l'organizzatore deve averlo acceso dal cruscotto). */
+export function downloadPhotosArchive() {
+  return downloadFile("/api/photos/archive.zip", "foto-neuroparty.zip");
+}
+
+// Scarica un file riservato: il token viaggia nell'header, non nell'URL, poi il browser salva il blob.
+async function downloadFile(path, filename) {
+  const res = await fetch(`${getApiBase()}${path}`, { headers: headers() });
   if (!res.ok) throw await parseError(res);
   const blob = await res.blob();
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = CSV_NAMES[kind] || `${kind}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);

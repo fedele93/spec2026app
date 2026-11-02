@@ -51,6 +51,10 @@ export async function openDashboard() {
       <label class="as-check"><input type="checkbox" id="inv-rotate"> Rigenera i link prima di inviarli (quelli già in giro smettono di valere: usalo se un'email è finita alla persona sbagliata)</label>
       <button class="btn btn-primary" id="inv-send" style="margin-top:8px;" disabled>Invia gli inviti</button>
     </details>
+    <details class="card" id="dash-settings" open><summary><b>🎛️ Funzioni per gli invitati</b></summary>
+      <label class="as-check" style="margin-top:6px;"><input type="checkbox" id="set-photos-dl" ${d.settings?.photosDownload ? "checked" : ""}> Permetti a chi è registrato di scaricare tutte le foto in uno zip (pulsante in cima alla galleria)</label>
+      <div class="muted as-hint">Da accendere a fine festa, quando la galleria è completa: lo zip contiene le foto intere.</div>
+    </details>
     <details class="card" id="dash-reset"><summary><b>🧹 Fine della fase di prova</b></summary>
       <div class="muted" style="margin:6px 0;">Cancella invitati e profili, navetta, auguri, foto, quote uniche, notifiche ed email in coda. Restano la configurazione dell'evento, IBAN e link dei regali, gli accessi dei festeggiati, gli avatar e le iscrizioni alle notifiche. Non si può annullare: fai prima un backup (<span class="mono">scripts/backup.sh</span>).</div>
       <button class="btn btn-ghost" id="reset-go" style="color:#991B1B;">Azzera i dati di prova…</button>
@@ -72,6 +76,17 @@ export async function openDashboard() {
       bg.querySelector("#dash-orphans").onclick = () => { close(); openBusOrphans(); };
       bg.querySelector("#dash-exp-pool").onclick = () => downloadCsv("gift-pool").then(() => toast("quote-uniche.csv scaricato")).catch((e) => toast(e.message));
       initInvites(bg);
+      const dlToggle = bg.querySelector("#set-photos-dl");
+      dlToggle.onchange = async () => {
+        dlToggle.disabled = true;
+        try {
+          const r = await api.adminSettings({ photosDownload: dlToggle.checked });
+          dlToggle.checked = r.photosDownload;
+          toast(r.photosDownload ? "Download delle foto attivo per gli invitati ✓" : "Download delle foto spento");
+          await Repo.pollState();
+        } catch (e) { toast(e.message); dlToggle.checked = !dlToggle.checked; }
+        finally { dlToggle.disabled = false; }
+      };
       bg.querySelector("#reset-go").onclick = async () => {
         const word = prompt("Questo cancella TUTTI i dati raccolti (invitati, navetta, auguri, foto, quote). Per confermare scrivi AZZERA");
         if (!word) return;

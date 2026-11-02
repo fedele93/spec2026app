@@ -10,7 +10,7 @@ import { getSchedule, resolvePlaceholders } from "./schedule.js";
 export const RsvpStatus = { CONFIRMED: "CONFIRMED", PENDING: "PENDING", DECLINED: "DECLINED" };
 
 const EMPTY_EVENT = {
-  meta: { maxBusSeats: 40 }, schedule: {}, graduates: [],
+  meta: { maxBusSeats: 50 }, schedule: {}, graduates: [],
   program: { badge: "", title: "", subtitle: "", dateLabel: "", locationLabel: "", timeline: [] },
   busSchedule: { subtitle: "", andata: {}, ritorno: {}, pickupStops: [] }, mapPoints: [],
   giftCollectors: []
@@ -18,7 +18,7 @@ const EMPTY_EVENT = {
 const COLLECTOR_DEFAULTS = { id: "", name: "", roleTitle: "", description: "", iban: "", ibanHolder: "", paypalMeUrl: "", paypalContact: "", paymentMethods: ["IBAN", "PayPal", "Contanti"], transferReason: "" };
 
 // --- Costanti dell'evento (live bindings: vengono aggiornate da initData) -------------
-export let MAX_BUS_SEATS = 40;
+export let MAX_BUS_SEATS = 50;
 export let GRADUATES = [];
 export let MAP_POINTS = [];
 export let PROGRAM = EMPTY_EVENT.program;
@@ -34,7 +34,7 @@ function applyEvent(ev) {
   EVENT = { ...e, program: resolvePlaceholders(e.program ?? EMPTY_EVENT.program, SCHEDULE),
     busSchedule: resolvePlaceholders(e.busSchedule ?? EMPTY_EVENT.busSchedule, SCHEDULE),
     mapPoints: resolvePlaceholders(e.mapPoints ?? [], SCHEDULE) };
-  MAX_BUS_SEATS = e.meta?.maxBusSeats ?? 40;
+  MAX_BUS_SEATS = e.meta?.maxBusSeats ?? 50;
   GRADUATES = e.graduates ?? [];
   MAP_POINTS = EVENT.mapPoints;
   PROGRAM = EVENT.program;
@@ -96,6 +96,7 @@ export const Status = {
   treasurerEnabled: false, // il server ha un TREASURER_TOKEN[_<ID>] per il cruscotto delle quote uniche
   canSeeLists: true,       // con i token di questo dispositivo il server mostra gli elenchi completi di invitati e navetta
   canSeeMemories: true,    // foto e auguri: solo invitati registrati (link personale) e ruoli; false = schermata "Accedi"
+  photosDownloadEnabled: false, // l'organizzatore ha concesso il download di tutte le foto in uno zip (dallo snapshot)
   roles: null,             // ruoli sbloccati dai token di questo dispositivo {admin, treasurer, treasurerIds, graduate}; null = server senza il campo
   pushSubscriptions: 0,
   lastError: ""
@@ -128,6 +129,7 @@ async function refreshSnapshot() {
     Status.version = snap.version;
     Status.canSeeLists = snap.canSeeLists !== false;
     Status.canSeeMemories = snap.canSeeMemories !== false;
+    Status.photosDownloadEnabled = !!snap.photosDownloadEnabled;
     if (!Status.canSeeMemories) older = { photos: [], hasMore: null }; // bacheca chiusa: via anche le pagine caricate
     applyEvent(snap.event);
     writeCache(snap);

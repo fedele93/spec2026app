@@ -664,6 +664,20 @@ await page.waitForSelector("#dash-stats");
 const dashText = await page.textContent(".modal");
 check("cruscotto con contatori e cose da fare", dashText.includes("Confermati") && dashText.includes("Quote uniche") && (await page.$$("#dash-todo .dash-todo")).length >= 1);
 check("menu scelti nel cruscotto", (await page.textContent("#dash-menu")).includes("Vegano"));
+// download di tutte le foto: spento di default, l'organizzatore lo accende dal cruscotto
+check("interruttore download foto spento", (await page.$eval("#set-photos-dl", (b) => b.checked)) === false);
+check("archivio rifiutato finché spento (409)", (await fetch(BASE + "/api/photos/archive.zip", { headers: adminHeaders })).status === 409);
+check("accensione del download foto", (await (async () => { await resetToast(); await page.click("#set-photos-dl"); return toastText(); })()).includes("attivo"));
+const zipRes = await fetch(BASE + "/api/photos/archive.zip", { headers: adminHeaders });
+check("zip di tutte le foto scaricabile dai registrati", zipRes.status === 200 && (zipRes.headers.get("content-type") || "").includes("zip") && (await zipRes.arrayBuffer()).byteLength > 100);
+check("senza registrazione niente zip (401)", (await fetch(BASE + "/api/photos/archive.zip")).status === 401);
+await page.click(".modal .close");
+await tab("wishes");
+await page.waitForSelector("#dl-photos", { timeout: 10000 });
+check("pulsante \"Scarica tutte le foto\" in cima alla galleria", (await page.textContent("#dl-photos")).includes("zip"));
+await tab("program"); await page.click("#settings"); await page.waitForSelector("#s-dash"); await page.click("#s-dash"); await page.waitForSelector("#set-photos-dl");
+await page.click("#set-photos-dl"); await page.waitForTimeout(600);
+check("spento di nuovo: 409", (await fetch(BASE + "/api/photos/archive.zip", { headers: adminHeaders })).status === 409);
 // prenotazioni senza invitato: quella a mano di prima, con "crea invitato" (tocco di conferma)
 check("cruscotto segnala le prenotazioni senza invitato", (await page.textContent("#dash-orphans")).match(/\((\d+)\)/)[1] !== "0" && dashText.includes("senza invitato"));
 await page.click("#dash-orphans");

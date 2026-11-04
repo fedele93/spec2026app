@@ -10,7 +10,7 @@ object SeedData {
     // Date (AAAA-MM-GG) e orari (HH:MM, vuoto = da definire) dal blocco "schedule" del JSON
     val schedule: EventSchedule = EventSchedule(
         ceremonyDate = "2026-11-09",
-        ceremonyTime = "09:30",
+        ceremonyTime = "09:45",
         partyDate = "2026-11-13",
         partyTime = "21:30",
         partyEndTime = "03:00",
@@ -36,12 +36,12 @@ object SeedData {
             id = "seduta",
             title = "Seduta di Specializzazione & Proclamazione",
             subtitle = "Discussione Tesi & Brindisi",
-            timeLabel = "9 Novembre - ore 09:30",
+            timeLabel = "9 Novembre - ore 09:45",
             address = "Aula Magna \"G. De Benedictis\", AOUC Policlinico di Bari, Piazza Giulio Cesare 11, Bari",
             latitude = 41.1122,
             longitude = 16.8655,
             iconType = "GRADUATION",
-            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (ore 09:30). Ogni neo-specialista ha 10 minuti per la sua esposizione, in ordine alfabetico (orari indicativi): 9:30 Carlone, 9:40 Cusmai, 9:50 Esposto, 10:00 Luisi, 10:10 Parrulli, 10:20 Prezioso, 10:30 Regina, 10:40 Ruta, 10:50 Totaro.",
+            description = "Aula Magna \"G. De Benedictis\" del Policlinico di Bari. Arrivare qualche minuto prima dell'orario di inizio (ore 09:45). Ogni neo-specialista ha 10 minuti per la sua esposizione, in ordine alfabetico (orari indicativi): 9:45 Carlone, 9:55 Cusmai, 10:05 Esposto, 10:15 Luisi, 10:25 Parrulli, 10:35 Prezioso, 10:45 Regina, 10:55 Ruta, 11:05 Totaro.",
             mapsUrl = "https://maps.app.goo.gl/RhZKgXuxfYgg2RgTA"
         ),
         MapPoint(
@@ -78,10 +78,10 @@ object SeedData {
 
     val programTimeline: List<ProgramTimelineEntry> = listOf(
         ProgramTimelineEntry(
-            time = "Ore 09:30",
+            time = "Ore 09:45",
             title = "Seduta di Laurea & Proclamazione",
             location = "Aula Magna \"G. De Benedictis\" - Policlinico di Bari",
-            details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. Inizio alle ore 09:30. Ogni neo-specialista ha 10 minuti per la sua esposizione, in ordine alfabetico (orari indicativi): 9:30 Carlone, 9:40 Cusmai, 9:50 Esposto, 10:00 Luisi, 10:10 Parrulli, 10:20 Prezioso, 10:30 Regina, 10:40 Ruta, 10:50 Totaro.",
+            details = "Discussione delle tesi e proclamazione dei 9 neo-specialisti in Neurologia. Inizio alle ore 09:45. Ogni neo-specialista ha 10 minuti per la sua esposizione, in ordine alfabetico (orari indicativi): 9:45 Carlone, 9:55 Cusmai, 10:05 Esposto, 10:15 Luisi, 10:25 Parrulli, 10:35 Prezioso, 10:45 Regina, 10:55 Ruta, 11:05 Totaro.",
             hasMore = true
         ),
         ProgramTimelineEntry(

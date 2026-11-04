@@ -12,6 +12,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 - Foto: chi è registrato (profilo o ruolo) può commentare le foto della galleria: pulsante 💬 nella card con il conteggio e l'anteprima degli ultimi due commenti, pannello con tutti i commenti, invio e cancellazione dei propri (gli organizzatori cancellano qualsiasi commento). L'autore lo mette il server: nome del profilo, del festeggiato, del cassiere o "Organizzatori". Richiede il backend aggiornato. Android: nessuna modifica (ignora i campi nuovi).
 
 ### Modificato
+- Programma: la seduta inizia alle 9:45 (orari indicativi delle esposizioni aggiornati: 9:45 Carlone … 11:05 Totaro).
 - Navetta: orari definiti, andata alle 21:30 da Piazza Giulio Cesare e rientro alle 2:30 dal Giardino dei Tempi (programma, scheda Navetta, mappa, email e calendario della prenotazione).
 - Programma: la seduta inizia alle 9:30; ogni neo-specialista ha 10 minuti, in ordine alfabetico, con gli orari indicativi nel programma e nella mappa.
 - Navetta: capienza a 50 posti.

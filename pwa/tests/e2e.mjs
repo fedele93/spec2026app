@@ -678,6 +678,29 @@ check("pulsante \"Scarica tutte le foto\" in cima alla galleria", (await page.te
 await tab("program"); await page.click("#settings"); await page.waitForSelector("#s-dash"); await page.click("#s-dash"); await page.waitForSelector("#set-photos-dl");
 await page.click("#set-photos-dl"); await page.waitForTimeout(600);
 check("spento di nuovo: 409", (await fetch(BASE + "/api/photos/archive.zip", { headers: adminHeaders })).status === 409);
+// gioco delle coppie: interruttore, card in Programma, caricamento con la spunta, badge e filtro in galleria
+check("accensione del gioco delle coppie", (await (async () => { await resetToast(); await page.click("#set-pair-game"); return toastText(); })()).includes("acceso"));
+await page.click(".modal .close");
+await page.reload({ waitUntil: "networkidle" }); // il flag arriva con lo snapshot (polling o ricarica)
+await tab("program");
+await page.waitForSelector("#pair-card", { timeout: 10000 });
+check("card del gioco in Programma con le regole", (await page.textContent("#pair-card")).includes("bigliettino") && (await page.$("#pair-upload")) !== null);
+await page.click("#pair-upload");
+await page.waitForSelector("#ph-pair", { timeout: 10000 });
+check("il pulsante apre il modulo foto con la spunta di coppia già attiva", await page.$eval("#ph-pair", (b) => b.checked));
+await page.setInputFiles("#ph-file", { name: "coppia.png", mimeType: "image/png", buffer: tinyPng });
+await page.fill("#ph-caption", "Sale & Pepe");
+check("foto di coppia pubblicata", (await clickExpectToast("#ph-save")).includes("pubblicata"));
+await page.waitForSelector('.photo[data-tag="coppie"]', { timeout: 10000 });
+check("badge Coppia sulla card e conteggio nel filtro", (await page.textContent('.photo[data-tag="coppie"]')).includes("Coppia") && (await page.textContent("#gallery-filter")).includes("Coppie (1)"));
+await page.click('#gallery-filter [data-filter="coppie"]');
+await page.waitForTimeout(400);
+check("filtro Coppie: solo le foto del gioco", (await page.$$(".photo")).length === 1 && (await page.textContent(".photo")).includes("Sale & Pepe"));
+await page.click('#gallery-filter [data-filter="all"]');
+await page.waitForTimeout(400);
+check("filtro Tutte: torna la galleria intera", (await page.$$(".photo")).length > 1);
+await tab("program"); await page.click("#settings"); await page.waitForSelector("#s-dash"); await page.click("#s-dash"); await page.waitForSelector("#set-pair-game");
+await page.click("#set-pair-game"); await page.waitForTimeout(600);
 // prenotazioni senza invitato: quella a mano di prima, con "crea invitato" (tocco di conferma)
 check("cruscotto segnala le prenotazioni senza invitato", (await page.textContent("#dash-orphans")).match(/\((\d+)\)/)[1] !== "0" && dashText.includes("senza invitato"));
 await page.click("#dash-orphans");

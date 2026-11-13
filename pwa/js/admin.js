@@ -54,6 +54,7 @@ export async function openDashboard() {
     <details class="card" id="dash-settings" open><summary><b>🎛️ Funzioni per gli invitati</b></summary>
       <label class="as-check" style="margin-top:6px;"><input type="checkbox" id="set-photos-dl" ${d.settings?.photosDownload ? "checked" : ""}> Permetti a chi è registrato di scaricare tutte le foto in uno zip (pulsante in cima alla galleria)</label>
       <div class="muted as-hint">Da accendere a fine festa, quando la galleria è completa: lo zip contiene le foto intere.</div>
+      <label class="as-check" style="margin-top:8px;"><input type="checkbox" id="set-pair-game" ${d.settings?.pairGame ? "checked" : ""}> 👫 Gioco delle coppie: card con le regole in Programma, spunta "foto di coppia" nel caricamento e filtro 👫 in galleria</label>
     </details>
     <details class="card" id="dash-reset"><summary><b>🧹 Fine della fase di prova</b></summary>
       <div class="muted" style="margin:6px 0;">Cancella invitati e profili, navetta, auguri, foto, quote uniche, notifiche ed email in coda. Restano la configurazione dell'evento, IBAN e link dei regali, gli accessi dei festeggiati, gli avatar e le iscrizioni alle notifiche. Non si può annullare: fai prima un backup (<span class="mono">scripts/backup.sh</span>).</div>
@@ -86,6 +87,17 @@ export async function openDashboard() {
           await Repo.pollState();
         } catch (e) { toast(e.message); dlToggle.checked = !dlToggle.checked; }
         finally { dlToggle.disabled = false; }
+      };
+      const pairToggle = bg.querySelector("#set-pair-game");
+      pairToggle.onchange = async () => {
+        pairToggle.disabled = true;
+        try {
+          const r = await api.adminSettings({ pairGame: pairToggle.checked });
+          pairToggle.checked = r.pairGame;
+          toast(r.pairGame ? "Gioco delle coppie acceso 👫" : "Gioco delle coppie spento");
+          await Repo.pollState();
+        } catch (e) { toast(e.message); pairToggle.checked = !pairToggle.checked; }
+        finally { pairToggle.disabled = false; }
       };
       bg.querySelector("#reset-go").onclick = async () => {
         const word = prompt("Questo cancella TUTTI i dati raccolti (invitati, navetta, auguri, foto, quote). Per confermare scrivi AZZERA");

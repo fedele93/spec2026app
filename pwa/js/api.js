@@ -141,11 +141,12 @@ export const api = {
   deletePhotoComment: (id, cid) => request(`/api/photos/${id}/comments/${cid}`, { method: "DELETE" }),
   // a ritroso: le foto più vecchie dell'ultima già mostrata (createdAt + id)
   photosPage: (before, limit = 24) => request(`/api/photos/page?limit=${limit}` + (before ? `&beforeTs=${before.createdAt}&beforeId=${before.id}` : "")),
-  uploadPhoto: (file, authorName, caption) => {
+  uploadPhoto: (file, authorName, caption, tag = "") => {
     const fd = new FormData();
     fd.append("file", file);
     fd.append("authorName", authorName);
     fd.append("caption", caption);
+    if (tag) fd.append("tag", tag); // "coppie" = foto del gioco delle coppie
     return request("/api/photos", { method: "POST", form: fd, timeoutMs: 60000 });
   },
   likePhoto: (id) => request(`/api/photos/${id}/like`, { method: "POST" }),

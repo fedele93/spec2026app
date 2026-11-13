@@ -97,6 +97,7 @@ export const Status = {
   canSeeLists: true,       // con i token di questo dispositivo il server mostra gli elenchi completi di invitati e navetta
   canSeeMemories: true,    // foto e auguri: solo invitati registrati (link personale) e ruoli; false = schermata "Accedi"
   photosDownloadEnabled: false, // l'organizzatore ha concesso il download di tutte le foto in uno zip (dallo snapshot)
+  pairGameEnabled: false,  // gioco delle coppie acceso dal cruscotto: card con le regole, foto "coppie", filtro in galleria
   roles: null,             // ruoli sbloccati dai token di questo dispositivo {admin, treasurer, treasurerIds, graduate}; null = server senza il campo
   pushSubscriptions: 0,
   lastError: ""
@@ -130,6 +131,7 @@ async function refreshSnapshot() {
     Status.canSeeLists = snap.canSeeLists !== false;
     Status.canSeeMemories = snap.canSeeMemories !== false;
     Status.photosDownloadEnabled = !!snap.photosDownloadEnabled;
+    Status.pairGameEnabled = !!snap.pairGameEnabled;
     if (!Status.canSeeMemories) older = { photos: [], hasMore: null }; // bacheca chiusa: via anche le pagine caricate
     applyEvent(snap.event);
     writeCache(snap);
@@ -215,7 +217,7 @@ const ServerRepo = {
     older = { photos: older.photos.concat(fresh), hasMore: !!page.hasMore };
     return fresh;
   },
-  addPhoto: ({ file, authorName, caption }) => write(() => api.uploadPhoto(file, authorName, caption)),
+  addPhoto: ({ file, authorName, caption, tag }) => write(() => api.uploadPhoto(file, authorName, caption, tag)),
   likePhoto: (id) => write(() => api.likePhoto(id)),
   photoComments: (id) => api.photoComments(id),
   addPhotoComment: (id, text) => write(() => api.addPhotoComment(id, text)),
@@ -307,13 +309,13 @@ const LocalRepo = {
   photosTotal: () => null,
   photosHasMore: () => false, // in modalità locale le foto sono poche e tutte sul dispositivo
   loadOlderPhotos: async () => [],
-  addPhoto: async ({ file, authorName, caption }) => {
+  addPhoto: async ({ file, authorName, caption, tag = "" }) => {
     let imageUri = "";
     if (file) {
       if (file.size > 4_500_000) throw new ApiError(413, "Immagine troppo grande (max ~4.5MB in modalità locale)");
       imageUri = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file); });
     }
-    return add("photos", { authorName, caption, imageUri, likesCount: 1, createdAt: Date.now() }).then(notify);
+    return add("photos", { authorName, caption, imageUri, likesCount: 1, createdAt: Date.now(), tag }).then(notify);
   },
   likePhoto: (id) => updateRecord("photos", id, (p) => { p.likesCount = (p.likesCount || 0) + 1; }).then(notify),
   // i commenti vivono sul server (serve sapere chi scrive): in modalità locale non ci sono

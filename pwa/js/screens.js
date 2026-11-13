@@ -59,6 +59,18 @@ export async function program(el) {
       <span class="txt"><b>${esc(ticker.authorName)}</b> → ${esc(ticker.targetGraduate)}<br>“${esc(ticker.message)}”</span>
       <button class="heart" data-heart="${ticker.id}">❤️ ${ticker.heartCount}</button></div>` : ""}
 
+    ${serverMode && Status.pairGameEnabled ? `<div class="card pair-card" id="pair-card">
+      <b style="font-size:15px;">👫 Il gioco delle coppie</b>
+      <ol class="pair-steps">
+        <li>All'arrivo ricevi un bigliettino: dice <b>chi sei</b> e <b>chi devi cercare</b>.</li>
+        <li>Alla festa c'è qualcuno con il biglietto complementare che sta cercando te: trovatevi!</li>
+        <li>Fate insieme la foto più bella e caricatela qui con la spunta <b>"foto di coppia"</b>.</li>
+        <li>A mezzanotte un premio alcolico alle coppie migliori 🥂</li>
+      </ol>
+      <button class="btn btn-gold" id="pair-upload">📸 Carica la foto di coppia</button>
+      <div class="muted as-hint">${Status.canSeeMemories ? "Trovi tutte le coppie nella scheda Auguri → Galleria, filtro 👫 Coppie." : "Per caricare serve il profilo (basta uno dei due): tocca il pulsante e accedi con la tua email, ci vuole un minuto."}</div>
+    </div>` : ""}
+
     <div class="card push-card">
       <b>${serverMode ? "🔔 Notifiche in tempo reale" : "🔔 Notifiche"}</b>
       <div class="muted">${pushCardText(serverMode, pushOn)}</div>
@@ -97,6 +109,12 @@ export async function program(el) {
   const mp = el.querySelector("#my-profile");
   if (mp) mp.onclick = () => openProfile();
   el.querySelector("#open-guide").onclick = () => openGuide();
+  const pairBtn = el.querySelector("#pair-upload");
+  if (pairBtn) pairBtn.onclick = () => {
+    if (!Status.canSeeMemories) { hasProfile() ? openProfile() : requestLinkDialog(); return; } // prima il profilo
+    goto("wishes");
+    setTimeout(() => document.querySelector("#add-photo")?.click(), 150); // apre direttamente il modulo della foto
+  };
   const grad = el.querySelector("#graduate-area");
   if (grad) grad.onclick = () => openGraduateArea();
   const calBtn = el.querySelector("#cal-add");
@@ -671,9 +689,14 @@ function memoriesLocked(el) {
   el.querySelector("#ml-settings").onclick = () => settingsDialog();
 }
 
+// Filtro della galleria: tutte le foto o solo quelle del gioco delle coppie (resta finché si cambia scheda)
+let galleryFilter = "all";
+const matchesFilter = (p) => galleryFilter === "all" || p.tag === "coppie";
+
 // Una card della galleria (usata al primo disegno e per le pagine caricate dopo)
 const photoCard = (p) => `
-      <div class="photo" data-photo="${p.id}">
+      <div class="photo" data-photo="${p.id}" data-tag="${esc(p.tag || "")}">
+        ${p.tag === "coppie" ? `<span class="pill pill-gold pair-badge">👫 Coppia</span>` : ""}
         ${p.imageUri ? `<img class="thumb" src="${esc(p.thumbUri || p.imageUri)}" data-full="${esc(p.imageUri)}" alt="${esc(p.caption)}" loading="lazy" decoding="async" width="480" height="160">` : `<div class="placeholder">🎓 Neurologia 2026</div>`}
         <div class="name" style="font-weight:700;font-size:13px;">${esc(p.caption)}</div>
         <div class="cat">di ${esc(p.authorName)} · ${fmtTime(p.createdAt)}</div>
@@ -728,6 +751,10 @@ export async function wishes(el) {
   const list = await Repo.allWishes();
   const photos = await Repo.allPhotos();
   const wSorted = [...list].sort((a, b) => b.createdAt - a.createdAt);
+  const pairCount = photos.filter((p) => p.tag === "coppie").length;
+  const pairMode = Repo.mode === "server" && (Status.pairGameEnabled || pairCount > 0);
+  if (!pairMode) galleryFilter = "all";
+  const shown = photos.filter(matchesFilter);
   el.innerHTML = `
     <h2 class="section">Bacheca Auguri & Momenti</h2>
     <div class="muted" style="margin-top:-4px;margin-bottom:12px;">Condividi congratulazioni e scatti indimenticabili con tutti gli invitati</div>
@@ -746,10 +773,13 @@ export async function wishes(el) {
 
     <h2 class="section">Galleria Foto (${Repo.photosTotal() ?? photos.length})</h2>
     <div class="muted" style="margin-top:-4px;margin-bottom:10px;">Dalla più recente. Tocca una foto per ingrandirla, toccala di nuovo per chiuderla.</div>
+    ${pairMode ? `<div class="chips" id="gallery-filter" style="margin-bottom:10px;"><button class="chip ${galleryFilter === "all" ? "active" : ""}" data-filter="all">Tutte</button><button class="chip ${galleryFilter === "coppie" ? "active" : ""}" data-filter="coppie">👫 Coppie (${pairCount})</button></div>
+    ${pairCount ? `<div class="muted" style="margin:-4px 0 10px;">👫 ${pairCount === 1 ? "Una coppia si è già trovata" : `${pairCount} coppie si sono già trovate`}: carica anche la vostra!</div>` : ""}` : ""}
     ${Status.photosDownloadEnabled && photos.length ? `<button class="btn btn-ghost" id="dl-photos" style="margin-bottom:12px;">📦 Scarica tutte le foto (zip)</button>` : ""}
-    ${photos.length === 0 ? '<div class="empty">Nessuna foto condivisa ancora.</div>' : photos.map(photoCard).join("")}
+    ${shown.length === 0 ? `<div class="empty">${galleryFilter === "coppie" ? "Nessuna foto di coppia ancora: siate i primi!" : "Nessuna foto condivisa ancora."}</div>` : shown.map(photoCard).join("")}
     ${Repo.photosHasMore() ? `<button class="btn btn-ghost" id="more-photos" style="margin-bottom:12px;">⬇️ Mostra foto precedenti</button>` : ""}
   `;
+  el.querySelectorAll("#gallery-filter .chip").forEach((c) => c.onclick = () => { galleryFilter = c.dataset.filter; wishes(el); });
   const dl = el.querySelector("#dl-photos");
   if (dl) dl.onclick = async () => {
     dl.disabled = true; dl.textContent = "Preparazione dello zip…";
@@ -762,7 +792,7 @@ export async function wishes(el) {
     more.disabled = true; more.textContent = "Caricamento…";
     let fresh = [];
     if (await tryAction(async () => { fresh = await Repo.loadOlderPhotos(); })) {
-      more.insertAdjacentHTML("beforebegin", fresh.map(photoCard).join(""));
+      more.insertAdjacentHTML("beforebegin", fresh.filter(matchesFilter).map(photoCard).join(""));
       if (!Repo.photosHasMore()) more.remove();
     }
     if (more.isConnected) { more.disabled = false; more.textContent = "⬇️ Mostra foto precedenti"; }
@@ -837,7 +867,8 @@ function photoDialog(onDone) {
     <div class="field"><label>Immagine *</label><input id="ph-file" type="file" accept="image/*"></div>
     <div id="ph-preview" style="margin-bottom:10px;"></div>
     ${signedByProfile() ? `<div class="muted" style="margin-bottom:10px;">Pubblicherai con il nome del tuo profilo.</div>` : `<div class="field"><label>Nome di chi pubblica</label><input id="ph-author"></div>`}
-    <div class="field"><label>Didascalia / Momento della festa</label><input id="ph-caption" placeholder="es. Ultimo turno insieme!"></div>
+    ${Repo.mode === "server" && Status.pairGameEnabled ? `<label class="as-check"><input type="checkbox" id="ph-pair" checked> 👫 È la foto del gioco delle coppie</label>` : ""}
+    <div class="field"><label>Didascalia / Momento della festa</label><input id="ph-caption" placeholder="${Status.pairGameEnabled ? "Chi siete? es. Sale & Pepe" : "es. Ultimo turno insieme!"}"></div>
     <button class="btn btn-primary" id="ph-save" style="margin-top:10px;">Condividi in Galleria</button>`,
     (bg, close) => {
       const fileInput = bg.querySelector("#ph-file");
@@ -854,7 +885,8 @@ function photoDialog(onDone) {
         const ok = await tryAction(() => Repo.addPhoto({
           file,
           authorName: bg.querySelector("#ph-author")?.value.trim() || "Invitato",
-          caption: bg.querySelector("#ph-caption").value.trim()
+          caption: bg.querySelector("#ph-caption").value.trim(),
+          tag: bg.querySelector("#ph-pair")?.checked ? "coppie" : ""
         }), "Foto pubblicata ✓");
         btn.disabled = false; btn.textContent = "Condividi in Galleria";
         if (ok) { close(); onDone(); }

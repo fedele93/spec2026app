@@ -159,6 +159,9 @@ details.catering[open] summary::before { content: "▾"; }
 .photo { background: var(--surface); border: 1px solid var(--outline); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
 .photo .placeholder { background: linear-gradient(135deg, var(--navy), var(--primary)); height: 140px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.7); font-size: 28px; margin-bottom: 8px; }
 .photo img.thumb { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; margin-bottom: 8px; cursor: zoom-in; background: var(--outline); }
+.ph-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.ph-grid img { width: calc(33.33% - 4px); height: 90px; object-fit: cover; border-radius: 10px; background: var(--outline); }
+.ph-grid .ph-more { width: calc(33.33% - 4px); height: 90px; border-radius: 10px; background: var(--outline); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--on-surface-var); }
 .pair-card { border: 2px solid var(--gold, #C9A227); }
 .pair-steps { margin: 8px 0 12px; padding-left: 20px; font-size: 13px; line-height: 1.45; }
 .pair-steps li { margin-bottom: 4px; }

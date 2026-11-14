@@ -218,6 +218,8 @@ const ServerRepo = {
     return fresh;
   },
   addPhoto: ({ file, authorName, caption, tag }) => write(() => api.uploadPhoto(file, authorName, caption, tag)),
+  // caricamento multiplo: una chiamata per foto, nessun ricaricamento intermedio (il chiamante fa pollState alla fine)
+  addPhotos: async (items) => { for (const p of items) await api.uploadPhoto(p.file, p.authorName, p.caption, p.tag); },
   likePhoto: (id) => write(() => api.likePhoto(id)),
   photoComments: (id) => api.photoComments(id),
   addPhotoComment: (id, text) => write(() => api.addPhotoComment(id, text)),
@@ -318,6 +320,7 @@ const LocalRepo = {
     return add("photos", { authorName, caption, imageUri, likesCount: 1, createdAt: Date.now(), tag }).then(notify);
   },
   likePhoto: (id) => updateRecord("photos", id, (p) => { p.likesCount = (p.likesCount || 0) + 1; }).then(notify),
+  addPhotos: async (items) => { for (const p of items) await LocalRepo.addPhoto(p); },
   // i commenti vivono sul server (serve sapere chi scrive): in modalità locale non ci sono
   photoComments: async () => [],
   addPhotoComment: async () => { throw new ApiError(400, "I commenti alle foto funzionano solo con il server della festa"); },

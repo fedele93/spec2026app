@@ -211,6 +211,16 @@ check("tocco sulla foto: si ingrandisce con la versione intera", (await page.get
 await page.click(".lightbox");
 check("secondo tocco: torna normale", (await page.$(".lightbox")) === null);
 check("in galleria la miniatura leggera, non la foto intera", (await page.getAttribute(".photo img.thumb", "src")).includes("_t.jpg"));
+// più foto in una volta: anteprime, pulsante con il numero, caricamento in sequenza e galleria aggiornata alla fine
+const lottoBefore = (await page.$$(".photo")).length;
+await page.click("#add-photo");
+await page.waitForSelector("#ph-file");
+await page.setInputFiles("#ph-file", [1, 2, 3].map((i) => ({ name: `lotto${i}.png`, mimeType: "image/png", buffer: tinyPng })));
+check("anteprime e pulsante per 3 foto", (await page.$$("#ph-preview img")).length === 3 && (await page.textContent("#ph-save")).includes("3 foto"));
+await page.fill("#ph-caption", "Lotto di prova");
+check("3 foto pubblicate in una volta", (await clickExpectToast("#ph-save")).includes("3 foto pubblicate"));
+await page.waitForFunction((n) => document.querySelectorAll(".photo").length >= n + 3, lottoBefore, { timeout: 15000 });
+check("galleria con le 3 foto nuove, stessa didascalia", (await page.$$(".photo")).length === lottoBefore + 3 && (await page.$$eval(".photo", (els) => els.filter((e) => e.textContent.includes("Lotto di prova")).length)) === 3);
 // commenti: solo registrati, firmati dal server, anteprima nella card, cancellazione del proprio
 check("pulsante commenti a zero", (await page.textContent(".photo [data-comments]")).includes("💬 0"));
 await page.click(".photo [data-comments]");
@@ -245,7 +255,7 @@ const firstPage = (await page.$$(".photo")).length;
 check("prima pagina: 24 foto e il pulsante per le precedenti", firstPage === 24 && (await page.textContent(".photo")).includes("Extra 23"));
 await page.click("#more-photos");
 await page.waitForFunction((n) => document.querySelectorAll(".photo").length > n, firstPage, { timeout: 10000 });
-check("foto precedenti caricate in fondo, senza doppioni, fino alla più vecchia", (await page.$("#more-photos")) === null && (await page.$$(".photo")).length === 24 + 4 && (await page.$$eval(".photo", (els) => new Set(els.map((e) => e.dataset.photo)).size)) === 28);
+check("foto precedenti caricate in fondo, senza doppioni, fino alla più vecchia", (await page.$("#more-photos")) === null && (await page.$$(".photo")).length === 24 + 7 && (await page.$$eval(".photo", (els) => new Set(els.map((e) => e.dataset.photo)).size)) === 31);
 await shot("04-auguri-foto");
 // fine prova: l'invitato esce (record cancellato) e la bacheca torna bloccata; le sezioni seguenti partono senza profilo
 await fetch(BASE + `/api/guests/${ospite.id}`, { method: "DELETE", headers: e2eAdmin });

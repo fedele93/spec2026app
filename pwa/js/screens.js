@@ -862,34 +862,75 @@ function wishDialog(onDone) {
     });
 }
 
+// Riduce la foto sul telefono prima dell'invio (lato lungo 1600 px, JPEG): il server la ridurrebbe comunque,
+// ma così si caricano in pochi secondi anche decine di scatti da 5-10 MB. In caso di dubbio manda l'originale.
+async function shrinkImage(file, maxSide = 1600) {
+  if (!/^image\//.test(file.type) || file.type === "image/gif") return file;
+  try {
+    let src = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+    if (!src) {
+      src = await new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = URL.createObjectURL(file); });
+    }
+    const w = src.width || src.naturalWidth, h = src.height || src.naturalHeight;
+    const scale = Math.min(1, maxSide / Math.max(w, h));
+    if (scale === 1 && file.size < 1_500_000) return file; // già piccola: così com'è
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+    canvas.getContext("2d").drawImage(src, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch { return file; }
+}
+
 function photoDialog(onDone) {
   openModal(`<h3>📷 Condividi uno Scatto</h3>
-    <div class="field"><label>Immagine *</label><input id="ph-file" type="file" accept="image/*"></div>
-    <div id="ph-preview" style="margin-bottom:10px;"></div>
+    <div class="field"><label>Immagini * <span class="muted">(puoi sceglierne più di una)</span></label><input id="ph-file" type="file" accept="image/*" multiple></div>
+    <div id="ph-preview" class="ph-grid" style="margin-bottom:10px;"></div>
     ${signedByProfile() ? `<div class="muted" style="margin-bottom:10px;">Pubblicherai con il nome del tuo profilo.</div>` : `<div class="field"><label>Nome di chi pubblica</label><input id="ph-author"></div>`}
     ${Repo.mode === "server" && Status.pairGameEnabled ? `<label class="as-check"><input type="checkbox" id="ph-pair" checked> 👫 È la foto del gioco delle coppie</label>` : ""}
-    <div class="field"><label>Didascalia / Momento della festa</label><input id="ph-caption" placeholder="${Status.pairGameEnabled ? "Chi siete? es. Sale & Pepe" : "es. Ultimo turno insieme!"}"></div>
-    <button class="btn btn-primary" id="ph-save" style="margin-top:10px;">Condividi in Galleria</button>`,
+    <div class="field"><label>Didascalia / Momento della festa <span class="muted" id="ph-caption-hint"></span></label><input id="ph-caption" placeholder="${Status.pairGameEnabled ? "Chi siete? es. Sale & Pepe" : "es. Ultimo turno insieme!"}"></div>
+    <button class="btn btn-primary" id="ph-save" style="margin-top:10px;">Condividi in Galleria</button>
+    <div class="muted as-hint" id="ph-progress"></div>`,
     (bg, close) => {
-      const fileInput = bg.querySelector("#ph-file");
+      const fileInput = bg.querySelector("#ph-file"), btn = bg.querySelector("#ph-save"), prog = bg.querySelector("#ph-progress");
+      const label = (n) => n > 1 ? `Condividi ${n} foto in Galleria` : "Condividi in Galleria";
       fileInput.onchange = () => {
-        const f = fileInput.files[0];
+        const files = [...fileInput.files];
         const prev = bg.querySelector("#ph-preview");
-        if (f) { const url = URL.createObjectURL(f); prev.innerHTML = `<img src="${url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;">`; }
-        else prev.innerHTML = "";
+        // anteprima: fino a 6 miniature, poi "+N"
+        prev.innerHTML = files.slice(0, 6).map((f) => `<img src="${URL.createObjectURL(f)}" alt="">`).join("") + (files.length > 6 ? `<div class="ph-more">+${files.length - 6}</div>` : "");
+        btn.textContent = label(files.length);
+        bg.querySelector("#ph-caption-hint").textContent = files.length > 1 ? "(uguale per tutte)" : "";
       };
-      bg.querySelector("#ph-save").onclick = async () => {
-        const file = fileInput.files[0];
-        if (!file) { toast("Scegli una foto"); return; }
-        const btn = bg.querySelector("#ph-save"); btn.disabled = true; btn.textContent = "Caricamento…";
-        const ok = await tryAction(() => Repo.addPhoto({
-          file,
+      btn.onclick = async () => {
+        const files = [...fileInput.files];
+        if (!files.length) { toast("Scegli una foto"); return; }
+        const meta = {
           authorName: bg.querySelector("#ph-author")?.value.trim() || "Invitato",
           caption: bg.querySelector("#ph-caption").value.trim(),
-          tag: bg.querySelector("#ph-pair")?.checked ? "coppie" : ""
-        }), "Foto pubblicata ✓");
-        btn.disabled = false; btn.textContent = "Condividi in Galleria";
-        if (ok) { close(); onDone(); }
+          tag: bg.querySelector("#ph-pair")?.checked ? "coppie" : "",
+        };
+        btn.disabled = true; fileInput.disabled = true;
+        if (files.length === 1) {
+          btn.textContent = "Caricamento…";
+          const ok = await tryAction(() => Repo.addPhoto({ file: files[0], ...meta }), "Foto pubblicata ✓");
+          btn.disabled = false; fileInput.disabled = false; btn.textContent = label(1);
+          if (ok) { close(); onDone(); }
+          return;
+        }
+        // più foto: una alla volta (il server le ridimensiona), senza fermarsi se una non riesce; la galleria si aggiorna alla fine
+        let done = 0, failed = 0;
+        for (const [i, f] of files.entries()) {
+          btn.textContent = `Caricamento ${i + 1} di ${files.length}…`;
+          prog.textContent = done ? `${done} pubblicate${failed ? `, ${failed} non riuscite` : ""}` : "";
+          try { await Repo.addPhotos([{ file: await shrinkImage(f), ...meta }]); done++; }
+          catch (e) { failed++; console.warn("foto non caricata", f.name, e); }
+        }
+        await Repo.pollState();
+        toast(failed ? `${done} foto pubblicate, ${failed} non riuscite (riprova con quelle)` : `${done} foto pubblicate ✓`);
+        btn.disabled = false; fileInput.disabled = false; btn.textContent = label(files.length);
+        if (done) { close(); onDone(); }
       };
     });
 }

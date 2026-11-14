@@ -8,6 +8,7 @@ progetto adotta il [Semantic Versioning](https://semver.org/lang/it/spec/v2.0.0.
 ## [Non rilasciato]
 
 ### Aggiunto
+- Foto ingrandita: zoom con due dita (fino a 5x), un dito per spostarsi, doppio tocco per 2,5x, rotellina sul computer; pulsante × per chiudere (un tocco chiude solo se la foto non è ingrandita).
 - Foto: caricamento di più foto in una volta (selezione multipla, anteprime, didascalia comune, avanzamento "3 di 12", riepilogo di quante sono riuscite); le foto vengono ridotte sul telefono prima dell'invio, così anche decine di scatti partono in pochi secondi.
 - Gioco delle coppie (interruttore nel cruscotto → "Funzioni per gli invitati"): card con le regole in Programma e pulsante "Carica la foto di coppia" (porta al profilo se manca), spunta "foto di coppia" nel caricamento, badge 👫 e filtro Tutte / Coppie in galleria con il conteggio delle coppie. Richiede il backend aggiornato.
 - Foto: "📦 Scarica tutte le foto (zip)" in cima alla galleria per chi è registrato, quando l'organizzatore lo accende dal cruscotto ("Funzioni per gli invitati"). Lo zip contiene le foto intere. Richiede il backend aggiornato.

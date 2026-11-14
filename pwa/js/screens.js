@@ -823,16 +823,88 @@ export async function wishes(el) {
 const signedByProfile = () => Repo.mode === "server" && hasProfile();
 
 // Foto ingrandita: un tocco la apre a schermo intero (versione completa), un altro tocco (o Esc) la chiude.
+// Foto ingrandita con zoom "a due dita" (la pagina ha lo zoom del browser disattivato, quindi lo gestiamo noi):
+// pizzico per ingrandire fino a 5x, un dito per spostarsi, doppio tocco per 2,5x e ritorno, rotellina sul computer.
+// Un tocco semplice chiude solo se la foto non è ingrandita; la × chiude sempre.
 function openLightbox(src, caption) {
   const box = document.createElement("div");
   box.className = "modal-bg lightbox"; // "modal-bg": così isModalOpen() la vede e la pagina non si ridisegna sotto
   box.setAttribute("role", "dialog");
-  box.innerHTML = `<img src="${esc(src)}" alt="${esc(caption || "")}">${caption ? `<div class="lb-caption">${esc(caption)}</div>` : ""}`;
+  box.innerHTML = `<button class="lb-close" aria-label="Chiudi">×</button><img src="${esc(src)}" alt="${esc(caption || "")}" draggable="false">${caption ? `<div class="lb-caption">${esc(caption)}</div>` : ""}<div class="lb-hint">Pizzica per ingrandire · doppio tocco 2,5x</div>`;
+  const img = box.querySelector("img");
   const close = () => { box.remove(); document.removeEventListener("keydown", onKey); };
   const onKey = (e) => { if (e.key === "Escape") close(); };
-  box.onclick = close;
   document.addEventListener("keydown", onKey);
+  box.querySelector(".lb-close").onclick = (e) => { e.stopPropagation(); close(); };
+
+  // stato dello zoom: scala e spostamento (in px dello schermo) rispetto al centro
+  let scale = 1, tx = 0, ty = 0;
+  const MAX = 5;
+  const apply = () => { img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; box.classList.toggle("zoomed", scale > 1.01); box.dataset.scale = scale.toFixed(2); };
+  const clamp = () => {
+    // la foto non deve sparire fuori dallo schermo: al massimo metà fuori per lato
+    const r = img.getBoundingClientRect();
+    const maxX = Math.max(0, (r.width - box.clientWidth) / 2 + box.clientWidth / 4), maxY = Math.max(0, (r.height - box.clientHeight) / 2 + box.clientHeight / 4);
+    tx = Math.min(maxX, Math.max(-maxX, tx)); ty = Math.min(maxY, Math.max(-maxY, ty));
+  };
+  // ingrandisce di `factor` tenendo fermo il punto (cx, cy) dello schermo
+  const zoomAt = (factor, cx, cy) => {
+    const next = Math.min(MAX, Math.max(1, scale * factor));
+    const k = next / scale;
+    const ox = cx - (box.clientWidth / 2 + tx), oy = cy - (box.clientHeight / 2 + ty);
+    tx -= ox * (k - 1); ty -= oy * (k - 1); scale = next;
+    if (scale === 1) { tx = 0; ty = 0; } else clamp();
+    apply();
+  };
+
+  const pointers = new Map();
+  let pinch = null, lastTap = 0, moved = false, downAt = null;
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  box.onpointerdown = (e) => {
+    if (e.target.closest(".lb-close")) return; // la × resta un pulsante normale (con la cattura del puntatore il click non le arriverebbe)
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    try { box.setPointerCapture(e.pointerId); } catch { /* eventi sintetici */ }
+    moved = false; downAt = { x: e.clientX, y: e.clientY };
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = { d: dist(a, b), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, scale, tx, ty };
+    }
+  };
+  box.onpointermove = (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    const prev = pointers.get(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2 && pinch) {
+      const [a, b] = [...pointers.values()];
+      const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+      const next = Math.min(MAX, Math.max(1, pinch.scale * dist(a, b) / pinch.d));
+      const k = next / pinch.scale;
+      // il punto fra le due dita resta sotto le dita, e segue le dita se si spostano insieme
+      const ox = pinch.cx - (box.clientWidth / 2 + pinch.tx), oy = pinch.cy - (box.clientHeight / 2 + pinch.ty);
+      tx = pinch.tx - ox * (k - 1) + (cx - pinch.cx); ty = pinch.ty - oy * (k - 1) + (cy - pinch.cy); scale = next;
+      if (scale === 1) { tx = 0; ty = 0; } else clamp();
+      moved = true; apply();
+    } else if (pointers.size === 1 && scale > 1) {
+      tx += e.clientX - prev.x; ty += e.clientY - prev.y;
+      if (Math.abs(e.clientX - downAt.x) + Math.abs(e.clientY - downAt.y) > 6) moved = true;
+      clamp(); apply();
+    }
+  };
+  const lift = (e) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (e.type !== "pointerup" || pointers.size) return;
+    if (moved) return;
+    const now = Date.now();
+    if (now - lastTap < 320) { lastTap = 0; zoomAt(scale > 1.01 ? 1 / scale : 2.5, e.clientX, e.clientY); return; } // doppio tocco
+    lastTap = now;
+    if (scale <= 1.01) setTimeout(() => { if (lastTap === now) close(); }, 330); // tocco singolo (non seguito da un secondo)
+  };
+  box.onpointerup = lift; box.onpointercancel = lift;
+  box.onwheel = (e) => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY); };
+  box.ondblclick = (e) => e.preventDefault();
   document.body.appendChild(box);
+  apply();
 }
 
 function wishDialog(onDone) {

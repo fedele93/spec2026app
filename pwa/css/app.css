@@ -170,9 +170,13 @@ details.catering[open] summary::before { content: "▾"; }
 .pc-preview { margin-top: 8px; border-top: 1px solid var(--outline); padding-top: 6px; font-size: 13px; }
 .pc-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; font-size: 13px; line-height: 1.35; }
 .pc-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.lightbox { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
-.lightbox img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 8px; }
-.lightbox .lb-caption { color: #fff; margin-top: 10px; font-size: 14px; text-align: center; }
+.lightbox { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; touch-action: none; overflow: hidden; overscroll-behavior: contain; user-select: none; -webkit-user-select: none; }
+.lightbox img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 8px; transform-origin: center center; will-change: transform; -webkit-user-drag: none; }
+.lightbox.zoomed { cursor: grab; }
+.lightbox.zoomed .lb-caption, .lightbox.zoomed .lb-hint { opacity: 0; }
+.lightbox .lb-caption { color: #fff; margin-top: 10px; font-size: 14px; text-align: center; transition: opacity .2s; }
+.lightbox .lb-hint { position: absolute; bottom: calc(14px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; color: rgba(255,255,255,.6); font-size: 12px; transition: opacity .2s; pointer-events: none; }
+.lightbox .lb-close { position: absolute; top: calc(10px + env(safe-area-inset-top)); right: 12px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255,255,255,.18); color: #fff; font-size: 26px; line-height: 40px; cursor: pointer; z-index: 2; }
 
 /* gifts */
 .gift { margin-bottom: 14px; }
